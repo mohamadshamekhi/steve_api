@@ -40,3 +40,19 @@ func init() {
 func L() *slog.Logger {
 	return l
 }
+
+// New is constructor logger with special settings.
+func New(cfg Config, opt *slog.HandlerOptions) *slog.Logger {
+	fileWriter := &lumberjack.Logger{
+		Filename:  cfg.FilePath,
+		LocalTime: cfg.UseLocalTime,
+		MaxSize:   cfg.FileMaxSizeInMB,
+		MaxAge:    cfg.FileMaxAgeInDays,
+	}
+
+	logger := slog.New(
+		slog.NewJSONHandler(io.MultiWriter(fileWriter, os.Stdout), opt),
+	)
+
+	return logger
+}
