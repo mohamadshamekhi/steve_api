@@ -8,6 +8,7 @@ require (
 	github.com/knadh/koanf/providers/file v1.2.0
 	github.com/knadh/koanf/providers/structs v1.0.0
 	github.com/knadh/koanf/v2 v2.2.0
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
 require (

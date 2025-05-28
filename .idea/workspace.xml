@@ -4,7 +4,13 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c98442ad-2551-41db-bcc2-0ebd3f1a460d" name="Changes" comment="" />
+    <list default="true" id="c98442ad-2551-41db-bcc2-0ebd3f1a460d" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/pkg/logger/logger.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/default.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/default.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -18,9 +24,24 @@
     </option>
   </component>
   <component name="GOROOT" url="file:///usr/local/go" />
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 4
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "abolfazlnorzad"
+  }
 }]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/abolfazlnorzad/steve.git",
+    "accountId": "08062377-0374-400c-83ed-a69cb3e2af5c"
+  }
+}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
   <component name="ProjectId" id="2xjCLrnHfO5NbHMpyEgtoVnq3e1" />
   <component name="ProjectViewState">
     <option name="autoscrollFromSource" value="true" />
@@ -37,6 +58,7 @@
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
     "RunOnceActivity.go.migrated.go.modules.settings": "true",
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
+    "git-widget-placeholder": "main",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
     "last_opened_file_path": "/Users/abolfazlnorzad/Desktop/Projects/steve",
