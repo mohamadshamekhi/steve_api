@@ -5,7 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c98442ad-2551-41db-bcc2-0ebd3f1a460d" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/adapter/redis/adapter.go" beforeDir="false" afterPath="$PROJECT_DIR$/adapter/redis/adapter.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/repository/redis/otp/db.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/repository/redis/otp/otp.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/auth/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/auth/service.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

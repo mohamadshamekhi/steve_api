@@ -1,6 +1,7 @@
 package authservice
 
 import (
+	"context"
 	"fmt"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"math/rand"
@@ -14,9 +15,9 @@ type Config struct {
 }
 
 type Repository interface {
-	CheckUserHasActiveCode(key string) (bool, error)
-	GetUserActiveCode(key string) (string, error)
-	StoreNewActiveCodeForUser(key string, code string) error
+	CheckUserHasActiveCode(ctx context.Context, key string) (bool, error)
+	GetUserActiveCode(ctx context.Context, key string) (string, error)
+	StoreNewActiveCodeForUser(ctx context.Context, key string, code string) error
 }
 
 type Service struct {
@@ -28,10 +29,10 @@ func New(cfg Config, repo Repository) Service {
 	return Service{cfg: cfg, repo: repo}
 }
 
-func (s Service) GenerateOTPCode(phoneNumber string, prefix string) (string, error) {
+func (s Service) GenerateOTPCode(ctx context.Context, phoneNumber string, prefix string) (string, error) {
 	const op = "authservice.GenerateOTPCode"
 	key := fmt.Sprintf("%s:%s", prefix, phoneNumber)
-	resp, cErr := s.repo.CheckUserHasActiveCode(key)
+	resp, cErr := s.repo.CheckUserHasActiveCode(ctx, key)
 	if cErr != nil {
 		return "", richerror.New(op).WithWarpError(cErr)
 	}
@@ -39,12 +40,12 @@ func (s Service) GenerateOTPCode(phoneNumber string, prefix string) (string, err
 	if !resp {
 		randomInt := rand.New(rand.NewSource(time.Now().UnixNano())).Int()
 		code = fmt.Sprintf("%v", randomInt)
-		sErr := s.repo.StoreNewActiveCodeForUser(key, code)
+		sErr := s.repo.StoreNewActiveCodeForUser(ctx, key, code)
 		if sErr != nil {
 			return "", richerror.New(op).WithWarpError(sErr)
 		}
 	}
-	code, gErr := s.repo.GetUserActiveCode(key)
+	code, gErr := s.repo.GetUserActiveCode(ctx, key)
 	if gErr != nil {
 		return "", richerror.New(op).WithWarpError(gErr)
 	}
