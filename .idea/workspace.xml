@@ -5,15 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c98442ad-2551-41db-bcc2-0ebd3f1a460d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/repository/mongo/db.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/param/backofficeparam/login.go" beforeDir="false" afterPath="$PROJECT_DIR$/param/backoffice/auth/login.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/authservice/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/auth/service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/backofficeservice/login.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/backoffice/login.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/backofficeservice/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/backoffice/service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/validator/backoffice/auth/login.go" beforeDir="false" afterPath="$PROJECT_DIR$/validator/backoffice/auth/login.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/adapter/redis/adapter.go" beforeDir="false" afterPath="$PROJECT_DIR$/adapter/redis/adapter.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
