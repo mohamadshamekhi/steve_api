@@ -1,4 +1,4 @@
-package backofficeparam
+package backofficeauthparam
 
 type SendLoginCodeRequest struct {
 	PhoneNumber string

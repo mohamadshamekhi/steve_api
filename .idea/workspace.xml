@@ -5,7 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c98442ad-2551-41db-bcc2-0ebd3f1a460d" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/repository/mongo/db.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/param/backofficeparam/login.go" beforeDir="false" afterPath="$PROJECT_DIR$/param/backoffice/auth/login.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/authservice/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/auth/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/backofficeservice/login.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/backoffice/login.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/backofficeservice/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/backoffice/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/validator/backoffice/auth/login.go" beforeDir="false" afterPath="$PROJECT_DIR$/validator/backoffice/auth/login.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -64,10 +72,10 @@
     &quot;accountId&quot;: &quot;08062377-0374-400c-83ed-a69cb3e2af5c&quot;
   }
 }</component>
-  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
-  <component name="KubernetesApiProvider"><![CDATA[{
-  "isMigrated": true
-}]]></component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 4
 }</component>
@@ -85,6 +93,7 @@
     "RunOnceActivity.GoLinterPluginOnboarding": "true",
     "RunOnceActivity.GoLinterPluginStorageMigration": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
     "RunOnceActivity.go.migrated.go.modules.settings": "true",
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
@@ -94,7 +103,8 @@
     "last_opened_file_path": "/Users/abolfazlnorzad/Desktop/Projects/steve",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm"
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors.Color Scheme Font"
   },
   "keyToStringList": {
     "DatabaseDriversLRU": [
@@ -105,12 +115,15 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/param/backoffice/auth" />
       <recent name="$PROJECT_DIR$/validator/backoffice/auth" />
     </key>
   </component>
   <component name="RunManager">
     <configuration default="true" type="docker-deploy" factoryName="docker-compose.yml" temporary="true">
-      <deployment type="docker-compose.yml" />
+      <deployment type="docker-compose.yml">
+        <settings />
+      </deployment>
       <method v="2" />
     </configuration>
     <configuration name="docker-compose.yml: Compose Deployment" type="docker-deploy" factoryName="docker-compose.yml" temporary="true" server-name="Docker">

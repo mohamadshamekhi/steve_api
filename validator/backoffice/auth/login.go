@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/abolfazlnorzad/steve/param/backofficeparam"
+	"github.com/abolfazlnorzad/steve/param/backoffice"
 	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"regexp"
 )
 
-func (v Validator) ValidateLoginWithPhoneNumberRequest(req backofficeparam.SendLoginCodeRequest) (map[string]string, error) {
+func (v Validator) ValidateLoginWithPhoneNumberRequest(req backoffice.SendLoginCodeRequest) (map[string]string, error) {
 	const op = "backofficevalidatorauth.ValidateLoginWithPhoneNumberRequest"
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.PhoneNumber,
