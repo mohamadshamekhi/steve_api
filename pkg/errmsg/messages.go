@@ -17,4 +17,5 @@ const (
 	ErrorMsgAcceptKindBoxReqStatus       = "only pending requests will have the ability to be confirmed"
 	ErrorMsgRejectKindBoxReqStatus       = "only pending requests will have the ability to be rejected"
 	ErrorFileSize                        = "the file size should be less than 200 megabytes"
+	ErrorOTPCodeIsNotCorrect             = "OTP code is not correct"
 )

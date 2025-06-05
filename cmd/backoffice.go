@@ -21,6 +21,6 @@ func main() {
 	})
 	authSvc := authservice.New(cfg.Auth, redisotp.New(repo), nats)
 	backOfficeSvc := backofficeservice.New(cfg.BackOffice, authSvc)
-	resp, err := backOfficeSvc.Login(context.Background(), backofficeauthparam.SendLoginCodeRequest{PhoneNumber: "09011216131"})
+	resp, err := backOfficeSvc.SendOTPCode(context.Background(), backofficeauthparam.SendLoginCodeRequest{PhoneNumber: "09011216131"})
 	fmt.Println("err , resp", err, resp)
 }
