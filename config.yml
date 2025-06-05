@@ -2,3 +2,16 @@ type: yml
 
 http_server:
   port: 7777
+
+redis:
+  port: 6379
+  host: localhost
+  db: 0
+  password: ""
+
+backoffice:
+  prefix: backoffice
+
+
+auth:
+  expiration_time_opt_code: 2m

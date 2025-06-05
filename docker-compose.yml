@@ -21,8 +21,35 @@ services:
       - redis_data:/data # برای ذخیره‌سازی دائمی داده‌های Redis
     # command: redis-server --save 60 1 --loglevel warning # مثال برای تنظیمات Redis (اختیاری)
 
+  nats:
+    image: nats:2.11.4-alpine3.21
+    container_name: my_nats_server
+    restart: unless-stopped
+    ports:
+      - "4222:4222"  # پورت کلاینت NATS
+      - "8222:8222"  # پورت مانیتورینگ HTTP NATS
+      # - "6222:6222"  # پورت روتینگ برای کلاسترینگ
+    command: [
+      "nats-server",
+      "-js",                   # فعال‌سازی JetStream
+      "-sd",
+      "/data/jetstream",
+      "--http_port", "8222"      # <--- این خط اضافه شده: فعال‌سازی مانیتورینگ HTTP روی پورت 8222 داخل کانتینر
+      # مسیر ذخیره‌سازی داده‌های JetStream در داخل کانتینر
+      # '-D' # برای لاگ‌های بیشتر (Debug)
+      # '-V' # برای لاگ‌های بیشتر در مورد JetStream (Trace)
+    ]
+    volumes:
+      - nats_jetstream_data:/data/jetstream # اتصال volume به مسیر ذخیره‌سازی
+
+
 volumes:
   mongo_data: # تعریف volume برای MongoDB
     driver: local
   redis_data: # تعریف volume برای Redis
     driver: local
+  nats_jetstream_data: # تعریف volume برای ذخیره‌سازی دائمی داده‌های JetStream
+    driver: local
+
+
+

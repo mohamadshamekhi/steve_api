@@ -14,6 +14,7 @@ type Config struct {
 
 type Adapter struct {
 	client *redis.Client
+	cfg    Config
 }
 
 func New(config Config) *Adapter {

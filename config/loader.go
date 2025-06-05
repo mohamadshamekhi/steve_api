@@ -46,6 +46,10 @@ func init() {
 		log.Printf("error loading environment variables: %s", err)
 	}
 
+	if err := k.Unmarshal("", &c); err != nil {
+		panic(err)
+	}
+
 }
 
 func C() Config {
