@@ -5,24 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c98442ad-2551-41db-bcc2-0ebd3f1a460d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/adapter/nats/adapter.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/contract/protobuf/auth/otp.proto" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/service/notification/service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/d954981d-5cce-45c5-a4a9-3643670ea68b.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/d954981d-5cce-45c5-a4a9-3643670ea68b.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cmd/backoffice.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cmd/notification.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pkg/constant/const.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/adapter/redis/adapter.go" beforeDir="false" afterPath="$PROJECT_DIR$/adapter/redis/adapter.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/adapter/nats/adapter.go" beforeDir="false" afterPath="$PROJECT_DIR$/adapter/nats/adapter.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/config.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/loader.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/loader.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/repository/redis/otp/otp.go" beforeDir="false" afterPath="$PROJECT_DIR$/repository/redis/otp/otp.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/service/auth/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/auth/service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/backoffice/login.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/backoffice/login.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/backoffice/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/backoffice/service.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -115,7 +106,7 @@
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors.Color Scheme Font"
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   },
   "keyToStringList": {
     "DatabaseDriversLRU": [

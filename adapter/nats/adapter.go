@@ -17,6 +17,7 @@ type Adapter struct {
 }
 
 func New(cfg Config) *Adapter {
+
 	nc, err := nats.Connect(nats.DefaultURL,
 		nats.RetryOnFailedConnect(true),
 		nats.MaxReconnects(10),

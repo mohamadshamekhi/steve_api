@@ -14,7 +14,6 @@ import (
 
 func main() {
 	cfg := config.C()
-	fmt.Printf("%+v\n", cfg)
 	repo := redisadapter.New(cfg.Redis)
 	nats := natsadapter.New(natsadapter.Config{
 		Host: "localhost",
@@ -23,6 +22,5 @@ func main() {
 	authSvc := authservice.New(cfg.Auth, redisotp.New(repo), nats)
 	backOfficeSvc := backofficeservice.New(cfg.BackOffice, authSvc)
 	resp, err := backOfficeSvc.Login(context.Background(), backofficeauthparam.SendLoginCodeRequest{PhoneNumber: "09011216131"})
-	fmt.Println("err", err)
-	fmt.Println("resp", resp.Message)
+	fmt.Println("err , resp", err, resp)
 }

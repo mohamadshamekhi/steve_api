@@ -5,6 +5,8 @@ import (
 	"fmt"
 	natsadapter "github.com/abolfazlnorzad/steve/adapter/nats"
 	"github.com/abolfazlnorzad/steve/contract/goproto/auth"
+	"github.com/abolfazlnorzad/steve/pkg/constant"
+	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"github.com/nats-io/nats.go"
@@ -53,19 +55,21 @@ func (s Service) GenerateOTPCode(ctx context.Context, phoneNumber string, prefix
 		event := &auth.SendOTPCode{Code: code, PhoneNumber: phoneNumber}
 		payload, mErr := proto.Marshal(event)
 		if mErr != nil {
-			return richerror.New(op).WithWarpError(mErr)
+			return richerror.New(op).WithWarpError(mErr).WithKind(richerror.KindUnexpected).WithMessage(errmsg.ErrorMsgSomethingWentWrong)
 		}
-		fmt.Println("ppppppp  :", payload)
-		s.nats.NatsJS().AddStream(&nats.StreamConfig{
+		// todo - remove this code and transfer to package that init all stream or use Terraform or k8s opt
+		_, aErr := s.nats.NatsJS().AddStream(&nats.StreamConfig{
 			Name:     "notification",
-			MaxAge:   1 * 24 * time.Hour, // حداکثر عمر پیام (مثلاً 1 روز)
+			MaxAge:   1 * 24 * time.Hour,
 			Subjects: []string{"notification.*"},
 		})
-		// publish code in nats (phone_number , code)
-		ack, pErr := s.nats.NatsJS().Publish("notification.send_otp", payload)
+		if aErr != nil {
+			return richerror.New(op).WithWarpError(aErr).WithKind(richerror.KindUnexpected).WithMessage(errmsg.ErrorMsgSomethingWentWrong)
+		}
+		ack, pErr := s.nats.NatsJS().Publish(constant.SendOTPSubject, payload)
 		if pErr != nil {
-			fmt.Println("eeeeeeeeeeeee", pErr)
-			return richerror.New(op).WithWarpError(pErr)
+			fmt.Println("pErr", pErr)
+			return richerror.New(op).WithWarpError(pErr).WithKind(richerror.KindUnexpected).WithMessage(errmsg.ErrorMsgSomethingWentWrong)
 		}
 		logger.L().Info("message published successfully, ack.Stream , ack.Sequence", ack.Stream, ack.Sequence)
 	}

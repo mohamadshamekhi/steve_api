@@ -15,3 +15,7 @@ backoffice:
 
 auth:
   expiration_time_opt_code: 2m
+
+nats:
+  host: 127.0.0.1
+  port: 4222

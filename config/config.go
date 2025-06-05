@@ -1,6 +1,7 @@
 package config
 
 import (
+	natsadapter "github.com/abolfazlnorzad/steve/adapter/nats"
 	redisadapter "github.com/abolfazlnorzad/steve/adapter/redis"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
@@ -15,4 +16,5 @@ type Config struct {
 	Auth       authservice.Config       `koanf:"auth"`
 	BackOffice backofficeservice.Config `koanf:"backoffice"`
 	Redis      redisadapter.Config      `koanf:"redis"`
+	Nats       natsadapter.Config       `koanf:"nats"`
 }
