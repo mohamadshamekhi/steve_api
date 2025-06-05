@@ -11,7 +11,6 @@ import (
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"github.com/nats-io/nats.go"
 	"google.golang.org/protobuf/proto"
-
 	"math/rand/v2"
 	"time"
 )
@@ -52,27 +51,34 @@ func (s Service) GenerateOTPCode(ctx context.Context, phoneNumber string, prefix
 		if sErr != nil {
 			return richerror.New(op).WithWarpError(sErr)
 		}
-		event := &auth.SendOTPCode{Code: code, PhoneNumber: phoneNumber}
-		payload, mErr := proto.Marshal(event)
-		if mErr != nil {
-			return richerror.New(op).WithWarpError(mErr).WithKind(richerror.KindUnexpected).WithMessage(errmsg.ErrorMsgSomethingWentWrong)
-		}
-		// todo - remove this code and transfer to package that init all stream or use Terraform or k8s opt
-		_, aErr := s.nats.NatsJS().AddStream(&nats.StreamConfig{
-			Name:     "notification",
-			MaxAge:   1 * 24 * time.Hour,
-			Subjects: []string{"notification.*"},
-		})
-		if aErr != nil {
-			return richerror.New(op).WithWarpError(aErr).WithKind(richerror.KindUnexpected).WithMessage(errmsg.ErrorMsgSomethingWentWrong)
-		}
-		ack, pErr := s.nats.NatsJS().Publish(constant.SendOTPSubject, payload)
-		if pErr != nil {
-			fmt.Println("pErr", pErr)
-			return richerror.New(op).WithWarpError(pErr).WithKind(richerror.KindUnexpected).WithMessage(errmsg.ErrorMsgSomethingWentWrong)
-		}
-		logger.L().Info("message published successfully, ack.Stream , ack.Sequence", ack.Stream, ack.Sequence)
+		return s.publishMessageToNats(phoneNumber, code)
 	}
 
+	return nil
+}
+
+func (s Service) publishMessageToNats(phoneNumber string, code string) error {
+	const op = "authservice.GenerateOTPCode"
+
+	event := &auth.SendOTPCode{Code: code, PhoneNumber: phoneNumber}
+	payload, mErr := proto.Marshal(event)
+	if mErr != nil {
+		return richerror.New(op).WithWarpError(mErr).WithKind(richerror.KindUnexpected).WithMessage(errmsg.ErrorMsgSomethingWentWrong)
+	}
+	// todo - remove this code and transfer to package that init all stream or use Terraform or k8s opt
+	_, aErr := s.nats.NatsJS().AddStream(&nats.StreamConfig{
+		Name:     "notification",
+		MaxAge:   1 * 24 * time.Hour,
+		Subjects: []string{"notification.*"},
+	})
+	if aErr != nil {
+		return richerror.New(op).WithWarpError(aErr).WithKind(richerror.KindUnexpected).WithMessage(errmsg.ErrorMsgSomethingWentWrong)
+	}
+	ack, pErr := s.nats.NatsJS().Publish(constant.SendOTPSubject, payload)
+	if pErr != nil {
+		return richerror.New(op).WithWarpError(pErr).WithKind(richerror.KindUnexpected).WithMessage(errmsg.ErrorMsgSomethingWentWrong)
+	}
+	// todo - if necessary, we can store this published message into db.
+	logger.L().Info("message published successfully, ack.Stream , ack.Sequence", ack.Stream, ack.Sequence)
 	return nil
 }

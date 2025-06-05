@@ -1,6 +1,7 @@
 package natsadapter
 
 import (
+	"fmt"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/nats-io/nats.go"
 	"time"
@@ -18,7 +19,7 @@ type Adapter struct {
 
 func New(cfg Config) *Adapter {
 
-	nc, err := nats.Connect(nats.DefaultURL,
+	nc, err := nats.Connect(fmt.Sprintf("nats://%s:%d", cfg.Host, cfg.Port),
 		nats.RetryOnFailedConnect(true),
 		nats.MaxReconnects(10),
 		nats.ReconnectWait(time.Second*5),

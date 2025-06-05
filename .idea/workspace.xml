@@ -5,14 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c98442ad-2551-41db-bcc2-0ebd3f1a460d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/cmd/backoffice.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/cmd/notification.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pkg/constant/const.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/d954981d-5cce-45c5-a4a9-3643670ea68b.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/d954981d-5cce-45c5-a4a9-3643670ea68b.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/adapter/nats/adapter.go" beforeDir="false" afterPath="$PROJECT_DIR$/adapter/nats/adapter.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/notification.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/notification.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/config.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/service/auth/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/auth/service.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
