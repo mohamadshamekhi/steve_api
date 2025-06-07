@@ -6,8 +6,8 @@ import (
 
 type Claims struct {
 	jwt.RegisteredClaims
-	PhoneNumber string `json:"phone_number"`
-	Kind        string `json:"kind"`
+	EntityID string `json:"entity_id"`
+	Kind     string `json:"kind"`
 }
 
 func (c Claims) Valid() error {

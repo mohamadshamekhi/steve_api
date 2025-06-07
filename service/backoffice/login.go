@@ -29,9 +29,17 @@ func (s Service) VerifyOTPCode(ctx context.Context, req backofficeauthparam.Veri
 		return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op)
 	}
 	if resp {
-		token, gErr := s.authSvc.GenerateToken(req.PhoneNumber)
+		backofficeID, iErr := s.repo.GetBackOfficeUserIDByPhoneNumber(ctx, req.PhoneNumber)
+		if iErr != nil {
+			return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(iErr)
+		}
+		token, gErr := s.authSvc.GenerateAccessToken(backofficeID, s.config.Prefix)
+		if gErr != nil {
+			return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(gErr).
+				WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
+		}
 		return backofficeauthparam.VerifyLoginCodeResponse{
-			Token:   "",
+			Token:   token,
 			Message: "you are logged in!",
 		}, nil
 	}
