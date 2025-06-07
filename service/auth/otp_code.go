@@ -64,8 +64,8 @@ func (s Service) VerifyOTPCode(ctx context.Context, phoneNumber string, code str
 	key := fmt.Sprintf("%s:%s", prefix, phoneNumber)
 	activeCode, gErr := s.repo.GetUserActiveCode(ctx, key)
 	if gErr != nil {
-		return false, richerror.New(op).WithWarpError(gErr).WithKind(richerror.KindUnexpected).
-			WithMessage(errmsg.ErrorMsgSomethingWentWrong)
+		return false, richerror.New(op).WithKind(richerror.KindForbidden).
+			WithMessage(errmsg.ErrorOTPCodeIsNotCorrect)
 	}
 	if activeCode != code {
 		return false, nil

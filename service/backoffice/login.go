@@ -26,7 +26,7 @@ func (s Service) VerifyOTPCode(ctx context.Context, req backofficeauthparam.Veri
 
 	resp, err := s.authSvc.VerifyOTPCode(ctx, req.PhoneNumber, req.Code, s.config.Prefix)
 	if err != nil {
-		return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op)
+		return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	if resp {
 		backofficeID, iErr := s.repo.GetBackOfficeUserIDByPhoneNumber(ctx, req.PhoneNumber)

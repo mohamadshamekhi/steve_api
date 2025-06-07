@@ -54,3 +54,32 @@ func (v Validator) isBackOfficeUserIsExist(value any) error {
 
 	return nil
 }
+
+func (v Validator) ValidateVerifyOTPCodeRequest(req backofficeauthparam.VerifyLoginCodeRequest) (map[string]string, error) {
+	const op = "backofficevalidatorauth.ValidateVerifyOTPCodeRequest"
+	if err := validation.ValidateStruct(&req,
+		validation.Field(&req.Code, validation.Required),
+		validation.Field(&req.PhoneNumber,
+			validation.Required,
+			validation.Match(regexp.MustCompile(phoneNumberRegex)).Error(errmsg.ErrorMsgPhoneNumberIsNotValid),
+			validation.By(v.isBackOfficeUserIsExist))); err != nil {
+		fieldErrors := make(map[string]string)
+
+		vErr := validation.Errors{}
+		if errors.As(err, &vErr) {
+			for key, value := range vErr {
+
+				if value != nil {
+					fieldErrors[key] = value.Error()
+				}
+			}
+		}
+
+		return fieldErrors, richerror.New(op).WithMessage(errmsg.ErrorMsgInvalidInput).
+			WithKind(richerror.KindInvalid).
+			WithMeta(map[string]interface{}{"req": req}).WithWarpError(err)
+	}
+
+	//nolint
+	return nil, nil
+}

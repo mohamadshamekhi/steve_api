@@ -2,9 +2,11 @@ package redisotp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	"github.com/redis/go-redis/v9"
 	"time"
 )
 
@@ -27,6 +29,9 @@ func (d DB) GetUserActiveCode(ctx context.Context, key string) (string, error) {
 	const op = "redisotp.GetUserActiveCode"
 	res, err := d.adapter.Client().Get(ctx, key).Result()
 	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return "", richerror.New(op).WithWarpError(err).WithKind(richerror.KindNotFound).WithMessage(errmsg.ErrorMsgNotFound)
+		}
 		return "", richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).
 			WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithMeta(map[string]any{"key": key})
 	}

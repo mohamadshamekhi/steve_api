@@ -14,7 +14,8 @@ backoffice:
 
 
 auth:
-  expiration_time_opt_code: 2m
+  expiration_time_opt_code: 5m
+  sign_key: test
 
 nats:
   host: 127.0.0.1
