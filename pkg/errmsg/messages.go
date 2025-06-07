@@ -13,7 +13,7 @@ const (
 	ErrorMsgOtpCodeExist                 = "please wait a little bit"
 	ErrorMsgOtpCodeIsNotValid            = "verification code is not valid"
 	ErrorMsgCantScanQueryResult          = "can't scan query result"
-	ErrorMsgPhoneNumberOrPassIsIncorrect = "phone number or password is incorrect"
+	ErrorMsgPhoneNumberOrPassIsIncorrect = "phone number is incorrect"
 	ErrorMsgAcceptKindBoxReqStatus       = "only pending requests will have the ability to be confirmed"
 	ErrorMsgRejectKindBoxReqStatus       = "only pending requests will have the ability to be rejected"
 	ErrorFileSize                        = "the file size should be less than 200 megabytes"

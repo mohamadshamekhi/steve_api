@@ -23,6 +23,7 @@ func (v Validator) ValidateLoginWithPhoneNumberRequest(req backofficeauthparam.S
 		vErr := validation.Errors{}
 		if errors.As(err, &vErr) {
 			for key, value := range vErr {
+
 				if value != nil {
 					fieldErrors[key] = value.Error()
 				}
