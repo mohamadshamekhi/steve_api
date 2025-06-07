@@ -6,7 +6,7 @@ import (
 
 type Claims struct {
 	jwt.RegisteredClaims
-	PhoneNumber uint   `json:"phone_number"`
+	PhoneNumber string `json:"phone_number"`
 	Kind        string `json:"kind"`
 }
 
