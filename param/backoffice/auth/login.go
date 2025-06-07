@@ -1,18 +1,18 @@
 package backofficeauthparam
 
 type SendLoginCodeRequest struct {
-	PhoneNumber string
+	PhoneNumber string `json:"phone_number"`
 }
 type SendLoginCodeResponse struct {
-	Message string
+	Message string `json:"message"`
 }
 
 type VerifyLoginCodeRequest struct {
-	Code        string
-	PhoneNumber string
+	Code        string `json:"code"`
+	PhoneNumber string `json:"phone_number"`
 }
 
 type VerifyLoginCodeResponse struct {
-	Token   string
-	Message string
+	Token   string `json:"token"`
+	Message string `json:"message"`
 }
