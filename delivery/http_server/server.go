@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/abolfazlnorzad/steve/config"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
+	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"net/http"
@@ -24,7 +25,6 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler)
 }
 
 func (s Server) Serve() {
-	// todo -please fix cors policy configuration.
 	s.Router.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderAuthorization, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAccessControlAllowOrigin, echo.HeaderAccessControlAllowMethods},
@@ -32,7 +32,41 @@ func (s Server) Serve() {
 	}))
 	s.Router.Use(middleware.RequestID())
 
-	s.Router.Use(middleware.Logger())
+	s.Router.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogURI:           true,
+		LogStatus:        true,
+		LogHost:          true,
+		LogRemoteIP:      true,
+		LogRequestID:     true,
+		LogMethod:        true,
+		LogContentLength: true,
+		LogResponseSize:  true,
+		LogLatency:       true,
+		LogError:         true,
+		LogProtocol:      true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			errMsg := ""
+			if v.Error != nil {
+				errMsg = v.Error.Error()
+			}
+
+			logger.L().Info("request",
+				"request_id", v.RequestID,
+				"host", v.Host,
+				"content_length", v.ContentLength,
+				"protocol", v.Protocol,
+				"method", v.Method,
+				"latency", v.Latency,
+				"error", errMsg,
+				"remote_ip", v.RemoteIP,
+				"response_size", v.ResponseSize,
+				"uri", v.URI,
+				"status", v.Status,
+			)
+
+			return nil
+		},
+	}))
 
 	s.Router.Use(middleware.Recover())
 
