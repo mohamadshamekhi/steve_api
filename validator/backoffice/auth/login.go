@@ -17,7 +17,7 @@ func (v Validator) ValidateLoginWithPhoneNumberRequest(req backofficeauthparam.S
 		validation.Field(&req.PhoneNumber,
 			validation.Required,
 			validation.Match(regexp.MustCompile(phoneNumberRegex)).Error(errmsg.ErrorMsgPhoneNumberIsNotValid),
-			validation.By(v.IsBackOfficeUserIsExist))); err != nil {
+			validation.By(v.isBackOfficeUserIsExist))); err != nil {
 		fieldErrors := make(map[string]string)
 
 		vErr := validation.Errors{}
@@ -38,7 +38,7 @@ func (v Validator) ValidateLoginWithPhoneNumberRequest(req backofficeauthparam.S
 	return nil, nil
 }
 
-func (v Validator) IsBackOfficeUserIsExist(value any) error {
+func (v Validator) isBackOfficeUserIsExist(value any) error {
 	phoneNumber, ok := value.(string)
 	if !ok {
 		return fmt.Errorf(errmsg.ErrorMsgSomethingWentWrong)
