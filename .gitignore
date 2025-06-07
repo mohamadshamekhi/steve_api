@@ -226,3 +226,4 @@ Temporary Items
 *.icloud
 /logs
 # End of https://www.toptal.com/developers/gitignore/api/macos,goland,jetbrains
+./cmd/example.go

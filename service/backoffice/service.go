@@ -17,9 +17,10 @@ type Service struct {
 	repo    Repository
 }
 
-func New(cfg Config, authSvc authservice.Service) Service {
+func New(cfg Config, authSvc authservice.Service, repo Repository) Service {
 	return Service{
 		config:  cfg,
 		authSvc: authSvc,
+		repo:    repo,
 	}
 }
