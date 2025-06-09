@@ -1,12 +1,11 @@
 package entity
 
 type BackOffice struct {
-	ID           int64
-	Name         string
-	PhoneNumber  string
-	Email        string
-	NationalCode string
-	Address      string
-	ZipCode      string
-	AvatarID     int64
+	ID           string `bson:"_id"`
+	Name         string `bson:"name"`
+	PhoneNumber  string `bson:"phone_number"`
+	NationalCode string `bson:"national_code"`
+	Address      string `bson:"address"`
+	ZipCode      string `bson:"zip_code"`
+	AvatarID     int64  `bson:"avatar_id"`
 }

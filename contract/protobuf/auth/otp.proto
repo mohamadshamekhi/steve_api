@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package auth;
+option go_package = "contract/goproto/auth";
+
+
+message SendOTPCode {
+  string phone_number = 1;
+  string code = 2;
+}
