@@ -15,7 +15,7 @@ func (d DB) GetBackOfficeUserIDByPhoneNumber(ctx context.Context, phoneNumber st
 	var backOffice entity.BackOffice
 	if dErr := d.collection.FindOne(ctx, filter).Decode(&backOffice); dErr != nil {
 		fmt.Println("dErr", dErr)
-		return "", richerror.New(op).WithWarpError(dErr).WithMessage(errmsg.ErrorMsgSomethingWentWrong).
+		return "", richerror.New(op).WithWarpError(dErr).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).
 			WithKind(richerror.KindUnexpected)
 	}
 	return backOffice.ID, nil

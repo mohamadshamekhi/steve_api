@@ -18,7 +18,7 @@ func (d DB) IsBackOfficeUserIsExistByPhoneNumber(ctx context.Context, phoneNumbe
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return false, nil
 		}
-		return false, richerror.New(op).WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected).
+		return false, richerror.New(op).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected).
 			WithMeta(map[string]any{"phoneNumber": phoneNumber})
 	}
 	if backOfficeUser.ID == "" {

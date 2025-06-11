@@ -1,6 +1,9 @@
 package richerror
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type Kind int
 
@@ -9,91 +12,106 @@ const (
 	KindForbidden
 	KindNotFound
 	KindUnexpected
+	KindBadRequest
 )
 
 type RichError struct {
-	operation string
-	warpError error
-	message   string
-	kind      Kind
-	meta      map[string]any
+	operation    string
+	wrappedError error
+	messageKey   string
+	templateData map[string]any
+	kind         Kind
+	meta         map[string]any
 }
 
-func New(operation string) RichError {
-	return RichError{operation: operation}
+func New(op string) *RichError {
+	return &RichError{operation: op}
 }
 
-func (r RichError) WithWarpError(err error) RichError {
-	r.warpError = err
-
+func (r *RichError) WithWarpError(err error) *RichError {
+	r.wrappedError = err
 	return r
 }
 
-func (r RichError) WithMessage(message string) RichError {
-	r.message = message
-
+func (r *RichError) WithMessageKey(key string) *RichError {
+	r.messageKey = key
 	return r
 }
 
-func (r RichError) WithKind(kind Kind) RichError {
+func (r *RichError) WithKind(kind Kind) *RichError {
 	r.kind = kind
-
 	return r
 }
 
-func (r RichError) WithMeta(meta map[string]any) RichError {
+func (r *RichError) WithMeta(meta map[string]any) *RichError {
 	r.meta = meta
-
 	return r
 }
 
-func (r RichError) Kind() Kind {
+func (r *RichError) WithTemplateData(data map[string]any) *RichError {
+	r.templateData = data
+	return r
+}
+
+func (r *RichError) Kind() Kind {
 	if r.kind != 0 {
 		return r.kind
 	}
 
-	var re RichError
-
-	ok := errors.As(r.warpError, &re)
-	if !ok {
-		return 0
+	var re *RichError
+	if errors.As(r.wrappedError, &re) {
+		return re.Kind()
 	}
 
-	return re.Kind()
+	return 0
 }
 
-func (r RichError) Message() string {
-	if r.message != "" {
-		return r.message
+func (r *RichError) Error() string {
+	var wrappedErrMsg string
+	if r.wrappedError != nil {
+		wrappedErrMsg = r.wrappedError.Error()
 	}
-
-	if r.warpError == nil {
-		return ""
-	}
-
-	var re RichError
-
-	ok := errors.As(r.warpError, &re)
-	if !ok {
-		return r.warpError.Error()
-	}
-
-	return re.Message()
+	return fmt.Sprintf("op: %s, kind: %d, key: %s, err: [%s]",
+		r.operation, r.Kind(), r.messageKey, wrappedErrMsg)
 }
 
-func (r RichError) Error() string {
-	if r.message != "" {
-		return r.message
-	}
+func (r *RichError) Unwrap() error {
+	return r.wrappedError
+}
 
-	if r.warpError == nil {
-		return ""
-	}
+func (r *RichError) GetMessageKey() string {
+	return r.messageKey
+}
 
-	var re RichError
-	if errors.As(r.warpError, &re) {
-		return re.Error()
-	}
+func (r *RichError) GetTemplateData() map[string]any {
+	return r.templateData
+}
 
-	return r.warpError.Error()
+func (r *RichError) GetMeta() map[string]any {
+	return r.meta
+}
+func (r *RichError) GetOp() string {
+	return r.operation
+}
+
+func (r *RichError) MessageKey() string {
+	if r.messageKey != "" {
+		return r.messageKey
+	}
+	var re *RichError
+	if errors.As(r.wrappedError, &re) {
+		return re.MessageKey()
+	}
+	return ""
+}
+
+func (r *RichError) TemplateData() map[string]any {
+	if r.templateData != nil {
+		return r.templateData
+	}
+	var re *RichError
+	if errors.As(r.wrappedError, &re) {
+		return re.TemplateData()
+	}
+	return nil
 }

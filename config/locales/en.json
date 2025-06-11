@@ -1,0 +1,18 @@
+[
+  {
+    "id": "global.something_wrong",
+    "translation": "An unexpected error occurred. Please try again later."
+  },
+  {
+    "id": "global.invalid_input",
+    "translation": "The provided input data is invalid."
+  },
+  {
+    "id": "auth.login_successful",
+    "translation": "You have logged in successfully."
+  },
+  {
+    "id": "auth.invalid_otp",
+    "translation": "The OTP code '{{.Code}}' is not valid."
+  }
+]

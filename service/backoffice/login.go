@@ -26,7 +26,7 @@ func (s Service) VerifyOTPCode(ctx context.Context, req backofficeauthparam.Veri
 
 	resp, err := s.authSvc.VerifyOTPCode(ctx, req.PhoneNumber, req.Code, s.config.Prefix)
 	if err != nil {
-		return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(err)
+		return backofficeauthparam.VerifyLoginCodeResponse{}, err
 	}
 	if resp {
 		backofficeID, iErr := s.repo.GetBackOfficeUserIDByPhoneNumber(ctx, req.PhoneNumber)
@@ -35,8 +35,7 @@ func (s Service) VerifyOTPCode(ctx context.Context, req backofficeauthparam.Veri
 		}
 		token, gErr := s.authSvc.GenerateAccessToken(backofficeID, s.config.Prefix)
 		if gErr != nil {
-			return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(gErr).
-				WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
+			return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(gErr)
 		}
 		return backofficeauthparam.VerifyLoginCodeResponse{
 			Token:   token,
@@ -44,5 +43,5 @@ func (s Service) VerifyOTPCode(ctx context.Context, req backofficeauthparam.Veri
 		}, nil
 	}
 	return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithKind(richerror.KindForbidden).
-		WithMessage(errmsg.ErrorOTPCodeIsNotCorrect)
+		WithMessageKey(errmsg.ErrorOTPCodeIsNotCorrect)
 }
