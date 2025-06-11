@@ -32,7 +32,7 @@ func parseError(err error, translator *i18n.Translator, lang string) (response.A
 		mainMessage := translator.Translate(lang, richErr.MessageKey(), richErr.TemplateData())
 
 		if fieldErrorKeys, ok := richErr.GetMeta()["fields"].(map[string]string); ok {
-			translatedErrors := make(map[string]string)
+			translatedFieldErrors := make(map[string]string)
 
 			for field, key := range fieldErrorKeys {
 				attributeKey := "attr." + field
@@ -43,29 +43,30 @@ func parseError(err error, translator *i18n.Translator, lang string) (response.A
 				}
 				finalMessage := translator.Translate(lang, key, templateData)
 
-				translatedErrors[field] = finalMessage
+				translatedFieldErrors[field] = finalMessage
 			}
 
-			return response.APIResponse{Message: mainMessage, Errors: translatedErrors}, code
+			return response.NewErrorResponse(mainMessage, translatedFieldErrors), code
 		}
 
 		if code >= http.StatusInternalServerError {
-			msg := translator.Translate(lang, "global.something_wrong", nil)
-			return response.APIResponse{Message: msg}, code
+			mainMessage = translator.Translate(lang, "global.something_wrong", nil)
+			return response.NewErrorResponse(mainMessage, nil), code
 		}
 
-		msg := translator.Translate(lang, richErr.MessageKey(), richErr.TemplateData())
-		return response.APIResponse{Message: msg}, code
+		return response.NewErrorResponse(mainMessage, nil), code
 	}
 
 	var echoErr *echo.HTTPError
 	if errors.As(err, &echoErr) {
-		return response.APIResponse{Message: "درخواست شما با خطا مواجه شد."}, echoErr.Code
+		msg := translator.Translate(lang, "global.something_wrong", nil)
+		return response.NewErrorResponse(msg, nil), echoErr.Code
 	}
 
 	msg := translator.Translate(lang, "global.something_wrong", nil)
-	return response.APIResponse{Message: msg}, http.StatusInternalServerError
+	return response.NewErrorResponse(msg, nil), http.StatusInternalServerError
 }
+
 func mapKindToHTTPStatusCode(kind richerror.Kind) int {
 	switch kind {
 	case richerror.KindForbidden:
