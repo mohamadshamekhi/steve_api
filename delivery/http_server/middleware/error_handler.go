@@ -77,6 +77,8 @@ func mapKindToHTTPStatusCode(kind richerror.Kind) int {
 		return http.StatusNotFound
 	case richerror.KindInvalid:
 		return http.StatusBadRequest
+	case richerror.KindUnauthorized:
+		return http.StatusUnauthorized
 
 	default:
 		return http.StatusInternalServerError

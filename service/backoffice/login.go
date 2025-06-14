@@ -3,7 +3,6 @@ package backofficeservice
 import (
 	"context"
 	backofficeauthparam "github.com/abolfazlnorzad/steve/param/backoffice/auth"
-	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 )
 
@@ -16,9 +15,7 @@ func (s Service) SendOTPCode(ctx context.Context, req backofficeauthparam.SendLo
 	}
 
 	// return resp.
-	return backofficeauthparam.SendLoginCodeResponse{
-		Message: "sms is send",
-	}, nil
+	return backofficeauthparam.SendLoginCodeResponse{}, nil
 }
 
 func (s Service) VerifyOTPCode(ctx context.Context, req backofficeauthparam.VerifyLoginCodeRequest) (backofficeauthparam.VerifyLoginCodeResponse, error) {
@@ -38,10 +35,9 @@ func (s Service) VerifyOTPCode(ctx context.Context, req backofficeauthparam.Veri
 			return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(gErr)
 		}
 		return backofficeauthparam.VerifyLoginCodeResponse{
-			Token:   token,
-			Message: "you are logged in!",
+			Token: token,
 		}, nil
 	}
-	return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithKind(richerror.KindForbidden).
-		WithMessageKey(errmsg.ErrorOTPCodeIsNotCorrect)
+	return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithKind(richerror.KindUnauthorized).
+		WithMessageKey("validation.incorrect_opt_code")
 }

@@ -25,5 +25,5 @@ func getLanguageFromHeader(header http.Header) string {
 	if header.Get("Accept-Language") == "en" {
 		return "en"
 	}
-	return "fa" // زبان پیش‌فرض
+	return "fa"
 }

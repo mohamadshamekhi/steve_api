@@ -30,7 +30,7 @@ func (d DB) GetUserActiveCode(ctx context.Context, key string) (string, error) {
 	res, err := d.adapter.Client().Get(ctx, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return "", richerror.New(op).WithWarpError(err).WithKind(richerror.KindBadRequest).WithMessageKey("validation.incorrect_opt_code")
+			return "", richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnauthorized).WithMessageKey("validation.incorrect_opt_code")
 		}
 		return "", richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).
 			WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithMeta(map[string]any{"key": key})
