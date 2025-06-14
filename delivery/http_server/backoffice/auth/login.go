@@ -1,6 +1,7 @@
 package backofficeauthhandler
 
 import (
+	"github.com/abolfazlnorzad/steve/delivery/http_server/response"
 	backofficeauthparam "github.com/abolfazlnorzad/steve/param/backoffice/auth"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"github.com/labstack/echo/v4"
@@ -24,7 +25,13 @@ func (h Handler) LoginByPhoneNumber(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	lang := getLanguageFromHeader(c.Request().Header)
+
+	successMessage := h.translator.Translate(lang, "auth.otp_send", nil)
+
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
 }
 
 func (h Handler) VerifyOTPCode(c echo.Context) error {
@@ -43,6 +50,12 @@ func (h Handler) VerifyOTPCode(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+	lang := getLanguageFromHeader(c.Request().Header)
 
-	return c.JSON(http.StatusOK, resp)
+	successMessage := h.translator.Translate(lang, "auth.login_successful", nil)
+
+	// ✅ استفاده از Helper برای ساخت پاسخ موفقیت
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
 }
