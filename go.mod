@@ -12,8 +12,10 @@ require (
 	github.com/knadh/koanf/v2 v2.2.0
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/nats-io/nats.go v1.43.0
+	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/redis/go-redis/v9 v9.9.0
 	go.mongodb.org/mongo-driver v1.17.4
+	golang.org/x/text v0.25.0
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
@@ -45,7 +47,6 @@ require (
 	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

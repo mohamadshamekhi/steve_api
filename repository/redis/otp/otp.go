@@ -16,7 +16,7 @@ func (d DB) CheckUserHasActiveCode(ctx context.Context, key string) (bool, error
 	fmt.Println(err)
 	if err != nil {
 		return false, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).
-			WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithMeta(map[string]any{"key": key})
+			WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithMeta(map[string]any{"key": key})
 	}
 
 	if isExist == 0 {
@@ -30,10 +30,10 @@ func (d DB) GetUserActiveCode(ctx context.Context, key string) (string, error) {
 	res, err := d.adapter.Client().Get(ctx, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return "", richerror.New(op).WithWarpError(err).WithKind(richerror.KindNotFound).WithMessage(errmsg.ErrorMsgNotFound)
+			return "", richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnauthorized).WithMessageKey("validation.incorrect_opt_code")
 		}
 		return "", richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).
-			WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithMeta(map[string]any{"key": key})
+			WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithMeta(map[string]any{"key": key})
 	}
 	return res, nil
 }
@@ -44,7 +44,7 @@ func (d DB) StoreNewActiveCodeForUser(ctx context.Context, key string, code stri
 	err := d.adapter.Client().Set(ctx, key, code, expireTime).Err()
 	if err != nil {
 		return richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).
-			WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithMeta(map[string]any{"key": key, "code": code})
+			WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithMeta(map[string]any{"key": key, "code": code})
 	}
 	return nil
 }

@@ -20,12 +20,12 @@ func (s Service) generateToken(id string, subject string, kind string, expireDur
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(s.cfg.SignKey))
 	if err != nil {
-		return "", richerror.New(op).WithWarpError(err).WithMessage(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
+		return "", richerror.New(op).WithWarpError(err).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
 	}
 
 	return tokenString, nil
 }
 
 func (s Service) GenerateAccessToken(id string, kind string) (string, error) {
-	return s.generateToken(id ,s.cfg.AccessSubject ,kind , s.cfg.AccessExpirationTime)
+	return s.generateToken(id, s.cfg.AccessSubject, kind, s.cfg.AccessExpirationTime)
 }

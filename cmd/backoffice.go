@@ -6,6 +6,7 @@ import (
 	"github.com/abolfazlnorzad/steve/config"
 	httpserver "github.com/abolfazlnorzad/steve/delivery/http_server"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
+	"github.com/abolfazlnorzad/steve/pkg/i18n"
 	mongodb "github.com/abolfazlnorzad/steve/repository/mongo"
 	mongodbbackoffice "github.com/abolfazlnorzad/steve/repository/mongo/backoffice"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
@@ -26,7 +27,10 @@ func main() {
 	backOfficeMongoRepo := mongodbbackoffice.New(mongoRepo)
 	backOfficeSvc := backofficeservice.New(cfg.BackOffice, authSvc, backOfficeMongoRepo)
 	backOfficeVld := backofficevalidatorauth.New(backOfficeMongoRepo)
-	backOfficeHandler := backofficeauthhandler.New(backOfficeSvc, backOfficeVld)
+
+	translator, _ := i18n.New("config/locales", "fa")
+
+	backOfficeHandler := backofficeauthhandler.New(backOfficeSvc, backOfficeVld, translator)
 	server := httpserver.New(cfg, backOfficeHandler)
 	server.Serve()
 }

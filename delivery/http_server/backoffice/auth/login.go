@@ -1,54 +1,61 @@
 package backofficeauthhandler
 
 import (
+	"github.com/abolfazlnorzad/steve/delivery/http_server/response"
 	backofficeauthparam "github.com/abolfazlnorzad/steve/param/backoffice/auth"
-	"github.com/abolfazlnorzad/steve/pkg/errmsg"
-	httpmsg "github.com/abolfazlnorzad/steve/pkg/http_msg"
+	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
 
 func (h Handler) LoginByPhoneNumber(c echo.Context) error {
+	const op = "backofficeauthhandler.LoginByPhoneNumber"
 	var req backofficeauthparam.SendLoginCodeRequest
 	if bErr := c.Bind(&req); bErr != nil {
-		return c.JSON(http.StatusBadRequest, errmsg.ErrorMsgInvalidInput)
+		return richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("global.invalid_input").
+			WithWarpError(bErr)
 	}
-
-	if fieldErrors, err := h.vld.ValidateLoginWithPhoneNumberRequest(req); err != nil {
-		msg, code := httpmsg.Error(err)
-
-		return c.JSON(code, echo.Map{
-			"message": msg,
-			"errors":  fieldErrors,
-		})
+	if err := h.vld.ValidateLoginWithPhoneNumberRequest(req); err != nil {
+		return err
 	}
 	resp, err := h.svc.SendOTPCode(c.Request().Context(), req)
 	if err != nil {
-		msg, code := httpmsg.Error(err)
-		return c.JSON(code, map[string]string{"message": msg})
+		return err
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	lang := getLanguageFromHeader(c.Request().Header)
+
+	successMessage := h.translator.Translate(lang, "auth.otp_send", nil)
+
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
 }
 
 func (h Handler) VerifyOTPCode(c echo.Context) error {
+	const op = "backofficeauthhandler.VerifyOTPCode"
 	var req backofficeauthparam.VerifyLoginCodeRequest
 	if bErr := c.Bind(&req); bErr != nil {
-		return c.JSON(http.StatusBadRequest, errmsg.ErrorMsgInvalidInput)
+		return richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("global.invalid_input").
+			WithWarpError(bErr)
 	}
-	if fieldErrors, err := h.vld.ValidateVerifyOTPCodeRequest(req); err != nil {
-		msg, code := httpmsg.Error(err)
-
-		return c.JSON(code, echo.Map{
-			"message": msg,
-			"errors":  fieldErrors,
-		})
+	if err := h.vld.ValidateVerifyOTPCodeRequest(req); err != nil {
+		return err
 	}
 	resp, err := h.svc.VerifyOTPCode(c.Request().Context(), req)
 	if err != nil {
-		msg, code := httpmsg.Error(err)
-		return c.JSON(code, map[string]string{"message": msg})
+		return err
 	}
+	lang := getLanguageFromHeader(c.Request().Header)
 
-	return c.JSON(http.StatusOK, resp)
+	successMessage := h.translator.Translate(lang, "auth.login_successful", nil)
+
+	// ✅ استفاده از Helper برای ساخت پاسخ موفقیت
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
 }

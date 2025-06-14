@@ -4,7 +4,6 @@ type SendLoginCodeRequest struct {
 	PhoneNumber string `json:"phone_number"`
 }
 type SendLoginCodeResponse struct {
-	Message string `json:"message"`
 }
 
 type VerifyLoginCodeRequest struct {
@@ -13,6 +12,5 @@ type VerifyLoginCodeRequest struct {
 }
 
 type VerifyLoginCodeResponse struct {
-	Token   string `json:"token"`
-	Message string `json:"message"`
+	Token string `json:"token"`
 }

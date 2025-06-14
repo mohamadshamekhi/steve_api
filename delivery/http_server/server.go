@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/abolfazlnorzad/steve/config"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
+	middleware2 "github.com/abolfazlnorzad/steve/delivery/http_server/middleware"
+	"github.com/abolfazlnorzad/steve/pkg/i18n"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -30,6 +32,11 @@ func (s Server) Serve() {
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderAuthorization, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAccessControlAllowOrigin, echo.HeaderAccessControlAllowMethods},
 		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete, http.MethodOptions},
 	}))
+
+	translator, _ := i18n.New("config/locales", "fa")
+
+	s.Router.HTTPErrorHandler = middleware2.NewCentralErrorHandler(translator)
+
 	s.Router.Use(middleware.RequestID())
 
 	s.Router.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
@@ -45,19 +52,21 @@ func (s Server) Serve() {
 		LogError:         true,
 		LogProtocol:      true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			logger.L().Info("request",
-				"request_id", v.RequestID,
-				"host", v.Host,
-				"content_length", v.ContentLength,
-				"protocol", v.Protocol,
-				"method", v.Method,
-				"latency", v.Latency,
-				"error", v.Error,
-				"remote_ip", v.RemoteIP,
-				"response_size", v.ResponseSize,
-				"uri", v.URI,
-				"status", v.Status,
-			)
+			if v.Error == nil {
+				logger.L().Info("request",
+					"request_id", v.RequestID,
+					"host", v.Host,
+					"content_length", v.ContentLength,
+					"protocol", v.Protocol,
+					"method", v.Method,
+					"latency", v.Latency,
+					"error", v.Error,
+					"remote_ip", v.RemoteIP,
+					"response_size", v.ResponseSize,
+					"uri", v.URI,
+					"status", v.Status,
+				)
+			}
 
 			return nil
 		},

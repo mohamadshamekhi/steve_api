@@ -1,0 +1,181 @@
+[
+  {
+    "id": "global.something_wrong",
+    "translation": "خطایی غیرمنتظره رخ داده است. لطفاً بعداً تلاش کنید."
+  },
+  {
+    "id": "global.validation_failed",
+    "translation": "اطلاعات وارد شده نامعتبر است."
+  },
+  {
+    "id": "global.action_successful",
+    "translation": "عملیات با موفقیت انجام شد."
+  },
+
+
+  {
+    "id": "validation.required",
+    "translation": "{{.Attribute}} الزامی است."
+  },
+  {
+    "id": "validation.invalid_format",
+    "translation": "فرمت {{.Attribute}} نامعتبر است."
+  },
+  {
+    "id": "validation.min_length",
+    "translation": "{{.Attribute}} باید حداقل {{.Count}} کاراکتر باشد."
+  },
+  {
+    "id": "validation.phone_number_invalid",
+    "translation": "فرمت تلفن همراه نامعتبر است"
+  },
+  {
+    "id": "validation.incorrect_opt_code",
+    "translation": "کد وارد شده نامعتبر است."
+  },
+
+
+  {
+    "id": "attr.phone_number",
+    "translation": "شماره تلفن"
+  },
+  {
+    "id": "attr.Password",
+    "translation": "رمز عبور"
+  },
+  {
+    "id": "attr.FirstName",
+    "translation": "نام"
+  },
+  {
+    "id": "attr.LastName",
+    "translation": "نام خانوادگی"
+  },
+  {
+    "id": "attr.Email",
+    "translation": "ایمیل"
+  },
+  {
+    "id": "attr.ProductName",
+    "translation": "نام محصول"
+  },
+  {
+    "id": "attr.Price",
+    "translation": "قیمت"
+  },
+  {
+    "id": "attr.Stock",
+    "translation": "موجودی انبار"
+  },
+  {
+    "id": "attr.Address",
+    "translation": "آدرس"
+  },
+  {
+    "id": "attr.code",
+    "translation": "کد"
+  },
+
+
+  {
+    "id": "auth.login_successful",
+    "translation": "شما با موفقیت وارد شدید."
+  },
+  {
+    "id": "auth.logout_successful",
+    "translation": "شما با موفقیت خارج شدید."
+  },
+  {
+    "id": "auth.registration_successful",
+    "translation": "ثبت‌نام شما با موفقیت انجام شد. کد تایید برایتان ارسال گردید."
+  },
+  {
+    "id": "auth.otp_send",
+    "translation": " کد تایید برایتان ارسال گردید."
+  },
+  {
+    "id": "auth.invalid_credentials",
+    "translation": "شماره تلفن یا رمز عبور نامعتبر است."
+  },
+  {
+    "id": "auth.user_not_found",
+    "translation": "کاربری با این مشخصات یافت نشد."
+  },
+  {
+    "id": "auth.invalid_otp",
+    "translation": "کد تایید «{{.Code}}» نامعتبر است."
+  },
+  {
+    "id": "auth.forbidden_access",
+    "translation": "شما اجازه دسترسی به این بخش را ندارید."
+  },
+
+
+  {
+    "id": "product.add_to_cart_success",
+    "translation": "محصول «{{.ProductName}}» با موفقیت به سبد خرید اضافه شد."
+  },
+  {
+    "id": "product.not_found",
+    "translation": "محصول مورد نظر یافت نشد."
+  },
+  {
+    "id": "product.out_of_stock",
+    "translation": "متاسفانه موجودی محصول «{{.ProductName}}» به اتمام رسیده است."
+  },
+
+
+  {
+    "id": "cart.item_removed",
+    "translation": "کالا از سبد خرید شما حذف شد."
+  },
+  {
+    "id": "cart.is_empty",
+    "translation": "سبد خرید شما خالی است."
+  },
+  {
+    "id": "cart.item_count",
+    "translation": {
+      "one": "شما ۱ کالا در سبد خرید دارید.",
+      "other": "شما {{.Count}} کالا در سبد خرید دارید."
+    }
+  },
+
+
+  {
+    "id": "order.create_successful",
+    "translation": "سفارش شما با شماره پیگیری {{.TrackingCode}} با موفقیت ثبت شد."
+  },
+  {
+    "id": "order.status_changed",
+    "translation": "وضعیت سفارش شما به «{{.Status}}» تغییر یافت."
+  },
+
+
+  {
+    "id": "user.profile.update_successful",
+    "translation": "پروفایل شما با موفقیت به‌روزرسانی شد."
+  },
+  {
+    "id": "user.password.update_successful",
+    "translation": "رمز عبور شما با موفقیت تغییر یافت."
+  },
+
+
+  {
+    "id": "admin.product.create_successful",
+    "translation": "محصول جدید با موفقیت ایجاد شد."
+  },
+  {
+    "id": "admin.product.update_successful",
+    "translation": "محصول با موفقیت به‌روزرسانی شد."
+  },
+  {
+    "id": "admin.product.delete_confirm",
+    "translation": "آیا از حذف محصول «{{.ProductName}}» اطمینان دارید؟"
+  },
+  {
+    "id": "admin.user.access_changed",
+    "translation": "سطح دسترسی کاربر «{{.Username}}» تغییر یافت."
+  }
+]

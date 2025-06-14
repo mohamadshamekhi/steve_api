@@ -3,83 +3,93 @@ package backofficevalidatorauth
 import (
 	"context"
 	"errors"
-	"fmt"
 	backofficeauthparam "github.com/abolfazlnorzad/steve/param/backoffice/auth"
-	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"regexp"
 )
 
-func (v Validator) ValidateLoginWithPhoneNumberRequest(req backofficeauthparam.SendLoginCodeRequest) (map[string]string, error) {
+func (v Validator) ValidateLoginWithPhoneNumberRequest(req backofficeauthparam.SendLoginCodeRequest) error {
 	const op = "backofficevalidatorauth.ValidateLoginWithPhoneNumberRequest"
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.PhoneNumber,
-			validation.Required,
-			validation.Match(regexp.MustCompile(phoneNumberRegex)).Error(errmsg.ErrorMsgPhoneNumberIsNotValid),
+			validation.Required.Error("validation.required"),
+			validation.Match(regexp.MustCompile(phoneNumberRegex)).Error("validation.phone_number_invalid"),
 			validation.By(v.isBackOfficeUserIsExist))); err != nil {
-		fieldErrors := make(map[string]string)
 
-		vErr := validation.Errors{}
-		if errors.As(err, &vErr) {
-			for key, value := range vErr {
-
-				if value != nil {
-					fieldErrors[key] = value.Error()
+		var vErrs validation.Errors
+		if errors.As(err, &vErrs) {
+			fieldErrorKeys := make(map[string]string)
+			for field, errMessage := range vErrs {
+				if errMessage != nil {
+					fieldErrorKeys[field] = errMessage.Error()
 				}
 			}
+
+			return richerror.New(op).
+				WithKind(richerror.KindInvalid).
+				WithMessageKey("global.validation_failed").
+				WithMeta(map[string]any{"fields": fieldErrorKeys})
 		}
 
-		return fieldErrors, richerror.New(op).WithMessage(errmsg.ErrorMsgInvalidInput).
-			WithKind(richerror.KindInvalid).
-			WithMeta(map[string]interface{}{"req": req}).WithWarpError(err)
+		return richerror.New(op).WithKind(richerror.KindUnexpected).
+			WithMessageKey("global.something_wrong").WithWarpError(err)
+
 	}
 
 	//nolint
-	return nil, nil
+	return nil
 }
 
 func (v Validator) isBackOfficeUserIsExist(value any) error {
 	phoneNumber, ok := value.(string)
 	if !ok {
-		return fmt.Errorf(errmsg.ErrorMsgSomethingWentWrong)
+		return richerror.New("validator.isBackOfficeUserIsExist").
+			WithKind(richerror.KindUnexpected).
+			WithWarpError(errors.New("unexpected type assertion failed"))
 	}
 	isExist, err := v.repo.IsBackOfficeUserIsExistByPhoneNumber(context.Background(), phoneNumber)
 	if err != nil {
-		return fmt.Errorf(errmsg.ErrorMsgSomethingWentWrong)
+		return err
 	}
 	if !isExist {
-		return fmt.Errorf(errmsg.ErrorMsgPhoneNumberOrPassIsIncorrect)
+		return errors.New("auth.user_not_found")
 	}
 
 	return nil
 }
 
-func (v Validator) ValidateVerifyOTPCodeRequest(req backofficeauthparam.VerifyLoginCodeRequest) (map[string]string, error) {
+func (v Validator) ValidateVerifyOTPCodeRequest(req backofficeauthparam.VerifyLoginCodeRequest) error {
 	const op = "backofficevalidatorauth.ValidateVerifyOTPCodeRequest"
 	if err := validation.ValidateStruct(&req,
-		validation.Field(&req.Code, validation.Required),
+		validation.Field(&req.Code, validation.Required.Error("validation.required")),
 		validation.Field(&req.PhoneNumber,
-			validation.Required,
-			validation.Match(regexp.MustCompile(phoneNumberRegex)).Error(errmsg.ErrorMsgPhoneNumberIsNotValid),
+			validation.Required.Error("validation.required"),
+			validation.Match(regexp.MustCompile(phoneNumberRegex)).Error("validation.phone_number_invalid"),
 			validation.By(v.isBackOfficeUserIsExist))); err != nil {
-		fieldErrors := make(map[string]string)
 
-		vErr := validation.Errors{}
-		if errors.As(err, &vErr) {
-			for key, value := range vErr {
-
-				if value != nil {
-					fieldErrors[key] = value.Error()
+		var vErrs validation.Errors
+		if errors.As(err, &vErrs) {
+			fieldErrorKeys := make(map[string]string)
+			for field, fieldErr := range vErrs {
+				if fieldErr != nil {
+					fieldErrorKeys[field] = fieldErr.Error()
 				}
 			}
+
+			return richerror.New(op).
+				WithKind(richerror.KindInvalid).
+				WithMessageKey("global.validation_failed").
+				WithMeta(map[string]any{"fields": fieldErrorKeys})
 		}
 
-		return fieldErrors, richerror.New(op).WithMessage(errmsg.ErrorMsgInvalidInput).
-			WithKind(richerror.KindInvalid).
-			WithMeta(map[string]interface{}{"req": req}).WithWarpError(err)
+		return richerror.New(op).
+			WithKind(richerror.KindUnexpected).
+			WithMessageKey("global.something_wrong").
+			WithWarpError(err)
+
 	}
 
 	//nolint
-	return nil, nil
+	return nil
 }
