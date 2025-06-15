@@ -2,7 +2,6 @@ package mongodbbackoffice
 
 import (
 	"context"
-	"fmt"
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -14,7 +13,6 @@ func (d DB) GetBackOfficeUserIDByPhoneNumber(ctx context.Context, phoneNumber st
 	filter := bson.M{"phone_number": phoneNumber}
 	var backOffice entity.BackOffice
 	if dErr := d.collection.FindOne(ctx, filter).Decode(&backOffice); dErr != nil {
-		fmt.Println("dErr", dErr)
 		return "", richerror.New(op).WithWarpError(dErr).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).
 			WithKind(richerror.KindUnexpected)
 	}

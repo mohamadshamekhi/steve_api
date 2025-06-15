@@ -3,7 +3,6 @@ package redisotp
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"github.com/redis/go-redis/v9"
@@ -13,7 +12,6 @@ import (
 func (d DB) CheckUserHasActiveCode(ctx context.Context, key string) (bool, error) {
 	const op = "redisotp.CheckUserHasActiveCode"
 	isExist, err := d.adapter.Client().Exists(ctx, key).Result()
-	fmt.Println(err)
 	if err != nil {
 		return false, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).
 			WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithMeta(map[string]any{"key": key})
