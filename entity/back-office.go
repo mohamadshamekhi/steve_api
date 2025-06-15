@@ -8,4 +8,10 @@ type BackOffice struct {
 	Address      string `bson:"address"`
 	ZipCode      string `bson:"zip_code"`
 	AvatarID     int64  `bson:"avatar_id"`
+	IsActive     bool   `bson:"is_active"`
+	isSuperAdmin bool   `bson:"is_super_admin"`
+}
+
+func (b BackOffice) IsSuperAdmin() bool {
+	return b.isSuperAdmin
 }
