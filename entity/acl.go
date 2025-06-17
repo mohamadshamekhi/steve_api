@@ -1,9 +1,16 @@
 package entity
 
+import "github.com/oklog/ulid/v2"
+
 type Permission struct {
 	ID          string `bson:"_id"`
 	Name        string `bson:"name"`
 	Description string `bson:"description"`
+}
+
+func (p *Permission) BeforeCreate() {
+	id := ulid.Make()
+	p.ID = id.String()
 }
 
 type Role struct {
@@ -11,4 +18,9 @@ type Role struct {
 	Name          string   `bson:"name"`
 	Description   string   `bson:"description"`
 	PermissionIDs []string `bson:"permission_ids"`
+}
+
+func (r *Role) BeforeCreate() {
+	id := ulid.Make()
+	r.ID = id.String()
 }
