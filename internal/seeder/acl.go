@@ -51,7 +51,6 @@ var predefinedPermissions = []entity.Permission{
 	{Name: "used_phone:reject", Description: "رد کردن یک درخواست فروش"},
 }
 
-// Run تابع اصلی Seeder است که در زمان راه‌اندازی برنامه فراخوانی می‌شود.
 func Run(permissionRepo mongodbpermission.DB, roleRepo mongodbrole.DB) error {
 	ctx := context.Background()
 	fmt.Println("Seeding database...")
