@@ -11,6 +11,10 @@
     "id": "global.action_successful",
     "translation": "عملیات با موفقیت انجام شد."
   },
+  {
+    "id": "global.forbidden",
+    "translation": "شما اجازه دسترسی ندارید."
+  },
 
 
   {
