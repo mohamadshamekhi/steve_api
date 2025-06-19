@@ -17,3 +17,14 @@ func (d DB) FindByName(ctx context.Context, name string) (entity.Role, error) {
 	}
 	return role, nil
 }
+
+func (d DB) GetPermissionIDsOfRole(ctx context.Context, roleID string) ([]string, error) {
+	const op = "mongodbrole.GetPermissionIDsOfRole"
+	filter := bson.M{"id": roleID}
+	var role entity.Role
+	if err := d.collection.FindOne(ctx, filter).Decode(&role); err != nil {
+		return role.PermissionIDs, richerror.New(op).WithWarpError(err).
+			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
+	}
+	return role.PermissionIDs, nil
+}
