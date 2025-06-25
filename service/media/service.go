@@ -16,8 +16,13 @@ type Config struct {
 	PresignedPublicURLExpiration  time.Duration `koanf:"presigned_public_url_expiration"`
 }
 
+type UploadResult struct {
+	Path       string
+	BucketName string
+	MimeType   string
+}
 type StorageProvider interface {
-	Upload(ctx context.Context, domain string, isPublic bool, file multipart.File, header *multipart.FileHeader) (string, error)
+	Upload(ctx context.Context, domain string, isPublic bool, file multipart.File, header *multipart.FileHeader) (UploadResult, error)
 	GetURL(ctx context.Context, media *entity.Media) (string, error)
 	Delete(ctx context.Context, media *entity.Media) error
 }

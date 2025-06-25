@@ -56,11 +56,11 @@ func New(credential Config, mcfg mediaservice.Config) *Disk {
 	}
 }
 
-func (d *Disk) Upload(ctx context.Context, domain string, isPublic bool, file multipart.File, header *multipart.FileHeader) (string, error) {
+func (d *Disk) Upload(ctx context.Context, domain string, isPublic bool, file multipart.File, header *multipart.FileHeader) (mediaservice.UploadResult, error) {
 	const op = "liarastorage.Upload"
 
 	if header.Size > d.MediaCfg.MaxUploadSizeBytes {
-		return "", richerror.New(op).
+		return mediaservice.UploadResult{}, richerror.New(op).
 			WithKind(richerror.KindInvalid).
 			WithMessageKey("media.file_too_large").
 			WithMeta(map[string]any{"max_size_mb": d.MediaCfg.MaxUploadSizeBytes, "actual_size_bytes": header.Size})
@@ -69,10 +69,10 @@ func (d *Disk) Upload(ctx context.Context, domain string, isPublic bool, file mu
 	buffer := make([]byte, 512)
 	_, err := file.Read(buffer)
 	if err != nil && err != io.EOF {
-		return "", richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
+		return mediaservice.UploadResult{}, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
 	}
 	if _, seekErr := file.Seek(0, 0); seekErr != nil {
-		return "", richerror.New(op).WithWarpError(seekErr).WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
+		return mediaservice.UploadResult{}, richerror.New(op).WithWarpError(seekErr).WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
 	}
 	mimeType := http.DetectContentType(buffer)
 	isValidMimeType := false
@@ -83,7 +83,7 @@ func (d *Disk) Upload(ctx context.Context, domain string, isPublic bool, file mu
 		}
 	}
 	if !isValidMimeType {
-		return "", richerror.New(op).
+		return mediaservice.UploadResult{}, richerror.New(op).
 			WithKind(richerror.KindInvalid).
 			WithMessageKey("media.mime_type_not_allowed").
 			WithMeta(map[string]any{"mime_type": mimeType})
@@ -108,10 +108,14 @@ func (d *Disk) Upload(ctx context.Context, domain string, isPublic bool, file mu
 		ContentType: aws.String(mimeType),
 	})
 	if err != nil {
-		return "", richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+		return mediaservice.UploadResult{}, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
 	}
 
-	return filePath, nil
+	return mediaservice.UploadResult{
+		Path:       filePath,
+		BucketName: targetBucket,
+		MimeType:   mimeType,
+	}, nil
 }
 
 func (d *Disk) GetURL(ctx context.Context, media *entity.Media) (string, error) {

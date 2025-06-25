@@ -11,7 +11,7 @@ import (
 func (s *Service) UploadFile(ctx context.Context, req mediaparam.UploadMediaRequest) (mediaparam.UploadMediaResponse, error) {
 	const op = "mediaservice.UploadFile"
 
-	path, uErr := s.provider.Upload(ctx, req.Domain, req.IsPublic, req.File, req.Header)
+	res, uErr := s.provider.Upload(ctx, req.Domain, req.IsPublic, req.File, req.Header)
 	if uErr != nil {
 		var rErr *richerror.RichError
 		if errors.As(uErr, &rErr) && rErr.Kind() == richerror.KindInvalid {
@@ -21,22 +21,23 @@ func (s *Service) UploadFile(ctx context.Context, req mediaparam.UploadMediaRequ
 	}
 	media := &entity.Media{
 		OriginalFileName: req.Header.Filename,
-		StorageProvider:  "liara", // todo - add to cfg
-		Path:             path,
+		StorageProvider:  "liara-s3", // todo - add to cfg
+		Path:             res.Path,
 		IsPublic:         req.IsPublic,
-		MimeType:         req.Header.Header.Get("Content-Type"),
+		MimeType:         res.MimeType,
 		Size:             req.Header.Size,
 		UploaderID:       req.UploaderID,
 		UploaderType:     req.UploaderType,
+		Bucket:           res.BucketName,
 	}
 	media.BeforeCreate()
 	if _, err := s.repository.AddMedia(ctx, *media); err != nil {
-		_ = s.provider.Delete(context.Background(), path)
+		_ = s.provider.Delete(context.Background(), media)
 		return mediaparam.UploadMediaResponse{}, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
 	}
 
 	return mediaparam.UploadMediaResponse{
 		ID:  media.ID,
-		URL: path,
+		URL: res.Path,
 	}, nil
 }
