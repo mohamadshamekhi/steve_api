@@ -27,6 +27,7 @@ mongo:
   db_name: "steve"
 
 media:
+  public_base_url: ""
   allowed_extensions:
     - "mp4"
     - "png"
