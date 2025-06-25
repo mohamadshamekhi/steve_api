@@ -3,13 +3,15 @@ package mediaparam
 import "mime/multipart"
 
 type UploadMediaRequest struct {
-	*multipart.FileHeader `json:"file"`
-	MediaableID           uint   `json:"mediaable_id"`
-	MediaableType         string `json:"mediaable_type"`
+	Domain       string                `json:"domain"`
+	UploaderID   string                `json:"uploader_id"`
+	UploaderType string                `json:"uploader_type"`
+	IsPublic     bool                  `json:"is_public"`
+	File         multipart.File        `json:"file"`
+	Header       *multipart.FileHeader `json:"header"`
 }
 
 type UploadMediaResponse struct {
-	ID       uint   `json:"id"`
-	URL      string `json:"url"`
-	MimeType string `json:"mime_type"`
+	ID  string `json:"id"`
+	URL string `json:"url"`
 }
