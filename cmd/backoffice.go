@@ -6,8 +6,11 @@ import (
 	"github.com/abolfazlnorzad/steve/config"
 	httpserver "github.com/abolfazlnorzad/steve/delivery/http_server"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
+	"github.com/abolfazlnorzad/steve/internal/seeder"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
 	mongodb "github.com/abolfazlnorzad/steve/repository/mongo"
+	mongodbpermission "github.com/abolfazlnorzad/steve/repository/mongo/acl/permission"
+	mongodbrole "github.com/abolfazlnorzad/steve/repository/mongo/acl/role"
 	mongodbbackoffice "github.com/abolfazlnorzad/steve/repository/mongo/backoffice"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
@@ -29,6 +32,10 @@ func main() {
 	backOfficeVld := backofficevalidatorauth.New(backOfficeMongoRepo)
 
 	translator, _ := i18n.New("config/locales", "fa")
+
+	permissionRepo := mongodbpermission.New(mongoRepo)
+	roleRepo := mongodbrole.New(mongoRepo)
+	seeder.Run(*permissionRepo, *roleRepo)
 
 	backOfficeHandler := backofficeauthhandler.New(backOfficeSvc, backOfficeVld, translator)
 	server := httpserver.New(cfg, backOfficeHandler)

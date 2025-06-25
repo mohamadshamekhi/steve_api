@@ -26,11 +26,11 @@ func (s Service) VerifyOTPCode(ctx context.Context, req backofficeauthparam.Veri
 		return backofficeauthparam.VerifyLoginCodeResponse{}, err
 	}
 	if resp {
-		backofficeID, iErr := s.repo.GetBackOfficeUserIDByPhoneNumber(ctx, req.PhoneNumber)
+		backoffice, iErr := s.repo.GetBackOfficeUserByPhoneNumber(ctx, req.PhoneNumber)
 		if iErr != nil {
 			return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(iErr)
 		}
-		token, gErr := s.authSvc.GenerateAccessToken(backofficeID, s.config.Prefix)
+		token, gErr := s.authSvc.GenerateAccessToken(backoffice.ID, s.config.Prefix, backoffice.RoleIDs, backoffice.PermissionIDs)
 		if gErr != nil {
 			return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(gErr)
 		}
