@@ -24,8 +24,8 @@ type StorageProvider interface {
 
 type Repository interface {
 	AddMedia(ctx context.Context, media entity.Media) (entity.Media, error)
-	GetMediaByID(ctx context.Context, id uint) (entity.Media, error)
-	DeleteMedia(ctx context.Context, id uint) error
+	GetMediaByID(ctx context.Context, id string) (entity.Media, error)
+	DeleteMedia(ctx context.Context, id string) error
 }
 type Service struct {
 	provider   StorageProvider
