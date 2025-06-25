@@ -3,6 +3,7 @@ package mediaservice
 import (
 	"context"
 	"github.com/abolfazlnorzad/steve/entity"
+	"github.com/abolfazlnorzad/steve/pkg/cache"
 	"mime/multipart"
 	"time"
 )
@@ -36,8 +37,9 @@ type Service struct {
 	provider   StorageProvider
 	repository Repository
 	config     Config
+	cache      cache.Provider
 }
 
-func New(provider StorageProvider, r Repository, cfg Config) Service {
-	return Service{provider: provider, repository: r, config: cfg}
+func New(provider StorageProvider, r Repository, cfg Config, cache cache.Provider) Service {
+	return Service{provider: provider, repository: r, config: cfg, cache: cache}
 }
