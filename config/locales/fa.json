@@ -18,6 +18,16 @@
 
 
   {
+    "id": "media.file_too_large",
+    "translation": "حجم فایل ارسالی بیش از حد مجاز است"
+  },
+  {
+    "id": "media.mime_type_not_allowed",
+    "translation": "نوع فایل آپلود شده مجاز نمیباشد"
+  },
+
+
+  {
     "id": "validation.required",
     "translation": "{{.Attribute}} الزامی است."
   },

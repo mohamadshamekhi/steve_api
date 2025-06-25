@@ -25,3 +25,22 @@ mongo:
   host: 127.0.0.1
   port: 27017
   db_name: "steve"
+
+media:
+  public_base_url: ""
+  allowed_extensions:
+    - "mp4"
+    - "png"
+    - "jpg"
+    - "jpeg"
+    - "webp"
+    - "avi"
+    - "webm"
+  max_upload_size: 500 * 1024 * 1024 #mb
+  presigned_private_url_expiration: "30m"
+  presigned_public_url_expiration :  "168h"
+  allowed_mime_types:
+    - "video/mp4"
+    - "image/png"
+    - "image/jpeg"
+    - "image/webp"
