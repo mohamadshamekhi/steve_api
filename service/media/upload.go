@@ -11,7 +11,7 @@ import (
 func (s *Service) UploadFile(ctx context.Context, req mediaparam.UploadMediaRequest) (mediaparam.UploadMediaResponse, error) {
 	const op = "mediaservice.UploadFile"
 
-	path, uErr := s.provider.Upload(ctx, req.Domain, req.File, req.Header)
+	path, uErr := s.provider.Upload(ctx, req.Domain, req.IsPublic, req.File, req.Header)
 	if uErr != nil {
 		var rErr *richerror.RichError
 		if errors.As(uErr, &rErr) && rErr.Kind() == richerror.KindInvalid {

@@ -14,7 +14,7 @@ func (s *Service) GetURL(ctx context.Context, req mediaparam.GetUrlRequest) (med
 		return mediaparam.GetUrlResponse{URL: fmt.Sprintf("%s/%s", s.config.PublicBaseURL, req.Media.Path)}, nil
 	}
 
-	url, err := s.provider.GetURL(ctx, req.Media.Path, s.config.PresignedPrivateURLExpiration)
+	url, err := s.provider.GetURL(ctx, &req.Media)
 	if err != nil {
 		return mediaparam.GetUrlResponse{}, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
 	}

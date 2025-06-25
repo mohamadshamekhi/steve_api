@@ -20,7 +20,7 @@ func (s *Service) DeleteMedia(ctx context.Context, request mediaparam.DeleteMedi
 		return mediaparam.DeleteMediaResponse{}, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
 	}
 
-	if err := s.provider.Delete(ctx, media.Path); err != nil {
+	if err := s.provider.Delete(ctx, &media); err != nil {
 
 		logger.L().Error("warning: failed to delete physical file from storage: %v\n", err)
 	}
