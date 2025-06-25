@@ -3,6 +3,7 @@ package liarastorage
 import (
 	"context"
 	"fmt"
+	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
@@ -22,7 +23,8 @@ type Config struct {
 	AwsAccessKeyID     string `koanf:"aws_access_key_id"`
 	AwsSecretAccessKey string `koanf:"aws_secret_access_key"`
 	Endpoint           string `koanf:"endpoint"`
-	BucketName         string `koanf:"bucket_name"`
+	PublicBucketName   string `koanf:"public_bucket_name"`
+	PrivateBucketName  string `koanf:"private_bucket_name"`
 }
 
 type Disk struct {
@@ -54,7 +56,7 @@ func New(credential Config, mcfg mediaservice.Config) *Disk {
 	}
 }
 
-func (d *Disk) Upload(ctx context.Context, domain string, file multipart.File, header *multipart.FileHeader) (string, error) {
+func (d *Disk) Upload(ctx context.Context, domain string, isPublic bool, file multipart.File, header *multipart.FileHeader) (string, error) {
 	const op = "liarastorage.Upload"
 
 	if header.Size > d.MediaCfg.MaxUploadSizeBytes {
@@ -95,9 +97,12 @@ func (d *Disk) Upload(ctx context.Context, domain string, file multipart.File, h
 	uniqueFileName := fmt.Sprintf("%s%s", ulid.Make().String(), ext)
 
 	filePath := fmt.Sprintf("%s/%s/%s/%s", domain, fileType, datePath, uniqueFileName)
-
+	targetBucket := d.config.PrivateBucketName
+	if isPublic {
+		targetBucket = d.config.PublicBucketName
+	}
 	_, err = d.client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:      aws.String(d.config.BucketName),
+		Bucket:      aws.String(targetBucket),
 		Key:         aws.String(filePath),
 		Body:        file,
 		ContentType: aws.String(mimeType),
@@ -109,13 +114,17 @@ func (d *Disk) Upload(ctx context.Context, domain string, file multipart.File, h
 	return filePath, nil
 }
 
-func (d *Disk) GetURL(ctx context.Context, path string, expiration time.Duration) (string, error) {
+func (d *Disk) GetURL(ctx context.Context, media *entity.Media) (string, error) {
 	pClient := s3.NewPresignClient(d.client)
+	targetBucket := d.config.PrivateBucketName
+	if media.IsPublic {
+		targetBucket = d.config.PublicBucketName
+	}
 	request, err := pClient.PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(d.config.BucketName),
-		Key:    aws.String(path),
+		Bucket: aws.String(targetBucket),
+		Key:    aws.String(media.Path),
 	}, func(opts *s3.PresignOptions) {
-		opts.Expires = expiration
+		opts.Expires = d.MediaCfg.PresignedPrivateURLExpiration
 	})
 	if err != nil {
 		return "", richerror.New("adapter.s3.GeneratePresignedURL").WithWarpError(err).WithKind(richerror.KindUnexpected)
@@ -124,8 +133,12 @@ func (d *Disk) GetURL(ctx context.Context, path string, expiration time.Duration
 	return request.URL, nil
 }
 
-func (d *Disk) Delete(ctx context.Context, filePath string) error {
-	_, err := d.client.DeleteObject(ctx, &s3.DeleteObjectInput{Bucket: aws.String(d.config.BucketName), Key: aws.String(filePath)})
+func (d *Disk) Delete(ctx context.Context, media *entity.Media) error {
+	targetBucket := d.config.PrivateBucketName
+	if media.IsPublic {
+		targetBucket = d.config.PublicBucketName
+	}
+	_, err := d.client.DeleteObject(ctx, &s3.DeleteObjectInput{Bucket: aws.String(targetBucket), Key: aws.String(media.Path)})
 
 	return err
 }

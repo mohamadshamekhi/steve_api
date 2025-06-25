@@ -17,9 +17,9 @@ type Config struct {
 }
 
 type StorageProvider interface {
-	Upload(ctx context.Context, domain string, file multipart.File, header *multipart.FileHeader) (string, error)
-	GetURL(ctx context.Context, path string, expiration time.Duration) (string, error)
-	Delete(ctx context.Context, path string) error
+	Upload(ctx context.Context, domain string, isPublic bool, file multipart.File, header *multipart.FileHeader) (string, error)
+	GetURL(ctx context.Context, media *entity.Media) (string, error)
+	Delete(ctx context.Context, media *entity.Media) error
 }
 
 type Repository interface {

@@ -9,6 +9,7 @@ type Media struct {
 	ID               string                 `bson:"_id"`
 	OriginalFileName string                 `bson:"original_file_name"`
 	StorageProvider  string                 `bson:"storage_provider"` // "s3", "gcs", "local"
+	Bucket           string                 `bson:"bucket"`
 	Path             string                 `bson:"path"`
 	IsPublic         bool                   `bson:"is_public"`
 	MimeType         string                 `bson:"mime_type"`
