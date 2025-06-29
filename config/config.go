@@ -4,10 +4,10 @@ import (
 	natsadapter "github.com/abolfazlnorzad/steve/adapter/nats"
 	redisadapter "github.com/abolfazlnorzad/steve/adapter/redis"
 	liarastorage "github.com/abolfazlnorzad/steve/adapter/storage/liara"
-	"github.com/abolfazlnorzad/steve/entity"
 	mongodb "github.com/abolfazlnorzad/steve/repository/mongo"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
+	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 )
 
 type HTTPServer struct {
@@ -22,5 +22,5 @@ type Config struct {
 	Nats          natsadapter.Config       `koanf:"nats"`
 	Mongo         mongodb.Config           `koanf:"mongo"`
 	ObjectStorage liarastorage.Config      `koanf:"storage"`
-	Media         entity.Config            `koanf:"media"`
+	Media         mediaservice.Config      `koanf:"media"`
 }

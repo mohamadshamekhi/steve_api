@@ -36,7 +36,7 @@ media:
     - "webp"
     - "avi"
     - "webm"
-  max_upload_size: 500 * 1024 * 1024 #mb
+  max_upload_size: 524288000
   presigned_private_url_expiration: "30m"
   presigned_public_url_expiration :  "168h"
   allowed_mime_types:

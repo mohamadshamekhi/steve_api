@@ -29,7 +29,8 @@ func New(backofficeSvc brandservice.BackofficeService,
 }
 
 func getLanguageFromHeader(header http.Header) string {
-	if header.Get("Accept-Language") == "en" {
+	lang := header.Get("Accept-Language")
+	if lang == "en" {
 		return "en"
 	}
 	return "fa"

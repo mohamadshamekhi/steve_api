@@ -127,6 +127,10 @@
     "id": "auth.forbidden_access",
     "translation": "شما اجازه دسترسی به این بخش را ندارید."
   },
+  {
+    "id": "auth.you_must_logged_in",
+    "translation": "لطفا ابتدا وارد شوید"
+  },
 
 
   {

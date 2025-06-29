@@ -2,6 +2,7 @@ package backofficemiddleware
 
 import (
 	"github.com/abolfazlnorzad/steve/config"
+	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	mw "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
@@ -10,6 +11,9 @@ import (
 func Auth(service authservice.Service, cfg authservice.Config) echo.MiddlewareFunc {
 	return mw.WithConfig(mw.Config{
 		ContextKey: config.AuthMiddlewareContextKey,
+		ErrorHandler: func(c echo.Context, err error) error {
+			return richerror.New("middleware.auth").WithMessageKey("auth.you_must_logged_in").WithKind(richerror.KindUnauthorized)
+		},
 		SigningKey: []byte(cfg.SignKey),
 		// TODO  - as sign method string to config
 		SigningMethod: "HS256",
