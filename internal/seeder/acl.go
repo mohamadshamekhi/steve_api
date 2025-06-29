@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/abolfazlnorzad/steve/entity"
+	"github.com/abolfazlnorzad/steve/pkg/key"
 	mongodbpermission "github.com/abolfazlnorzad/steve/repository/mongo/acl/permission"
 	mongodbrole "github.com/abolfazlnorzad/steve/repository/mongo/acl/role"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -102,21 +103,20 @@ func seedPermissions(ctx context.Context, repo mongodbpermission.DB) (map[string
 }
 
 func seedRoles(ctx context.Context, repo mongodbrole.DB, permissionMap map[string]string) error {
-	var allPermissionNames []string
-	for pName := range permissionMap {
-		allPermissionNames = append(allPermissionNames, pName)
+	var allPermissionKeys []string
+	for pKey := range permissionMap {
+		allPermissionKeys = append(allPermissionKeys, pKey)
 	}
-
 	rolesToSeed := map[string][]string{
-		"Super Admin":           allPermissionNames,
-		"Store Manager":         {"admin_panel:access", "product:list", "product:create", "product:edit", "product:delete", "brand:manage", "category:manage", "order:view_all", "order:edit_status", "payment:view_all", "discount:manage", "user:list", "user:view_details"},
-		"Marketing Specialist":  {"admin_panel:access", "discount:manage", "product:list", "user:list"},
-		"Content Writer":        {"admin_panel:access", "article:list", "article:create", "article:edit_own"},
-		"Senior Content Editor": {"admin_panel:access", "article:list", "article:create", "article:edit_own", "article:edit_all", "article:publish", "article:delete", "review:list", "review:approve", "review:delete"},
-		"Customer Support":      {"admin_panel:access", "order:view_all", "order:edit_status", "user:list", "user:view_details", "cart:view_all"},
-		"Financial Accountant":  {"admin_panel:access", "payment:view_all", "payment:export_reports", "order:view_all"},
-		"Repair Technician":     {"admin_panel:access", "repair:view_requests", "repair:update_status", "repair:set_price"},
-		"Used Phone Specialist": {"admin_panel:access", "used_phone:view_requests", "used_phone:approve", "used_phone:reject"},
+		key.SuperAdmin:          allPermissionKeys,
+		key.StoreManager:        {key.AccessAdminPanel, key.CanListProducts, key.CanCreateProduct, key.CanEditProduct, key.CanDeleteProduct, key.CanManageBrands, key.CanManageCategories, key.CanViewAllOrders, key.CanEditOrderStatus, key.CanViewAllPayments, key.CanManageDiscounts, key.CanListUsers, key.CanViewUserDetails},
+		key.MarketingSpecialist: {key.AccessAdminPanel, key.CanManageDiscounts, key.CanListProducts, key.CanListUsers},
+		key.ContentWriter:       {key.AccessAdminPanel, key.CanListArticles, key.CanCreateArticle, key.CanEditOwnArticle},
+		key.SeniorContentEditor: {key.AccessAdminPanel, key.CanListArticles, key.CanCreateArticle, key.CanEditOwnArticle, key.CanEditAllArticles, key.CanPublishArticle, key.CanDeleteArticle, key.CanListReviews, key.CanApproveReview, key.CanDeleteReview},
+		key.CustomerSupport:     {key.AccessAdminPanel, key.CanViewAllOrders, key.CanEditOrderStatus, key.CanListUsers, key.CanViewUserDetails, key.CanViewAllCarts},
+		key.FinancialAccountant: {key.AccessAdminPanel, key.CanViewAllPayments, key.CanExportPayments, key.CanViewAllOrders},
+		key.RepairTechnician:    {key.AccessAdminPanel, key.CanViewRepairRequests, key.CanUpdateRepairStatus, key.CanSetRepairPrice},
+		key.UsedPhoneSpecialist: {key.AccessAdminPanel, key.CanViewUsedPhoneRequests, key.CanApproveUsedPhone, key.CanRejectUsedPhone},
 	}
 
 	for roleName, permissionNames := range rolesToSeed {
