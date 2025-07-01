@@ -76,7 +76,7 @@ func (d *Disk) Upload(ctx context.Context, domain string, isPublic bool, file mu
 	}
 	mimeType := http.DetectContentType(buffer)
 	isValidMimeType := false
-	for _, allowedType := range d.MediaCfg.AllowedExtensions {
+	for _, allowedType := range d.MediaCfg.AllowedMimeTypes {
 		if mimeType == allowedType {
 			isValidMimeType = true
 			break

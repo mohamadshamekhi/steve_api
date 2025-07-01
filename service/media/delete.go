@@ -8,7 +8,7 @@ import (
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 )
 
-func (s *Service) DeleteMedia(ctx context.Context, request mediaparam.DeleteMediaRequest) (mediaparam.DeleteMediaResponse, error) {
+func (s Service) DeleteMedia(ctx context.Context, request mediaparam.DeleteMediaRequest) (mediaparam.DeleteMediaResponse, error) {
 	const op = "mediaservice.DeleteMedia"
 
 	media, err := s.repository.GetMediaByID(ctx, request.ID)

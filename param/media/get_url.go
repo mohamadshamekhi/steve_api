@@ -1,7 +1,9 @@
 package mediaparam
 
+import "github.com/abolfazlnorzad/steve/entity"
+
 type GetUrlRequest struct {
-	ID string `json:"id"`
+	Media entity.Media `json:"media"`
 }
 
 type GetUrlResponse struct {

@@ -215,5 +215,9 @@
   {
     "id": "media.unsupported_media_type",
     "translation": "نوع محتوای ارسالی پشتیبانی نمی‌شود. لطفاً از فرمت 'multipart/form-data' برای آپلود فایل استفاده کنید."
+  },
+  {
+    "id": "media.file_not_provided",
+    "translation": "لطفا فایل را اپلود کنید"
   }
 ]

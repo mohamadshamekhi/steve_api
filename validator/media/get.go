@@ -14,7 +14,7 @@ func (v Validator) ValidateGetFile(req mediaparam.GetUrlRequest) error {
 	const op = "mediavalidator.ValidateGetFile"
 
 	if err := validation.ValidateStruct(&req,
-		validation.Field(&req.ID, validation.Required, validation.By(v.checkMediaIsExistByID)),
+		validation.Field(&req.Media.ID, validation.Required, validation.By(v.checkMediaIsExistByID)),
 	); err != nil {
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {

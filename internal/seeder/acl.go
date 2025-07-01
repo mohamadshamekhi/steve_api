@@ -71,7 +71,6 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.UpdateSettings, Description: "ویرایش تنظیمات کلی سایت"},
 }
 
-// Run تابع اصلی Seeder است.
 func Run(permissionRepo *mongodbpermission.DB, roleRepo *mongodbrole.DB, backooficeRepo *mongodbbackoffice.DB) error {
 	ctx := context.Background()
 	fmt.Println("Seeding database...")

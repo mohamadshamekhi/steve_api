@@ -8,3 +8,7 @@ type Repository interface {
 type Validator struct {
 	repo Repository
 }
+
+func New(r Repository) Validator {
+	return Validator{repo: r}
+}

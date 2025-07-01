@@ -5,6 +5,7 @@ import (
 	"github.com/abolfazlnorzad/steve/config"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
+	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	middleware2 "github.com/abolfazlnorzad/steve/delivery/http_server/middleware"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
@@ -18,14 +19,16 @@ type Server struct {
 	Router                *echo.Echo
 	backofficeAuthHandler backofficeauthhandler.Handler
 	brandHandler          brandhandler.Handler
+	mediaHandler          mediahandler.Handler
 }
 
-func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler) Server {
+func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler) Server {
 	return Server{
 		config:                cfg,
 		Router:                echo.New(),
 		backofficeAuthHandler: backofficeAuthHandler,
 		brandHandler:          brandHandler,
+		mediaHandler:          mediaHandler,
 	}
 }
 
@@ -80,6 +83,7 @@ func (s Server) Serve() {
 	//set routes
 	s.backofficeAuthHandler.SetRoutes(s.Router)
 
+	s.mediaHandler.SetRoutes(s.Router)
 	s.brandHandler.SetRoutes(s.Router)
 
 	// Start server
