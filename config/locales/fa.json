@@ -78,6 +78,10 @@
     "translation": "ایمیل"
   },
   {
+    "id": "attr.name",
+    "translation": "نام"
+  },
+  {
     "id": "attr.ProductName",
     "translation": "نام محصول"
   },

@@ -14,7 +14,6 @@ func (h Handler) Create(c echo.Context) error {
 	var req brandparam.CreateBrandRequest
 	if bErr := c.Bind(&req); bErr != nil {
 		var echoErr *echo.HTTPError
-		// الف) بررسی می‌کنیم آیا خطا از نوع خطاهای داخلی Echo است؟
 		if errors.As(bErr, &echoErr) {
 			if echoErr.Code == http.StatusUnsupportedMediaType {
 				return richerror.New(op).
