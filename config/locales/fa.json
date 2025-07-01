@@ -15,7 +15,10 @@
     "id": "global.forbidden",
     "translation": "شما اجازه دسترسی ندارید."
   },
-
+  {
+    "id": "global.not-found",
+    "translation": "آیتمی پیدا نشد"
+  },
 
   {
     "id": "media.file_too_large",
