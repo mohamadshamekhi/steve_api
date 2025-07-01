@@ -7,17 +7,17 @@ import (
 	"time"
 )
 
-func (s Service) generateToken(id string, subject string, kind string, expireDuration time.Duration, roleIDs []string, permissionIDs []string) (string, error) {
+func (s Service) generateToken(id string, subject string, kind string, expireDuration time.Duration, roleKeys []string, permissionKeys []string) (string, error) {
 	const op = "authservice.GenerateToken"
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   subject,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expireDuration)),
 		},
-		Kind:          kind,
-		EntityID:      id,
-		RoleIDs:       roleIDs,
-		PermissionIDs: permissionIDs,
+		Kind:           kind,
+		EntityID:       id,
+		RoleKeys:       roleKeys,
+		PermissionKeys: permissionKeys,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString([]byte(s.cfg.SignKey))
@@ -28,6 +28,6 @@ func (s Service) generateToken(id string, subject string, kind string, expireDur
 	return tokenString, nil
 }
 
-func (s Service) GenerateAccessToken(id string, kind string, roleIDs []string, permissionIDs []string) (string, error) {
-	return s.generateToken(id, s.cfg.AccessSubject, kind, s.cfg.AccessExpirationTime, roleIDs, permissionIDs)
+func (s Service) GenerateAccessToken(id string, kind string, roleKeys []string, permissionKeys []string) (string, error) {
+	return s.generateToken(id, s.cfg.AccessSubject, kind, s.cfg.AccessExpirationTime, roleKeys, permissionKeys)
 }

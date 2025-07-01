@@ -14,10 +14,10 @@ func (p *Permission) BeforeCreate() {
 }
 
 type Role struct {
-	ID            string   `bson:"_id"`
-	Name          string   `bson:"name"`
-	Description   string   `bson:"description"`
-	PermissionIDs []string `bson:"permission_ids"`
+	ID             string   `bson:"_id"`
+	Name           string   `bson:"name"`
+	Description    string   `bson:"description"`
+	PermissionKeys []string `bson:"permission_keys"` // بهترین روش برای این کار
 }
 
 func (r *Role) BeforeCreate() {

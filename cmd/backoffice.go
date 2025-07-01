@@ -40,7 +40,7 @@ func main() {
 
 	permissionRepo := mongodbpermission.New(mongoRepo)
 	roleRepo := mongodbrole.New(mongoRepo)
-	seeder.Run(*permissionRepo, *roleRepo)
+	seeder.Run(permissionRepo, roleRepo, backOfficeMongoRepo)
 
 	brandRepo := mongodbbrand.New(mongoRepo)
 	backofficebrandsvc := brandservice.NewBackofficeService(brandRepo)

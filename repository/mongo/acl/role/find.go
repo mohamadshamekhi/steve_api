@@ -2,6 +2,7 @@ package mongodbrole
 
 import (
 	"context"
+	"fmt"
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"go.mongodb.org/mongo-driver/bson"
@@ -18,19 +19,19 @@ func (d DB) FindByName(ctx context.Context, name string) (entity.Role, error) {
 	return role, nil
 }
 
-func (d DB) GetPermissionIDsOfRole(ctx context.Context, roleIDs []string) ([]string, error) {
+func (d DB) GetPermissionKeysOfRole(ctx context.Context, roleKeys []string) ([]string, error) {
 	const op = "mongodbrole.GetPermissionIDsOfRole"
-	if len(roleIDs) == 0 {
+	if len(roleKeys) == 0 {
 		return []string{}, nil
 	}
-	filter := bson.M{"_id": bson.M{"$in": roleIDs}}
+	filter := bson.M{"name": bson.M{"$in": roleKeys}}
 	cursor, err := d.collection.Find(ctx, filter)
 	if err != nil {
 		return nil, richerror.New(op).WithWarpError(err).
 			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
 	}
 	defer cursor.Close(ctx)
-	permissionIDSet := make(map[string]struct{})
+	permissionKsySet := make(map[string]struct{})
 
 	for cursor.Next(ctx) {
 		var role entity.Role
@@ -39,19 +40,18 @@ func (d DB) GetPermissionIDsOfRole(ctx context.Context, roleIDs []string) ([]str
 				WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
 		}
 
-		// ۴. اضافه کردن تمام شناسه‌های دسترسی این نقش به map
-		for _, permID := range role.PermissionIDs {
-			permissionIDSet[permID] = struct{}{}
+		for _, permID := range role.PermissionKeys {
+			permissionKsySet[permID] = struct{}{}
 		}
 	}
 	if err := cursor.Err(); err != nil {
 		return nil, richerror.New(op).WithWarpError(err).
 			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
 	}
-	result := make([]string, 0, len(permissionIDSet))
-	for id := range permissionIDSet {
+	result := make([]string, 0, len(permissionKsySet))
+	for id := range permissionKsySet {
 		result = append(result, id)
 	}
-
+	fmt.Println("result", result)
 	return result, nil
 }

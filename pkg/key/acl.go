@@ -1,61 +1,97 @@
 package key
 
 const (
-	SuperAdmin          = "Super Admin"
-	StoreManager        = "Store Manager"
-	MarketingSpecialist = "Marketing Specialist"
-	ContentWriter       = "Content Writer"
-	SeniorContentEditor = "Senior Content Editor"
-	CustomerSupport     = "Customer Support"
-	FinancialAccountant = "Financial Accountant"
-	RepairTechnician    = "Repair Technician"
-	UsedPhoneSpecialist = "Used Phone Specialist"
+	SuperAdmin           = "super_admin"
+	StoreManager         = "store_manager"
+	ProductManager       = "product_manager"
+	MarketingManager     = "marketing_manager"
+	CustomerSupportLead  = "customer_support_lead"
+	CustomerSupportAgent = "customer_support_agent"
+	FinancialManager     = "financial_manager"
+	RepairTechnician     = "repair_technician"
+	UsedPhoneSpecialist  = "used_phone_specialist"
 )
 const (
+	// --- دسترسی‌های کلی پنل ---
 	AccessAdminPanel = "admin_panel:access"
 
-	CanListBackofficeUsers   = "backoffice_user:list"
-	CanCreateBackofficeUser  = "backoffice_user:create"
-	CanEditBackofficeUser    = "backoffice_user:edit"
-	CanDeleteBackofficeUser  = "backoffice_user:delete"
-	CanAssignBackofficeRoles = "backoffice_user:assign_roles"
+	// --- مدیریت داشبورد و گزارشات ---
+	ViewDashboardAnalytics = "dashboard:view_analytics"
+	ExportReports          = "reports:export"
 
-	CanListUsers       = "user:list"
-	CanViewUserDetails = "user:view_details"
-	CanEditUser        = "user:edit"
-	CanBanUser         = "user:ban"
+	// --- مدیریت کاربران پنل (Backoffice) ---
+	ListBackofficeUsers   = "backoffice_user:list"
+	ViewBackofficeUser    = "backoffice_user:view"
+	CreateBackofficeUser  = "backoffice_user:create"
+	UpdateBackofficeUser  = "backoffice_user:update"
+	DeleteBackofficeUser  = "backoffice_user:delete"
+	AssignBackofficeRoles = "backoffice_user:assign_roles"
 
-	CanCreateBrand = "brand:create"
+	// --- مدیریت مشتریان (Users) ---
+	ListUsers       = "user:list"
+	ViewUserDetails = "user:view_details"
+	UpdateUser      = "user:update"
+	BanUser         = "user:ban"
 
-	CanListProducts     = "product:list"
-	CanCreateProduct    = "product:create"
-	CanEditProduct      = "product:edit"
-	CanDeleteProduct    = "product:delete"
-	CanManageBrands     = "brand:manage"
-	CanManageCategories = "category:manage"
+	// --- مدیریت کاتالوگ محصولات ---
+	ListProducts  = "product:list"
+	ViewProduct   = "product:view"
+	CreateProduct = "product:create"
+	UpdateProduct = "product:update"
+	DeleteProduct = "product:delete"
 
-	CanListArticles    = "article:list"
-	CanCreateArticle   = "article:create"
-	CanEditOwnArticle  = "article:edit_own"
-	CanEditAllArticles = "article:edit_all"
-	CanPublishArticle  = "article:publish"
-	CanDeleteArticle   = "article:delete"
-	CanListReviews     = "review:list"
-	CanApproveReview   = "review:approve"
-	CanDeleteReview    = "review:delete"
+	// --- مدیریت موجودیت‌های وابسته به محصول ---
+	ListBrands  = "brand:list"
+	CreateBrand = "brand:create"
+	UpdateBrand = "brand:update"
+	DeleteBrand = "brand:delete"
 
-	CanViewAllOrders   = "order:view_all"
-	CanEditOrderStatus = "order:edit_status"
-	CanViewAllPayments = "payment:view_all"
-	CanExportPayments  = "payment:export_reports"
-	CanRefundPayment   = "payment:refund"
-	CanManageDiscounts = "discount:manage"
-	CanViewAllCarts    = "cart:view_all"
+	ListCategories = "category:list"
+	CreateCategory = "category:create"
+	UpdateCategory = "category:update"
+	DeleteCategory = "category:delete"
 
-	CanViewRepairRequests    = "repair:view_requests"
-	CanUpdateRepairStatus    = "repair:update_status"
-	CanSetRepairPrice        = "repair:set_price"
-	CanViewUsedPhoneRequests = "used_phone:view_requests"
-	CanApproveUsedPhone      = "used_phone:approve"
-	CanRejectUsedPhone       = "used_phone:reject"
+	// --- مدیریت محتوا ---
+	ListArticles   = "article:list"
+	ViewArticle    = "article:view"
+	CreateArticle  = "article:create"
+	UpdateArticle  = "article:update"
+	PublishArticle = "article:publish"
+	DeleteArticle  = "article:delete"
+
+	ListReviews   = "review:list"
+	ApproveReview = "review:approve"
+	DeleteReview  = "review:delete"
+
+	// --- مدیریت فروش ---
+	ListOrders        = "order:list"
+	ViewOrderDetails  = "order:view_details"
+	UpdateOrderStatus = "order:update_status"
+
+	ListCarts       = "cart:list"
+	ViewCartDetails = "cart:view_details"
+
+	ListDiscounts  = "discount:list"
+	CreateDiscount = "discount:create"
+	UpdateDiscount = "discount:update"
+	DeleteDiscount = "discount:delete"
+
+	// --- مدیریت امور مالی ---
+	ListPayments       = "payment:list"
+	ViewPaymentDetails = "payment:view_details"
+	RefundPayment      = "payment:refund"
+
+	// --- مدیریت خدمات ---
+	ListRepairRequests = "repair:list"
+	ViewRepairRequest  = "repair:view"
+	UpdateRepairStatus = "repair:update_status"
+	SetRepairPrice     = "repair:set_price"
+
+	ListUsedPhoneRequests = "used_phone:list"
+	ViewUsedPhoneRequest  = "used_phone:view"
+	ApproveUsedPhone      = "used_phone:approve"
+	RejectUsedPhone       = "used_phone:reject"
+
+	// --- مدیریت تنظیمات ---
+	UpdateSettings = "settings:update"
 )

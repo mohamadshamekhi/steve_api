@@ -12,7 +12,7 @@ func ACL(service aclservice.Service,
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) (err error) {
 			claims := claim.GetClaimsFromEchoContext(c)
-			isAllowed, err := service.CheckAccess(c.Request().Context(), claims.EntityID, claims.RoleIDs, claims.PermissionIDs, permissions...)
+			isAllowed, err := service.CheckAccess(c.Request().Context(), claims.EntityID, claims.RoleKeys, claims.PermissionKeys, permissions...)
 			if err != nil {
 				// TODO - log unexpected error
 				return err

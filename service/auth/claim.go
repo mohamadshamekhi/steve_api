@@ -6,10 +6,10 @@ import (
 
 type Claims struct {
 	jwt.RegisteredClaims
-	EntityID      string   `json:"entity_id"`
-	Kind          string   `json:"kind"`
-	RoleIDs       []string `json:"role_ids"`
-	PermissionIDs []string `json:"permission_ids"`
+	EntityID       string   `json:"entity_id"`
+	Kind           string   `json:"kind"`
+	RoleKeys       []string `json:"role_keys"`
+	PermissionKeys []string `json:"permission_keys"`
 }
 
 func (c Claims) Valid() error {

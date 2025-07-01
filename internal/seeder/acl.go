@@ -8,143 +8,190 @@ import (
 	"github.com/abolfazlnorzad/steve/pkg/key"
 	mongodbpermission "github.com/abolfazlnorzad/steve/repository/mongo/acl/permission"
 	mongodbrole "github.com/abolfazlnorzad/steve/repository/mongo/acl/role"
+	mongodbbackoffice "github.com/abolfazlnorzad/steve/repository/mongo/backoffice"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var predefinedPermissions = []entity.Permission{
-	{Name: "admin_panel:access", Description: "اجازه ورود به پنل مدیریت"},
-	{Name: "backoffice_user:list", Description: "مشاهده لیست کاربران پنل مدیریت"},
-	{Name: "backoffice_user:create", Description: "ایجاد کاربر جدید برای پنل مدیریت"},
-	{Name: "backoffice_user:edit", Description: "ویرایش اطلاعات کاربران پنل"},
-	{Name: "backoffice_user:delete", Description: "حذف کاربر از پنل مدیریت"},
-	{Name: "backoffice_user:assign_roles", Description: "تخصیص و تغییر نقش‌های کاربران پنل"},
-	{Name: "user:list", Description: "مشاهده لیست مشتریان"},
-	{Name: "user:view_details", Description: "مشاهده جزئیات پروفایل و سفارشات یک مشتری"},
-	{Name: "user:edit", Description: "ویرایش اطلاعات مشتریان"},
-	{Name: "user:ban", Description: "مسدود کردن حساب کاربری یک مشتری"},
-	{Name: "product:list", Description: "مشاهده لیست محصولات"},
-	{Name: "product:create", Description: "ایجاد محصول جدید"},
-	{Name: "product:edit", Description: "ویرایش کامل مشخصات، قیمت و موجودی محصول"},
-	{Name: "product:delete", Description: "حذف محصول"},
-	{Name: "brand:manage", Description: "مدیریت کامل برندها"},
-	{Name: "category:manage", Description: "مدیریت کامل دسته‌بندی‌ها"},
-	{Name: "article:list", Description: "مشاهده لیست مقالات وبلاگ"},
-	{Name: "article:create", Description: "ایجاد مقاله جدید"},
-	{Name: "article:edit_own", Description: "ویرایش مقالات پیش‌نویس خود"},
-	{Name: "article:edit_all", Description: "ویرایش تمام مقالات"},
-	{Name: "article:publish", Description: "انتشار یا لغو انتشار مقالات"},
-	{Name: "article:delete", Description: "حذف مقاله"},
-	{Name: "review:list", Description: "مشاهده لیست نظرات کاربران"},
-	{Name: "review:approve", Description: "تایید یا رد کردن نظرات کاربران"},
-	{Name: "review:delete", Description: "حذف نظرات تایید شده"},
-	{Name: "order:view_all", Description: "مشاهده تمام سفارشات"},
-	{Name: "order:edit_status", Description: "تغییر وضعیت سفارشات"},
-	{Name: "payment:view_all", Description: "مشاهده تمام تراکنش‌های مالی"},
-	{Name: "payment:export_reports", Description: "خروجی گرفتن از گزارشات مالی"},
-	{Name: "payment:refund", Description: "انجام عملیات بازگشت وجه"},
-	{Name: "discount:manage", Description: "مدیریت کامل کدهای تخفیف"},
-	{Name: "cart:view_all", Description: "مشاهده سبدهای خرید فعال و رها شده"},
-	{Name: "repair:view_requests", Description: "مشاهده درخواست‌های تعمیرات"},
-	{Name: "repair:update_status", Description: "تغییر وضعیت یک درخواست تعمیر"},
-	{Name: "repair:set_price", Description: "قیمت‌گذاری برای هزینه تعمیر"},
-	{Name: "used_phone:view_requests", Description: "مشاهده درخواست‌های فروش گوشی دست دوم"},
-	{Name: "used_phone:approve", Description: "تایید یک درخواست فروش"},
-	{Name: "used_phone:reject", Description: "رد کردن یک درخواست فروش"},
+	{Name: key.AccessAdminPanel, Description: "اجازه ورود به پنل مدیریت"},
+	{Name: key.ViewDashboardAnalytics, Description: "مشاهده تحلیل‌های داشبورد"},
+	{Name: key.ExportReports, Description: "خروجی گرفتن از گزارشات"},
+	{Name: key.ListBackofficeUsers, Description: "مشاهده لیست کاربران پنل"},
+	{Name: key.ViewBackofficeUser, Description: "مشاهده جزئیات کاربر پنل"},
+	{Name: key.CreateBackofficeUser, Description: "ایجاد کاربر جدید برای پنل"},
+	{Name: key.UpdateBackofficeUser, Description: "ویرایش اطلاعات کاربران پنل"},
+	{Name: key.DeleteBackofficeUser, Description: "حذف کاربر از پنل"},
+	{Name: key.AssignBackofficeRoles, Description: "تخصیص و تغییر نقش‌های کاربران پنل"},
+	{Name: key.ListUsers, Description: "مشاهده لیست مشتریان"},
+	{Name: key.ViewUserDetails, Description: "مشاهده جزئیات پروفایل مشتری"},
+	{Name: key.UpdateUser, Description: "ویرایش اطلاعات مشتریان"},
+	{Name: key.BanUser, Description: "مسدود کردن حساب کاربری مشتری"},
+	{Name: key.ListProducts, Description: "مشاهده لیست محصولات"},
+	{Name: key.ViewProduct, Description: "مشاهده جزئیات محصول"},
+	{Name: key.CreateProduct, Description: "ایجاد محصول جدید"},
+	{Name: key.UpdateProduct, Description: "ویرایش محصول"},
+	{Name: key.DeleteProduct, Description: "حذف محصول"},
+	{Name: key.ListBrands, Description: "مشاهده لیست برندها"},
+	{Name: key.CreateBrand, Description: "ایجاد برند جدید"},
+	{Name: key.UpdateBrand, Description: "ویرایش برند"},
+	{Name: key.DeleteBrand, Description: "حذف برند"},
+	{Name: key.ListCategories, Description: "مشاهده لیست دسته‌بندی‌ها"},
+	{Name: key.CreateCategory, Description: "ایجاد دسته‌بندی جدید"},
+	{Name: key.UpdateCategory, Description: "ویرایش دسته‌بندی"},
+	{Name: key.DeleteCategory, Description: "حذف دسته‌بندی"},
+	{Name: key.ListArticles, Description: "مشاهده لیست مقالات"},
+	{Name: key.ViewArticle, Description: "مشاهده جزئیات مقاله"},
+	{Name: key.CreateArticle, Description: "ایجاد مقاله جدید"},
+	{Name: key.UpdateArticle, Description: "ویرایش مقاله"},
+	{Name: key.PublishArticle, Description: "انتشار یا لغو انتشار مقاله"},
+	{Name: key.DeleteArticle, Description: "حذف مقاله"},
+	{Name: key.ListReviews, Description: "مشاهده لیست نظرات"},
+	{Name: key.ApproveReview, Description: "تایید یا رد کردن نظر"},
+	{Name: key.DeleteReview, Description: "حذف نظر"},
+	{Name: key.ListOrders, Description: "مشاهده لیست سفارشات"},
+	{Name: key.ViewOrderDetails, Description: "مشاهده جزئیات سفارش"},
+	{Name: key.UpdateOrderStatus, Description: "تغییر وضعیت سفارش"},
+	{Name: key.ListCarts, Description: "مشاهده لیست سبدهای خرید"},
+	{Name: key.ViewCartDetails, Description: "مشاهده جزئیات سبد خرید"},
+	{Name: key.ListDiscounts, Description: "مشاهده لیست تخفیف‌ها"},
+	{Name: key.CreateDiscount, Description: "ایجاد تخفیف جدید"},
+	{Name: key.UpdateDiscount, Description: "ویرایش تخفیف"},
+	{Name: key.DeleteDiscount, Description: "حذف تخفیف"},
+	{Name: key.ListPayments, Description: "مشاهده لیست پرداخت‌ها"},
+	{Name: key.ViewPaymentDetails, Description: "مشاهده جزئیات پرداخت"},
+	{Name: key.RefundPayment, Description: "انجام عملیات بازگشت وجه"},
+	{Name: key.ListRepairRequests, Description: "مشاهده لیست درخواست‌های تعمیر"},
+	{Name: key.ViewRepairRequest, Description: "مشاهده جزئیات درخواست تعمیر"},
+	{Name: key.UpdateRepairStatus, Description: "تغییر وضعیت درخواست تعمیر"},
+	{Name: key.SetRepairPrice, Description: "قیمت‌گذاری برای تعمیر"},
+	{Name: key.ListUsedPhoneRequests, Description: "مشاهده لیست درخواست‌های فروش گوشی دست دوم"},
+	{Name: key.ViewUsedPhoneRequest, Description: "مشاهده جزئیات درخواست فروش گوشی دست دوم"},
+	{Name: key.ApproveUsedPhone, Description: "تایید درخواست فروش گوشی دست دوم"},
+	{Name: key.RejectUsedPhone, Description: "رد کردن درخواست فروش گوشی دست دوم"},
+	{Name: key.UpdateSettings, Description: "ویرایش تنظیمات کلی سایت"},
 }
 
-func Run(permissionRepo mongodbpermission.DB, roleRepo mongodbrole.DB) error {
+// Run تابع اصلی Seeder است.
+func Run(permissionRepo *mongodbpermission.DB, roleRepo *mongodbrole.DB, backooficeRepo *mongodbbackoffice.DB) error {
 	ctx := context.Background()
 	fmt.Println("Seeding database...")
 
-	permissionMap, err := seedPermissions(ctx, permissionRepo)
-	if err != nil {
+	if err := seedPermissions(ctx, permissionRepo); err != nil {
 		return fmt.Errorf("failed to seed permissions: %w", err)
 	}
 
-	if err := seedRoles(ctx, roleRepo, permissionMap); err != nil {
+	if err := seedRoles(ctx, roleRepo); err != nil {
 		return fmt.Errorf("failed to seed roles: %w", err)
 	}
+	backooficeRepo.AddRoleToBackofficeUser("09011216131", key.SuperAdmin)
 
 	fmt.Println("Database seeding completed successfully.")
 	return nil
 }
 
-func seedPermissions(ctx context.Context, repo mongodbpermission.DB) (map[string]string, error) {
-	permissionNameIdMap := make(map[string]string)
-
+func seedPermissions(ctx context.Context, repo *mongodbpermission.DB) error {
 	for _, p := range predefinedPermissions {
-
-		permission, err := repo.FindByName(ctx, p.Name)
+		_, err := repo.FindByName(ctx, p.Name)
 		if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, err
+			return err
 		}
 
-		if err == nil {
-			permissionNameIdMap[p.Name] = permission.ID
-			continue
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			newPermission := &entity.Permission{
+				Name:        p.Name,
+				Description: p.Description,
+			}
+			newPermission.BeforeCreate() // تولید ID
+			if err := repo.Create(ctx, newPermission); err != nil {
+				return err
+			}
+			fmt.Printf("Permission '%s' created.\n", newPermission.Name)
 		}
-
-		newPermission := &entity.Permission{
-			Name:        p.Name,
-			Description: p.Description,
-		}
-
-		newPermission.BeforeCreate()
-
-		if err := repo.Create(ctx, newPermission); err != nil {
-			return nil, err
-		}
-
-		fmt.Printf("Permission '%s' created.\n", newPermission.Name)
-
-		permissionNameIdMap[newPermission.Name] = newPermission.ID
 	}
-	return permissionNameIdMap, nil
+	return nil
 }
 
-func seedRoles(ctx context.Context, repo mongodbrole.DB, permissionMap map[string]string) error {
-	var allPermissionKeys []string
-	for pKey := range permissionMap {
-		allPermissionKeys = append(allPermissionKeys, pKey)
-	}
-	rolesToSeed := map[string][]string{
-		key.SuperAdmin:          allPermissionKeys,
-		key.StoreManager:        {key.AccessAdminPanel, key.CanListProducts, key.CanCreateProduct, key.CanEditProduct, key.CanDeleteProduct, key.CanManageBrands, key.CanManageCategories, key.CanViewAllOrders, key.CanEditOrderStatus, key.CanViewAllPayments, key.CanManageDiscounts, key.CanListUsers, key.CanViewUserDetails},
-		key.MarketingSpecialist: {key.AccessAdminPanel, key.CanManageDiscounts, key.CanListProducts, key.CanListUsers},
-		key.ContentWriter:       {key.AccessAdminPanel, key.CanListArticles, key.CanCreateArticle, key.CanEditOwnArticle},
-		key.SeniorContentEditor: {key.AccessAdminPanel, key.CanListArticles, key.CanCreateArticle, key.CanEditOwnArticle, key.CanEditAllArticles, key.CanPublishArticle, key.CanDeleteArticle, key.CanListReviews, key.CanApproveReview, key.CanDeleteReview},
-		key.CustomerSupport:     {key.AccessAdminPanel, key.CanViewAllOrders, key.CanEditOrderStatus, key.CanListUsers, key.CanViewUserDetails, key.CanViewAllCarts},
-		key.FinancialAccountant: {key.AccessAdminPanel, key.CanViewAllPayments, key.CanExportPayments, key.CanViewAllOrders},
-		key.RepairTechnician:    {key.AccessAdminPanel, key.CanViewRepairRequests, key.CanUpdateRepairStatus, key.CanSetRepairPrice},
-		key.UsedPhoneSpecialist: {key.AccessAdminPanel, key.CanViewUsedPhoneRequests, key.CanApproveUsedPhone, key.CanRejectUsedPhone},
+func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
+
+	allPermissionKeys := make([]string, 0, len(predefinedPermissions))
+	for _, p := range predefinedPermissions {
+		allPermissionKeys = append(allPermissionKeys, p.Name)
 	}
 
-	for roleName, permissionNames := range rolesToSeed {
+	rolesToSeed := map[string][]string{
+		key.SuperAdmin: allPermissionKeys,
+
+		key.StoreManager: {
+			key.AccessAdminPanel, key.ViewDashboardAnalytics,
+			key.ListUsers, key.ViewUserDetails,
+			key.ListProducts, key.ViewProduct,
+			key.ListOrders, key.ViewOrderDetails, key.UpdateOrderStatus,
+			key.ListCarts, key.ViewCartDetails,
+			key.ListPayments, key.ViewPaymentDetails,
+			key.ListDiscounts,
+		},
+
+		key.ProductManager: {
+			key.AccessAdminPanel,
+			key.ListProducts, key.ViewProduct, key.CreateProduct, key.UpdateProduct, key.DeleteProduct,
+			key.ListBrands, key.CreateBrand, key.UpdateBrand, key.DeleteBrand,
+			key.ListCategories, key.CreateCategory, key.UpdateCategory, key.DeleteCategory,
+		},
+
+		key.MarketingManager: {
+			key.AccessAdminPanel,
+			key.ListDiscounts, key.CreateDiscount, key.UpdateDiscount, key.DeleteDiscount,
+			key.ListUsers, key.ViewUserDetails,
+		},
+
+		key.CustomerSupportLead: {
+			key.AccessAdminPanel,
+			key.ListUsers, key.ViewUserDetails, key.UpdateUser, key.BanUser,
+			key.ListOrders, key.ViewOrderDetails, key.UpdateOrderStatus,
+			key.ListCarts, key.ViewCartDetails,
+		},
+
+		key.CustomerSupportAgent: {
+			key.AccessAdminPanel,
+			key.ListUsers, key.ViewUserDetails,
+			key.ListOrders, key.ViewOrderDetails,
+		},
+
+		key.FinancialManager: {
+			key.AccessAdminPanel,
+			key.ListPayments, key.ViewPaymentDetails, key.RefundPayment,
+			key.ExportReports,
+		},
+
+		key.RepairTechnician: {
+			key.AccessAdminPanel,
+			key.ListRepairRequests, key.ViewRepairRequest, key.UpdateRepairStatus, key.SetRepairPrice,
+		},
+
+		key.UsedPhoneSpecialist: {
+			key.AccessAdminPanel,
+			key.ListUsedPhoneRequests, key.ViewUsedPhoneRequest, key.ApproveUsedPhone, key.RejectUsedPhone,
+		},
+	}
+
+	for roleName, permissionKeys := range rolesToSeed {
 		_, err := repo.FindByName(ctx, roleName)
 		if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
 			return err
 		}
 
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			var permissionIDs []string
-			for _, pName := range permissionNames {
-				if id, ok := permissionMap[pName]; ok {
-					permissionIDs = append(permissionIDs, id)
-				}
-			}
-
 			newRole := &entity.Role{
-				Name:          roleName,
-				Description:   fmt.Sprintf("Role for %s", roleName),
-				PermissionIDs: permissionIDs,
+				Name:           roleName,
+				Description:    fmt.Sprintf("Role for %s", roleName),
+				PermissionKeys: permissionKeys,
 			}
-
 			newRole.BeforeCreate()
 
 			if err := repo.Create(ctx, newRole); err != nil {
 				return err
 			}
-			fmt.Printf("Role '%s' created with %d permissions.\n", newRole.Name, len(permissionIDs))
+			fmt.Printf("Role '%s' created with %d permissions.\n", newRole.Name, len(permissionKeys))
 		}
 	}
 	return nil
