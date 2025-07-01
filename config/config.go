@@ -21,6 +21,6 @@ type Config struct {
 	Redis         redisadapter.Config      `koanf:"redis"`
 	Nats          natsadapter.Config       `koanf:"nats"`
 	Mongo         mongodb.Config           `koanf:"mongo"`
-	ObjectStorage liarastorage.Config      `koanf:"storage"`
+	ObjectStorage liarastorage.Config      `koanf:"object_storage"`
 	Media         mediaservice.Config      `koanf:"media"`
 }

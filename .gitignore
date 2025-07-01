@@ -227,3 +227,5 @@ Temporary Items
 /logs
 # End of https://www.toptal.com/developers/gitignore/api/macos,goland,jetbrains
 ./cmd/example.go
+
+env-tmp.sh
