@@ -51,6 +51,10 @@
     "id": "validation.brand_is_already_exist",
     "translation": "برند در حال حاضر موجود میباشد"
   },
+  {
+    "id": "validation.invalid_input",
+    "translation": "ورودی نا معتبر میباشد."
+  },
 
 
   {
@@ -199,5 +203,10 @@
   {
     "id": "admin.user.access_changed",
     "translation": "سطح دسترسی کاربر «{{.Username}}» تغییر یافت."
+  },
+
+  {
+    "id": "media.unsupported_media_type",
+    "translation": "نوع محتوای ارسالی پشتیبانی نمی‌شود. لطفاً از فرمت 'multipart/form-data' برای آپلود فایل استفاده کنید."
   }
 ]
