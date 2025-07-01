@@ -7,7 +7,7 @@ import (
 )
 
 type RoleRepository interface {
-	GetPermissionIDsOfRole(ctx context.Context, roleID string) ([]string, error)
+	GetPermissionIDsOfRole(ctx context.Context, roleID []string) ([]string, error)
 }
 type Service struct {
 	RoleRepo RoleRepository
@@ -21,7 +21,7 @@ func (s Service) CheckAccess(ctx context.Context, backofficeUserID string,
 	backofficeUserRoleIDs []string, backofficeUserPermissionIDs []string, permissionIDs ...string) (bool, error) {
 	const op = "aclservice.CheckAccess"
 	// get permissions of backoffice roles
-	pIDs, gErr := s.RoleRepo.GetPermissionIDsOfRole(ctx, backofficeUserID)
+	pIDs, gErr := s.RoleRepo.GetPermissionIDsOfRole(ctx, backofficeUserRoleIDs)
 	if gErr != nil {
 		return false, richerror.New(op).WithWarpError(gErr)
 	}
