@@ -25,6 +25,8 @@ const (
 	CanEditUser        = "user:edit"
 	CanBanUser         = "user:ban"
 
+	CanCreateBrand = "brand:create"
+
 	CanListProducts     = "product:list"
 	CanCreateProduct    = "product:create"
 	CanEditProduct      = "product:edit"

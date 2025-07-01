@@ -15,6 +15,7 @@ import (
 	mongodbbackoffice "github.com/abolfazlnorzad/steve/repository/mongo/backoffice"
 	mongodbbrand "github.com/abolfazlnorzad/steve/repository/mongo/brand"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
+	aclservice "github.com/abolfazlnorzad/steve/service/acl"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
 	brandservice "github.com/abolfazlnorzad/steve/service/brand"
@@ -46,7 +47,8 @@ func main() {
 
 	brandVld := brandvalidator.New(brandRepo)
 	backOfficeHandler := backofficeauthhandler.New(backOfficeSvc, backOfficeVld, translator)
-	brandHandler := brandhandler.New(backofficebrandsvc, translator, brandVld, authSvc, cfg.Auth)
+	aclSvc := aclservice.New(roleRepo)
+	brandHandler := brandhandler.New(backofficebrandsvc, translator, brandVld, authSvc, cfg.Auth, aclSvc)
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler)
 	server.Serve()
 }

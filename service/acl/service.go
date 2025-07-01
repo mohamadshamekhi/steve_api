@@ -13,6 +13,10 @@ type Service struct {
 	RoleRepo RoleRepository
 }
 
+func New(roleRepo RoleRepository) Service {
+	return Service{RoleRepo: roleRepo}
+}
+
 func (s Service) CheckAccess(ctx context.Context, backofficeUserID string,
 	backofficeUserRoleIDs []string, backofficeUserPermissionIDs []string, permissionIDs ...string) (bool, error) {
 	const op = "aclservice.CheckAccess"
