@@ -37,7 +37,6 @@ func (s Service) UploadFile(ctx context.Context, req mediaparam.UploadMediaReque
 	}
 
 	return mediaparam.UploadMediaResponse{
-		ID:  media.ID,
-		URL: res.Path,
+		ID: media.ID,
 	}, nil
 }

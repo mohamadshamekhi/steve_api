@@ -12,6 +12,5 @@ type UploadMediaRequest struct {
 }
 
 type UploadMediaResponse struct {
-	ID  string `json:"id"`
-	URL string `json:"url"`
+	ID string `json:"id"`
 }
