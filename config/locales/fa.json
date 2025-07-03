@@ -15,7 +15,10 @@
     "id": "global.forbidden",
     "translation": "شما اجازه دسترسی ندارید."
   },
-
+  {
+    "id": "global.not-found",
+    "translation": "آیتمی پیدا نشد"
+  },
 
   {
     "id": "media.file_too_large",
@@ -47,11 +50,31 @@
     "id": "validation.incorrect_opt_code",
     "translation": "کد وارد شده نامعتبر است."
   },
+  {
+    "id": "validation.brand_is_already_exist",
+    "translation": "برند در حال حاضر موجود میباشد"
+  },
+  {
+    "id": "validation.invalid_input",
+    "translation": "ورودی نا معتبر میباشد."
+  },
 
 
   {
     "id": "attr.phone_number",
     "translation": "شماره تلفن"
+  },
+  {
+    "id": "attr.domain",
+    "translation": "دامته آپلود فایل"
+  },
+  {
+    "id": "attr.id",
+    "translation": "شناسه"
+  },
+  {
+    "id": "attr.media_id",
+    "translation": "فایل  "
   },
   {
     "id": "attr.Password",
@@ -68,6 +91,10 @@
   {
     "id": "attr.Email",
     "translation": "ایمیل"
+  },
+  {
+    "id": "attr.name",
+    "translation": "نام"
   },
   {
     "id": "attr.ProductName",
@@ -122,6 +149,10 @@
   {
     "id": "auth.forbidden_access",
     "translation": "شما اجازه دسترسی به این بخش را ندارید."
+  },
+  {
+    "id": "auth.you_must_logged_in",
+    "translation": "لطفا ابتدا وارد شوید"
   },
 
 
@@ -191,5 +222,14 @@
   {
     "id": "admin.user.access_changed",
     "translation": "سطح دسترسی کاربر «{{.Username}}» تغییر یافت."
+  },
+
+  {
+    "id": "media.unsupported_media_type",
+    "translation": "نوع محتوای ارسالی پشتیبانی نمی‌شود. لطفاً از فرمت 'multipart/form-data' برای آپلود فایل استفاده کنید."
+  },
+  {
+    "id": "media.file_not_provided",
+    "translation": "لطفا فایل را اپلود کنید"
   }
 ]

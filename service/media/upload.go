@@ -8,7 +8,7 @@ import (
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 )
 
-func (s *Service) UploadFile(ctx context.Context, req mediaparam.UploadMediaRequest) (mediaparam.UploadMediaResponse, error) {
+func (s Service) UploadFile(ctx context.Context, req mediaparam.UploadMediaRequest) (mediaparam.UploadMediaResponse, error) {
 	const op = "mediaservice.UploadFile"
 
 	res, uErr := s.provider.Upload(ctx, req.Domain, req.IsPublic, req.File, req.Header)
@@ -37,7 +37,6 @@ func (s *Service) UploadFile(ctx context.Context, req mediaparam.UploadMediaRequ
 	}
 
 	return mediaparam.UploadMediaResponse{
-		ID:  media.ID,
-		URL: res.Path,
+		ID: media.ID,
 	}, nil
 }

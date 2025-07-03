@@ -3,19 +3,29 @@ package main
 import (
 	natsadapter "github.com/abolfazlnorzad/steve/adapter/nats"
 	redisadapter "github.com/abolfazlnorzad/steve/adapter/redis"
+	liarastorage "github.com/abolfazlnorzad/steve/adapter/storage/liara"
 	"github.com/abolfazlnorzad/steve/config"
 	httpserver "github.com/abolfazlnorzad/steve/delivery/http_server"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
+	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
+	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	"github.com/abolfazlnorzad/steve/internal/seeder"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
 	mongodb "github.com/abolfazlnorzad/steve/repository/mongo"
 	mongodbpermission "github.com/abolfazlnorzad/steve/repository/mongo/acl/permission"
 	mongodbrole "github.com/abolfazlnorzad/steve/repository/mongo/acl/role"
 	mongodbbackoffice "github.com/abolfazlnorzad/steve/repository/mongo/backoffice"
+	mongodbbrand "github.com/abolfazlnorzad/steve/repository/mongo/brand"
+	mongodbmedia "github.com/abolfazlnorzad/steve/repository/mongo/media"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
+	aclservice "github.com/abolfazlnorzad/steve/service/acl"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
+	brandservice "github.com/abolfazlnorzad/steve/service/brand"
+	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 	backofficevalidatorauth "github.com/abolfazlnorzad/steve/validator/backoffice/auth"
+	brandvalidator "github.com/abolfazlnorzad/steve/validator/brand"
+	mediavalidator "github.com/abolfazlnorzad/steve/validator/media"
 )
 
 func main() {
@@ -35,9 +45,22 @@ func main() {
 
 	permissionRepo := mongodbpermission.New(mongoRepo)
 	roleRepo := mongodbrole.New(mongoRepo)
-	seeder.Run(*permissionRepo, *roleRepo)
+	seeder.Run(permissionRepo, roleRepo, backOfficeMongoRepo)
 
+	brandRepo := mongodbbrand.New(mongoRepo)
+	mediaRepo := mongodbmedia.New(mongoRepo)
+
+	l := liarastorage.New(cfg.ObjectStorage, cfg.Media)
+	mediaSvc := mediaservice.New(l, mediaRepo, cfg.Media, redisRepo)
+	backofficebrandsvc := brandservice.NewBackofficeService(brandRepo, mediaSvc)
+
+	brandVld := brandvalidator.New(brandRepo, mediaSvc)
 	backOfficeHandler := backofficeauthhandler.New(backOfficeSvc, backOfficeVld, translator)
-	server := httpserver.New(cfg, backOfficeHandler)
+	aclSvc := aclservice.New(roleRepo)
+	brandHandler := brandhandler.New(backofficebrandsvc, translator, brandVld, authSvc, cfg.Auth, aclSvc)
+	mediaVld := mediavalidator.New(mediaRepo)
+
+	mediaHandler := mediahandler.New(mediaVld, mediaSvc, translator, authSvc, cfg.Auth)
+	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler)
 	server.Serve()
 }

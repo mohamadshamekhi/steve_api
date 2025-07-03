@@ -30,7 +30,7 @@ func (s Service) VerifyOTPCode(ctx context.Context, req backofficeauthparam.Veri
 		if iErr != nil {
 			return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(iErr)
 		}
-		token, gErr := s.authSvc.GenerateAccessToken(backoffice.ID, s.config.Prefix, backoffice.RoleIDs, backoffice.PermissionIDs)
+		token, gErr := s.authSvc.GenerateAccessToken(backoffice.ID, s.config.Prefix, backoffice.Roles, backoffice.Permissions)
 		if gErr != nil {
 			return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(gErr)
 		}

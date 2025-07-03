@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/abolfazlnorzad/steve/entity"
-	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"log"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+
 	"github.com/oklog/ulid/v2"
 	"io"
 	"mime/multipart"
@@ -29,26 +32,26 @@ type Config struct {
 
 type Disk struct {
 	config   Config
-	client   *s3.Client
+	client   *s3.S3
 	MediaCfg mediaservice.Config
 }
 
 func New(credential Config, mcfg mediaservice.Config) *Disk {
-	cfg, lErr := config.LoadDefaultConfig(context.Background(), config.WithRegion("us-west-2"))
-	if lErr != nil {
-		logger.L().Error("error in load config in liara object storage :", lErr)
-	}
-	cfg.Credentials = aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
-		return aws.Credentials{
-			AccessKeyID:     credential.AwsAccessKeyID,
-			SecretAccessKey: credential.AwsSecretAccessKey,
-		}, nil
+
+	sess, err := session.NewSession(&aws.Config{
+		Endpoint:    aws.String(credential.Endpoint),
+		Region:      aws.String("us-east-1"), // Region is required but can be arbitrary for S3-compatible storage
+		Credentials: credentials.NewStaticCredentials(credential.AwsAccessKeyID, credential.AwsSecretAccessKey, ""),
 	})
 
-	cfg.BaseEndpoint = aws.String(credential.Endpoint)
+	if err != nil {
+		log.Fatalf("Failed to create liara session: %v", err)
 
-	client := s3.NewFromConfig(cfg)
+	}
 
+	client := s3.New(sess)
+
+	fmt.Println("credential", credential)
 	return &Disk{
 		config:   credential,
 		client:   client,
@@ -76,7 +79,7 @@ func (d *Disk) Upload(ctx context.Context, domain string, isPublic bool, file mu
 	}
 	mimeType := http.DetectContentType(buffer)
 	isValidMimeType := false
-	for _, allowedType := range d.MediaCfg.AllowedExtensions {
+	for _, allowedType := range d.MediaCfg.AllowedMimeTypes {
 		if mimeType == allowedType {
 			isValidMimeType = true
 			break
@@ -101,7 +104,7 @@ func (d *Disk) Upload(ctx context.Context, domain string, isPublic bool, file mu
 	if isPublic {
 		targetBucket = d.config.PublicBucketName
 	}
-	_, err = d.client.PutObject(ctx, &s3.PutObjectInput{
+	_, err = d.client.PutObject(&s3.PutObjectInput{
 		Bucket:      aws.String(targetBucket),
 		Key:         aws.String(filePath),
 		Body:        file,
@@ -119,22 +122,20 @@ func (d *Disk) Upload(ctx context.Context, domain string, isPublic bool, file mu
 }
 
 func (d *Disk) GetURL(ctx context.Context, media *entity.Media) (string, error) {
-	pClient := s3.NewPresignClient(d.client)
 	targetBucket := d.config.PrivateBucketName
 	if media.IsPublic {
 		targetBucket = d.config.PublicBucketName
 	}
-	request, err := pClient.PresignGetObject(ctx, &s3.GetObjectInput{
+	req, _ := d.client.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(targetBucket),
 		Key:    aws.String(media.Path),
-	}, func(opts *s3.PresignOptions) {
-		opts.Expires = d.MediaCfg.PresignedPrivateURLExpiration
 	})
+	url, err := req.Presign(d.MediaCfg.PresignedPrivateURLExpiration)
 	if err != nil {
 		return "", richerror.New("adapter.s3.GeneratePresignedURL").WithWarpError(err).WithKind(richerror.KindUnexpected)
 	}
 
-	return request.URL, nil
+	return url, nil
 }
 
 func (d *Disk) Delete(ctx context.Context, media *entity.Media) error {
@@ -142,7 +143,7 @@ func (d *Disk) Delete(ctx context.Context, media *entity.Media) error {
 	if media.IsPublic {
 		targetBucket = d.config.PublicBucketName
 	}
-	_, err := d.client.DeleteObject(ctx, &s3.DeleteObjectInput{Bucket: aws.String(targetBucket), Key: aws.String(media.Path)})
+	_, err := d.client.DeleteObject(&s3.DeleteObjectInput{Bucket: aws.String(targetBucket), Key: aws.String(media.Path)})
 
 	return err
 }

@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	PublicBaseURL                 string        `json:"public_base_url"`
+	PublicBaseURL                 string        `koanf:"public_base_url"`
 	AllowedExtensions             []string      `koanf:"allowed_extensions"`
 	AllowedMimeTypes              []string      `koanf:"allowed_mime_types"`
 	MaxUploadSizeBytes            int64         `koanf:"max_upload_size"`
@@ -32,6 +32,7 @@ type Repository interface {
 	AddMedia(ctx context.Context, media entity.Media) (entity.Media, error)
 	GetMediaByID(ctx context.Context, id string) (entity.Media, error)
 	DeleteMedia(ctx context.Context, id string) error
+	FindManyByIDs(ctx context.Context, ids []string) ([]entity.Media, error)
 }
 type Service struct {
 	provider   StorageProvider
