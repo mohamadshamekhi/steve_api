@@ -43,6 +43,11 @@ func (s BackofficeService) GetBrand(ctx context.Context, req brandparam.GetBrand
 	if err != nil {
 		return brandparam.GetBrandResponse{}, richerror.New(op).WithWarpError(err)
 	}
+	if !brand.DeletedAt.IsZero() {
+		return brandparam.GetBrandResponse{}, richerror.New(op).
+			WithKind(richerror.KindNotFound).
+			WithMessageKey("global.not-found")
+	}
 	resp, err := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: brand.MediaID})
 	if err != nil {
 		return brandparam.GetBrandResponse{}, richerror.New(op).WithWarpError(err)
@@ -61,6 +66,13 @@ func (s BackofficeService) Update(ctx context.Context, req brandparam.UpdateBran
 	if fErr != nil {
 		return brandparam.UpdateBrandResponse{}, richerror.New(op).WithWarpError(fErr)
 	}
+
+	if !brand.DeletedAt.IsZero() {
+		return brandparam.UpdateBrandResponse{}, richerror.New(op).
+			WithKind(richerror.KindNotFound).
+			WithMessageKey("global.not-found")
+	}
+
 	var oldMediaIDToDelete string
 
 	if req.Name != nil {
