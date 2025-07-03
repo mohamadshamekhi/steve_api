@@ -32,6 +32,7 @@ type Repository interface {
 	AddMedia(ctx context.Context, media entity.Media) (entity.Media, error)
 	GetMediaByID(ctx context.Context, id string) (entity.Media, error)
 	DeleteMedia(ctx context.Context, id string) error
+	FindManyByIDs(ctx context.Context, ids []string) ([]entity.Media, error)
 }
 type Service struct {
 	provider   StorageProvider

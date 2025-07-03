@@ -148,7 +148,6 @@ func (s BackofficeService) Delete(ctx context.Context, req brandparam.DeleteBran
 
 func (s BackofficeService) All(ctx context.Context, req brandparam.GetAllBrandsParamRequest) (brandparam.GetAllBrandsParamResponse, error) {
 	const op = "brandservice.All"
-
 	resp, err := s.repo.All(ctx, req.Filter, req.Pagination)
 	if err != nil {
 		return brandparam.GetAllBrandsParamResponse{}, richerror.New(op).WithWarpError(err)

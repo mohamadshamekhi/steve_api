@@ -9,3 +9,10 @@ type GetMediaByIDRequest struct {
 type GetMediaByIDResponse struct {
 	Media entity.Media `json:"media"`
 }
+
+type GetUrlsByIDsRequest struct {
+	IDs []string `json:"ids"`
+}
+type GetUrlsByIDsResponse struct {
+	URLs map[string]string `json:"urls"`
+}

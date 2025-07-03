@@ -23,3 +23,25 @@ func (d DB) GetMediaByID(ctx context.Context, id string) (entity.Media, error) {
 	}
 	return media, nil
 }
+func (d DB) FindManyByIDs(ctx context.Context, ids []string) ([]entity.Media, error) {
+	const op = "mongodb.FindManyByIDs"
+
+	if len(ids) == 0 {
+		return []entity.Media{}, nil
+	}
+
+	filter := bson.M{"_id": bson.M{"$in": ids}}
+
+	cursor, err := d.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+	defer cursor.Close(ctx)
+
+	var mediaList []entity.Media
+	if err := cursor.All(ctx, &mediaList); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+
+	return mediaList, nil
+}
