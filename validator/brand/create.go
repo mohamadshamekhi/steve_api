@@ -45,11 +45,23 @@ func (v Validator) ValidateCreateBrandRequest(req brandparam.CreateBrandRequest)
 }
 
 func (v Validator) brandIsUnique(value any) error {
-	name, ok := value.(string)
-	if !ok {
-		return richerror.New("brandvalidator.BrandIsUnique").
+	var name string
+	switch v := value.(type) {
+	case string:
+		name = v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		name = *v
+	default:
+		return richerror.New("brandvalidator.BrandIsUnique.type_assertion").
 			WithKind(richerror.KindUnexpected).
-			WithWarpError(errors.New("unexpected type assertion failed"))
+			WithWarpError(errors.New("unexpected type for brand name"))
+	}
+
+	if name == "" {
+		return nil
 	}
 	resp, err := v.repo.CheckBrandNameIsExist(context.Background(), name)
 	if err != nil {

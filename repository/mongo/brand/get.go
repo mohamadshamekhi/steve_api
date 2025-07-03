@@ -24,3 +24,18 @@ func (d DB) FindByID(ctx context.Context, id string) (entity.Brand, error) {
 	}
 	return brand, nil
 }
+
+func (d DB) FindByName(ctx context.Context, name string) (entity.Brand, error) {
+	const op = "mongodbbrand.FindByName"
+	filter := bson.M{"name": name}
+	var brand entity.Brand
+
+	if err := d.collection.FindOne(ctx, filter).Decode(&brand); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return brand, richerror.New(op).WithWarpError(err).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
+		}
+		return brand, richerror.New(op).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected).
+			WithMeta(map[string]any{"name": name})
+	}
+	return brand, nil
+}

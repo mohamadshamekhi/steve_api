@@ -1,6 +1,7 @@
 package brandvalidator
 
 import (
+	"context"
 	"errors"
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -16,10 +17,8 @@ func (v Validator) ValidateUpdateBrandRequest(req brandparam.UpdateBrandRequest)
 		validation.Field(&req.Name,
 			validation.When(req.Name != nil,
 				validation.Required.Error("validation.required"),
-				validation.By(v.brandIsExist),
-				validation.By(v.brandIsUnique),
-			),
-		),
+				validation.By(v.brandNameIsUniqueForUpdate((req.BrandID))),
+			)),
 		validation.Field(&req.Description,
 			validation.When(req.Name != nil,
 				validation.Required.Error("validation.required"),
@@ -53,4 +52,28 @@ func (v Validator) ValidateUpdateBrandRequest(req brandparam.UpdateBrandRequest)
 
 	//nolint
 	return nil
+}
+
+func (v Validator) brandNameIsUniqueForUpdate(currentBrandID string) validation.RuleFunc {
+	return func(value interface{}) error {
+		name, ok := value.(*string)
+		if !ok || name == nil || *name == "" {
+			return nil
+		}
+
+		existingBrand, err := v.repo.FindByName(context.Background(), *name)
+		if err != nil {
+			var rErr *richerror.RichError
+			if errors.As(err, &rErr) && rErr.Kind() == richerror.KindNotFound {
+				return nil
+			}
+			return err
+		}
+
+		if existingBrand.ID != currentBrandID {
+			return errors.New("validation.brand_is_already_exist")
+		}
+
+		return nil
+	}
 }

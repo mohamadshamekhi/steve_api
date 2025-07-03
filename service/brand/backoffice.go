@@ -78,6 +78,11 @@ func (s BackofficeService) Update(ctx context.Context, req brandparam.UpdateBran
 	if req.Name != nil {
 		brand.Name = *req.Name
 	}
+
+	if req.Description != nil {
+		brand.Description = *req.Description
+	}
+
 	if req.MediaID != nil && *req.MediaID != brand.MediaID {
 
 		_, mediaErr := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: *req.MediaID})

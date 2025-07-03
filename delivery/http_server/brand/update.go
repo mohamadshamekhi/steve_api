@@ -18,6 +18,7 @@ func (h Handler) Update(c echo.Context) error {
 			WithMessageKey("validation.invalid_input").
 			WithWarpError(bErr)
 	}
+	req.BrandID = c.Param("id")
 
 	if err := h.validator.ValidateUpdateBrandRequest(req); err != nil {
 		return err
