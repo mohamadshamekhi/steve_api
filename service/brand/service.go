@@ -13,7 +13,7 @@ type BrandReader interface {
 
 type BrandWriter interface {
 	Create(ctx context.Context, brand entity.Brand) error
-	//Update(ctx context.Context, brand entity.Brand) error
+	Update(ctx context.Context, brand entity.Brand) error
 }
 
 type BrandReadWriter interface {
@@ -23,4 +23,5 @@ type BrandReadWriter interface {
 
 type MediaService interface {
 	GetURLByMediaID(ctx context.Context, req mediaparam.GetUrlByIDRequest) (mediaparam.GetUrlByIDResponse, error)
+	DeleteMedia(ctx context.Context, req mediaparam.DeleteMediaRequest) (mediaparam.DeleteMediaResponse, error)
 }
