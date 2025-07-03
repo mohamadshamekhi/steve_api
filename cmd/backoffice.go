@@ -48,17 +48,17 @@ func main() {
 	seeder.Run(permissionRepo, roleRepo, backOfficeMongoRepo)
 
 	brandRepo := mongodbbrand.New(mongoRepo)
-	backofficebrandsvc := brandservice.NewBackofficeService(brandRepo)
+	mediaRepo := mongodbmedia.New(mongoRepo)
 
-	brandVld := brandvalidator.New(brandRepo)
+	backofficebrandsvc := brandservice.NewBackofficeService(brandRepo)
+	l := liarastorage.New(cfg.ObjectStorage, cfg.Media)
+	mediaSvc := mediaservice.New(l, mediaRepo, cfg.Media, redisRepo)
+	brandVld := brandvalidator.New(brandRepo, mediaSvc)
 	backOfficeHandler := backofficeauthhandler.New(backOfficeSvc, backOfficeVld, translator)
 	aclSvc := aclservice.New(roleRepo)
 	brandHandler := brandhandler.New(backofficebrandsvc, translator, brandVld, authSvc, cfg.Auth, aclSvc)
-	mediaRepo := mongodbmedia.New(mongoRepo)
 	mediaVld := mediavalidator.New(mediaRepo)
 
-	l := liarastorage.New(cfg.ObjectStorage, cfg.Media)
-	mediaSvc := mediaservice.New(l, mediaRepo, cfg.Media, redisRepo)
 	mediaHandler := mediahandler.New(mediaVld, mediaSvc, translator, authSvc, cfg.Auth)
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler)
 	server.Serve()

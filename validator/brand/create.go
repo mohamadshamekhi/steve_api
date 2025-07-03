@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
+	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
@@ -13,7 +14,11 @@ func (v Validator) ValidateCreateBrandRequest(req brandparam.CreateBrandRequest)
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.Name,
 			validation.Required.Error("validation.required"),
-			validation.By(v.brandIsExist))); err != nil {
+			validation.By(v.brandIsExist)),
+		validation.Field(&req.MediaID,
+			validation.Required.Error("validation.required"),
+			validation.By(v.mediaBrandIsExist),
+		)); err != nil {
 
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {
@@ -51,7 +56,29 @@ func (v Validator) brandIsExist(value any) error {
 		return err
 	}
 	if resp {
-		return richerror.New("brandvalidator.BrandIsExist").WithKind(richerror.KindBadRequest).WithMessageKey("validation.brand_is_already_exist")
+		return errors.New("validation.brand_is_already_exist")
+	}
+	return nil
+}
+
+func (v Validator) mediaBrandIsExist(value any) error {
+	mediaID, ok := value.(string)
+	if !ok {
+		return richerror.New("brandvalidator.BrandIsUnique").
+			WithKind(richerror.KindUnexpected).
+			WithWarpError(errors.New("unexpected type assertion failed"))
+	}
+
+	_, err := v.mediaSvc.FindMediaByID(context.Background(), mediaparam.GetMediaByIDRequest{ID: mediaID})
+
+	if err != nil {
+		var rErr *richerror.RichError
+		if errors.As(err, &rErr) {
+			if rErr.Kind() == richerror.KindNotFound {
+				return errors.New(rErr.MessageKey())
+			}
+		}
+		return err
 	}
 	return nil
 }

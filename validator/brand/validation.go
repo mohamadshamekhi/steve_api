@@ -1,14 +1,18 @@
 package brandvalidator
 
-import "context"
+import (
+	"context"
+	mediaservice "github.com/abolfazlnorzad/steve/service/media"
+)
 
 type Repository interface {
 	CheckBrandNameIsExist(ctx context.Context, brandName string) (bool, error)
 }
 type Validator struct {
-	repo Repository
+	repo     Repository
+	mediaSvc mediaservice.Service
 }
 
-func New(repo Repository) Validator {
-	return Validator{repo: repo}
+func New(repo Repository, mediaSvc mediaservice.Service) Validator {
+	return Validator{repo: repo, mediaSvc: mediaSvc}
 }

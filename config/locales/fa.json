@@ -65,6 +65,14 @@
     "translation": "شماره تلفن"
   },
   {
+    "id": "attr.domain",
+    "translation": "دامته آپلود فایل"
+  },
+  {
+    "id": "attr.media_id",
+    "translation": "فایل  "
+  },
+  {
     "id": "attr.Password",
     "translation": "رمز عبور"
   },

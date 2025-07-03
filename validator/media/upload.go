@@ -10,9 +10,8 @@ import (
 func (v Validator) ValidateUploadRequest(req mediaparam.UploadMediaRequest) error {
 	const op = "mediavalidator.ValidateUploadRequest"
 	if err := validation.ValidateStruct(&req,
-		validation.Field(&req.Domain, validation.Required),
-		validation.Field(&req.UploaderID, validation.Required),
-		validation.Field(&req.UploaderType, validation.In("backoffice", "user")),
+		validation.Field(&req.Domain, validation.Required.Error("validation.required")),
+		validation.Field(&req.UploaderType, validation.In("backoffice", "user").Error("validation.required")),
 	); err != nil {
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {
