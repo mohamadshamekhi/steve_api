@@ -7,6 +7,7 @@ import (
 
 type Repository interface {
 	CheckBrandNameIsExist(ctx context.Context, brandName string) (bool, error)
+	CheckBrandIDIsExist(ctx context.Context, id string) (bool, error)
 }
 type Validator struct {
 	repo     Repository

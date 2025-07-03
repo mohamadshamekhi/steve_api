@@ -14,7 +14,7 @@ func (v Validator) ValidateCreateBrandRequest(req brandparam.CreateBrandRequest)
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.Name,
 			validation.Required.Error("validation.required"),
-			validation.By(v.brandIsExist)),
+			validation.By(v.brandIsUnique)),
 		validation.Field(&req.MediaID,
 			validation.Required.Error("validation.required"),
 			validation.By(v.mediaBrandIsExist),
@@ -44,7 +44,7 @@ func (v Validator) ValidateCreateBrandRequest(req brandparam.CreateBrandRequest)
 	return nil
 }
 
-func (v Validator) brandIsExist(value any) error {
+func (v Validator) brandIsUnique(value any) error {
 	name, ok := value.(string)
 	if !ok {
 		return richerror.New("brandvalidator.BrandIsUnique").

@@ -52,7 +52,7 @@ func main() {
 
 	l := liarastorage.New(cfg.ObjectStorage, cfg.Media)
 	mediaSvc := mediaservice.New(l, mediaRepo, cfg.Media, redisRepo)
-	backofficebrandsvc := brandservice.NewBackofficeService(brandRepo)
+	backofficebrandsvc := brandservice.NewBackofficeService(brandRepo, mediaSvc)
 
 	brandVld := brandvalidator.New(brandRepo, mediaSvc)
 	backOfficeHandler := backofficeauthhandler.New(backOfficeSvc, backOfficeVld, translator)

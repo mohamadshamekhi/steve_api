@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	PublicBaseURL                 string        `json:"public_base_url"`
+	PublicBaseURL                 string        `koanf:"public_base_url"`
 	AllowedExtensions             []string      `koanf:"allowed_extensions"`
 	AllowedMimeTypes              []string      `koanf:"allowed_mime_types"`
 	MaxUploadSizeBytes            int64         `koanf:"max_upload_size"`

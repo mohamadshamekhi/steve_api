@@ -13,8 +13,8 @@ type BackofficeService struct {
 	mediaSvc MediaService
 }
 
-func NewBackofficeService(repo BrandReadWriter) BackofficeService {
-	return BackofficeService{repo: repo}
+func NewBackofficeService(repo BrandReadWriter, mediaSvc MediaService) BackofficeService {
+	return BackofficeService{repo: repo, mediaSvc: mediaSvc}
 }
 
 func (s BackofficeService) Create(ctx context.Context, req brandparam.CreateBrandRequest) (brandparam.CreateBrandResponse, error) {

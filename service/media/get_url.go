@@ -14,7 +14,7 @@ func (s Service) GetURL(ctx context.Context, req mediaparam.GetUrlRequest) (medi
 	const op = "mediaservice.GetURL"
 
 	if req.Media.IsPublic {
-		return mediaparam.GetUrlResponse{URL: fmt.Sprintf("%s/%s", s.config.PublicBaseURL, req.Media.Path)}, nil
+		return mediaparam.GetUrlResponse{URL: fmt.Sprintf("%s/%s/%s", s.config.PublicBaseURL, req.Media.Bucket, req.Media.Path)}, nil
 	}
 
 	cacheKey := fmt.Sprintf("media:url:%s", req.Media.ID)

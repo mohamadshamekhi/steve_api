@@ -27,7 +27,7 @@ mongo:
   db_name: "steve"
 
 media:
-  public_base_url: ""
+  public_base_url: "https://storage.iran.liara.space"
   allowed_extensions:
     - "mp4"
     - "png"
