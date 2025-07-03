@@ -11,7 +11,7 @@ import (
 )
 
 func (s Service) GetURL(ctx context.Context, req mediaparam.GetUrlRequest) (mediaparam.GetUrlResponse, error) {
-	const op = "media.service.GetURL"
+	const op = "mediaservice.GetURL"
 
 	if req.Media.IsPublic {
 		return mediaparam.GetUrlResponse{URL: fmt.Sprintf("%s/%s", s.config.PublicBaseURL, req.Media.Path)}, nil
@@ -38,4 +38,21 @@ func (s Service) GetURL(ctx context.Context, req mediaparam.GetUrlRequest) (medi
 		logger.L().Error("failed to cache media url", "error", cacheErr, "key", cacheKey)
 	}
 	return mediaparam.GetUrlResponse{URL: newURL}, nil
+}
+
+func (s Service) GetURLByMediaID(ctx context.Context, req mediaparam.GetUrlByIDRequest) (mediaparam.GetUrlByIDResponse, error) {
+	const op = "mediaservice.GetURLByMediaID"
+
+	res, err := s.FindMediaByID(ctx, mediaparam.GetMediaByIDRequest{ID: req.ID})
+	if err != nil {
+		return mediaparam.GetUrlByIDResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	resp, err := s.GetURL(ctx, mediaparam.GetUrlRequest{Media: res.Media})
+	if err != nil {
+		return mediaparam.GetUrlByIDResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	return mediaparam.GetUrlByIDResponse{URL: resp.URL}, nil
+
 }

@@ -4,11 +4,13 @@ import (
 	"context"
 	"github.com/abolfazlnorzad/steve/entity"
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
+	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 )
 
 type BackofficeService struct {
-	repo BrandReadWriter
+	repo     BrandReadWriter
+	mediaSvc MediaService
 }
 
 func NewBackofficeService(repo BrandReadWriter) BackofficeService {
@@ -30,4 +32,23 @@ func (s BackofficeService) Create(ctx context.Context, req brandparam.CreateBran
 	}
 
 	return brandparam.CreateBrandResponse{}, nil
+}
+
+func (s BackofficeService) GetBrand(ctx context.Context, req brandparam.GetBrandRequest) (brandparam.GetBrandResponse, error) {
+	const op = "brandservice.GetBrand"
+
+	brand, err := s.repo.FindByID(ctx, req.ID)
+	if err != nil {
+		return brandparam.GetBrandResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	resp, err := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: brand.MediaID})
+	if err != nil {
+		return brandparam.GetBrandResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return brandparam.GetBrandResponse{
+		ID:          brand.ID,
+		Name:        brand.Name,
+		Description: brand.Description,
+		Url:         resp.URL,
+	}, nil
 }

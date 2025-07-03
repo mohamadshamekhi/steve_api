@@ -50,9 +50,10 @@ func main() {
 	brandRepo := mongodbbrand.New(mongoRepo)
 	mediaRepo := mongodbmedia.New(mongoRepo)
 
-	backofficebrandsvc := brandservice.NewBackofficeService(brandRepo)
 	l := liarastorage.New(cfg.ObjectStorage, cfg.Media)
 	mediaSvc := mediaservice.New(l, mediaRepo, cfg.Media, redisRepo)
+	backofficebrandsvc := brandservice.NewBackofficeService(brandRepo)
+
 	brandVld := brandvalidator.New(brandRepo, mediaSvc)
 	backOfficeHandler := backofficeauthhandler.New(backOfficeSvc, backOfficeVld, translator)
 	aclSvc := aclservice.New(roleRepo)

@@ -9,3 +9,11 @@ type GetUrlRequest struct {
 type GetUrlResponse struct {
 	URL string `json:"url"`
 }
+
+type GetUrlByIDRequest struct {
+	ID string `json:"id"`
+}
+
+type GetUrlByIDResponse struct {
+	URL string `json:"url"`
+}

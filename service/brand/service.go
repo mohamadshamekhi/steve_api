@@ -3,11 +3,12 @@ package brandservice
 import (
 	"context"
 	"github.com/abolfazlnorzad/steve/entity"
+	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 )
 
 type BrandReader interface {
 	FindByID(ctx context.Context, id string) (entity.Brand, error)
-	ListAll(ctx context.Context) ([]entity.Brand, error)
+	//ListAll(ctx context.Context) ([]entity.Brand, error)
 }
 
 type BrandWriter interface {
@@ -16,6 +17,10 @@ type BrandWriter interface {
 }
 
 type BrandReadWriter interface {
-	//BrandReader
+	BrandReader
 	BrandWriter
+}
+
+type MediaService interface {
+	GetURLByMediaID(ctx context.Context, req mediaparam.GetUrlByIDRequest) (mediaparam.GetUrlByIDResponse, error)
 }
