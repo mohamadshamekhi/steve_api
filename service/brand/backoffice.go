@@ -145,3 +145,33 @@ func (s BackofficeService) Delete(ctx context.Context, req brandparam.DeleteBran
 
 	return brandparam.DeleteBrandResponse{}, nil
 }
+
+func (s BackofficeService) All(ctx context.Context, req brandparam.GetAllBrandsParamRequest) (brandparam.GetAllBrandsParamResponse, error) {
+	const op = "brandservice.All"
+
+	resp, err := s.repo.All(ctx, req.Filter, req.Pagination)
+	if err != nil {
+		return brandparam.GetAllBrandsParamResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	var brands []brandparam.BrandInfo
+
+	for _, b := range resp.Brands {
+		r, e := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: b.MediaID})
+		if e != nil {
+			return brandparam.GetAllBrandsParamResponse{}, e
+		}
+		brands = append(brands, brandparam.BrandInfo{
+			ID:          b.ID,
+			Name:        b.Name,
+			Description: b.Description,
+			URL:         r.URL,
+		})
+	}
+
+	return brandparam.GetAllBrandsParamResponse{Brands: brands, Pagination: struct {
+		PageSize   uint `json:"page_size"`
+		PageNumber uint `json:"page_number"`
+		Total      uint `json:"total"`
+	}{PageSize: req.Pagination.GetPageSize(), PageNumber: req.Pagination.GetPageNumber(), Total: uint(resp.TotalCount)}}, nil
+
+}

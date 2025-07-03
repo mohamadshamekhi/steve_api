@@ -3,12 +3,18 @@ package brandservice
 import (
 	"context"
 	"github.com/abolfazlnorzad/steve/entity"
+	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 )
 
+type ListResult struct {
+	Brands     []entity.Brand
+	TotalCount int64
+}
+
 type BrandReader interface {
 	FindByID(ctx context.Context, id string) (entity.Brand, error)
-	//ListAll(ctx context.Context) ([]entity.Brand, error)
+	All(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
 }
 
 type BrandWriter interface {
