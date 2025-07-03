@@ -107,7 +107,11 @@ func (s BackofficeService) Update(ctx context.Context, req brandparam.UpdateBran
 	}
 	if oldMediaIDToDelete != "" {
 		go func() {
-			if _, err := s.mediaSvc.DeleteMedia(context.Background(), mediaparam.DeleteMediaRequest{ID: oldMediaIDToDelete}); err != nil {
+			r, err := s.mediaSvc.FindMediaByID(context.Background(), mediaparam.GetMediaByIDRequest{ID: oldMediaIDToDelete})
+			if err != nil {
+				logger.L().Error("error in find old media", oldMediaIDToDelete)
+			}
+			if _, err := s.mediaSvc.DeleteMedia(context.Background(), mediaparam.DeleteMediaRequest{Media: r.Media}); err != nil {
 				logger.L().Error("ERROR: background media deletion failed for ID %s: %v\n", oldMediaIDToDelete, err)
 			}
 		}()
@@ -115,4 +119,29 @@ func (s BackofficeService) Update(ctx context.Context, req brandparam.UpdateBran
 
 	return brandparam.UpdateBrandResponse{}, nil
 
+}
+
+func (s BackofficeService) Delete(ctx context.Context, req brandparam.DeleteBrandRequest) (brandparam.DeleteBrandResponse, error) {
+	const op = "brandservice.Delete"
+
+	brand, err := s.repo.FindByID(ctx, req.ID)
+	if err != nil {
+		return brandparam.DeleteBrandResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	if !brand.DeletedAt.IsZero() {
+		return brandparam.DeleteBrandResponse{}, richerror.New(op).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
+	}
+
+	if dErr := s.repo.Delete(ctx, brand); dErr != nil {
+		return brandparam.DeleteBrandResponse{}, richerror.New(op).WithWarpError(dErr)
+	}
+	// todo-write background job for delete media after one day
+	//go func() {
+	//	if _, err := s.mediaSvc.DeleteMedia(context.Background(), mediaparam.DeleteMediaRequest{ID: brand.MediaID}); err != nil {
+	//		logger.L().Error("ERROR: background media deletion failed for ID %s: %v\n", brand.MediaID, err)
+	//	}
+	//}()
+
+	return brandparam.DeleteBrandResponse{}, nil
 }
