@@ -9,10 +9,10 @@ type Category struct {
 	ID          string     `bson:"_id"`
 	Name        string     `bson:"name"`
 	Slug        string     `bson:"slug"`
-	Description string     `bson:"description , omitempty"`
+	Description string     `bson:"description, omitempty"`
 	MediaID     string     `bson:"media_id"`
-	ParentID    string     `bson:"parent_id ,omitempty"`
-	Ancestors   []Ancestor `bson:"ancestors , omitempty"`
+	ParentID    string     `bson:"parent_id,omitempty"`
+	Ancestors   []Ancestor `bson:"ancestors, omitempty"`
 	Level       int        `bson:"level"`
 	CreatedAt   time.Time  `bson:"created_at"`
 	UpdatedAt   time.Time  `bson:"updated_at"`
