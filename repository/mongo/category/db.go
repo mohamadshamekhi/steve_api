@@ -19,7 +19,7 @@ func New(c *mongodb.DB) *DB {
 
 	indexes := []mongo.IndexModel{
 		{
-			Keys:    bson.D{{Key: "category", Value: 1}},
+			Keys:    bson.D{{Key: "slug", Value: 1}},
 			Options: options.Index().SetUnique(true),
 		},
 	}
