@@ -5,13 +5,13 @@ import (
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 )
 
-type GetAllCategoriesParamRequest struct {
+type GetAllCategoriesRequest struct {
 	Pagination commonparam.PaginationRequest `json:"pagination" ,query:"pagination"`
 	Filter     commonparam.FilterRequest     `json:"filter"`
 }
-type GetAllCategoriesParamResponse struct {
+type GetAllCategoriesResponse struct {
 	Pagination commonparam.PaginationResponse `json:"pagination"`
-	Brands     []CategoryInfo                 `json:"categories"`
+	Categories []CategoryInfo                 `json:"categories"`
 }
 
 type CategoryInfo struct {
@@ -19,5 +19,7 @@ type CategoryInfo struct {
 	Name        string            `json:"name"`
 	Description string            `json:"description"`
 	URL         string            `json:"url"`
+	Level       int               `json:"level"`
+	Slug        string            `json:"slug"`
 	Ancestors   []entity.Ancestor `json:"ancestors"`
 }

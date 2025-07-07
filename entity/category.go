@@ -8,6 +8,7 @@ import (
 type Category struct {
 	ID          string     `bson:"_id"`
 	Name        string     `bson:"name"`
+	Slug        string     `bson:"slug"`
 	Description string     `bson:"description , omitempty"`
 	MediaID     string     `bson:"media_id"`
 	ParentID    string     `bson:"parent_id ,omitempty"`
