@@ -5,6 +5,7 @@ import (
 	"github.com/abolfazlnorzad/steve/config"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
+	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	middleware2 "github.com/abolfazlnorzad/steve/delivery/http_server/middleware"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
@@ -20,15 +21,17 @@ type Server struct {
 	backofficeAuthHandler backofficeauthhandler.Handler
 	brandHandler          brandhandler.Handler
 	mediaHandler          mediahandler.Handler
+	categoryHandler       categoryhandler.Handler
 }
 
-func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler) Server {
+func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler) Server {
 	return Server{
 		config:                cfg,
 		Router:                echo.New(),
 		backofficeAuthHandler: backofficeAuthHandler,
 		brandHandler:          brandHandler,
 		mediaHandler:          mediaHandler,
+		categoryHandler:       categoryHandler,
 	}
 }
 
@@ -85,7 +88,7 @@ func (s Server) Serve() {
 
 	s.mediaHandler.SetRoutes(s.Router)
 	s.brandHandler.SetRoutes(s.Router)
-
+	s.categoryHandler.SetRoutes(s.Router)
 	// Start server
 	address := fmt.Sprintf(":%d", s.config.HTTPServer.Port)
 	fmt.Printf("start echo server on %s\n", address)
