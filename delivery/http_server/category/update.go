@@ -19,7 +19,6 @@ func (h Handler) Update(c echo.Context) error {
 			WithWarpError(bErr)
 	}
 	req.CategoryID = c.Param("id")
-
 	if err := h.vld.ValidateUpdateCategoryRequest(req); err != nil {
 		return err
 	}

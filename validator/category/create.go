@@ -48,15 +48,26 @@ func (v Validator) ValidateCreateCategoryRequest(req categoryparam.CreateCategor
 }
 
 func (v Validator) mediaIsExist(value any) error {
-	mediaID, ok := value.(string)
-	if !ok {
-		return richerror.New("categoryvalidator.mediaIsExist").
+	var id string
+	switch v := value.(type) {
+	case string:
+		id = v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		id = *v
+	default:
+		return richerror.New("brandvalidator.BrandIsUnique.type_assertion").
 			WithKind(richerror.KindUnexpected).
-			WithWarpError(errors.New("unexpected type assertion failed"))
+			WithWarpError(errors.New("unexpected type for brand name"))
 	}
 
-	_, err := v.mediaSvc.FindMediaByID(context.Background(), mediaparam.GetMediaByIDRequest{ID: mediaID})
+	if id == "" {
+		return nil
+	}
 
+	_, err := v.mediaSvc.FindMediaByID(context.Background(), mediaparam.GetMediaByIDRequest{ID: id})
 	if err != nil {
 		var rErr *richerror.RichError
 		if errors.As(err, &rErr) {

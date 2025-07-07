@@ -208,6 +208,10 @@ func (s BackofficeService) Update(ctx context.Context, req categoryparam.UpdateC
 		for {
 			existingCategory, err := s.repo.FindBySlug(ctx, slug)
 			if err != nil {
+				var rErr *richerror.RichError
+				if errors.As(err, &rErr) && rErr.Kind() == richerror.KindNotFound {
+					break
+				}
 				return categoryparam.UpdateCategoryResponse{}, richerror.New(op).WithWarpError(err)
 			}
 

@@ -18,7 +18,7 @@ func (v Validator) ValidateUpdateCategoryRequest(req categoryparam.UpdateCategor
 				validation.Required.Error("validation.required")),
 		),
 		validation.Field(&req.Description,
-			validation.When(req.Name != nil,
+			validation.When(req.Description != nil,
 				validation.Required.Error("validation.required"),
 			),
 		),
