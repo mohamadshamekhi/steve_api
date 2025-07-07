@@ -20,9 +20,10 @@ type Category struct {
 }
 
 type Ancestor struct {
-	ID   string `bson:"_id"`
-	Name string `bson:"name"`
-	Slug string `bson:"slug"`
+	ID    string `bson:"_id"`
+	Name  string `bson:"name"`
+	Slug  string `bson:"slug"`
+	Level int    `bson:"level"`
 }
 
 func (c *Category) BeforeCreate() {

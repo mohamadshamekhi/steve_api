@@ -55,9 +55,10 @@ func (s BackofficeService) Create(ctx context.Context, req categoryparam.CreateC
 
 		c.Ancestors = p.Ancestors
 		c.Ancestors = append(c.Ancestors, entity.Ancestor{
-			ID:   p.ID,
-			Name: p.Name,
-			Slug: p.Slug,
+			ID:    p.ID,
+			Name:  p.Name,
+			Slug:  p.Slug,
+			Level: p.Level,
 		})
 		c.Level = p.Level + 1
 	} else {
