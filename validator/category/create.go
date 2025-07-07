@@ -15,7 +15,7 @@ func (v Validator) ValidateCreateCategoryRequest(req categoryparam.CreateCategor
 		validation.Field(&req.Name,
 			validation.Required.Error("validation.required")),
 		validation.Field(&req.ParentID,
-			validation.When(req.ParentID != "", validation.Required.Error("validation.required")),
+			validation.When(req.ParentID != nil, validation.Required.Error("validation.required")),
 			validation.By(v.categoryIsExist),
 		),
 		validation.Field(&req.MediaID,
@@ -70,11 +70,23 @@ func (v Validator) mediaIsExist(value any) error {
 }
 
 func (v Validator) categoryIsExist(value any) error {
-	id, ok := value.(string)
-	if !ok {
-		return richerror.New("categoryvalidator.categoryIsExist").
+	var id string
+	switch v := value.(type) {
+	case string:
+		id = v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		id = *v
+	default:
+		return richerror.New("brandvalidator.BrandIsUnique.type_assertion").
 			WithKind(richerror.KindUnexpected).
-			WithWarpError(errors.New("unexpected type assertion failed"))
+			WithWarpError(errors.New("unexpected type for brand name"))
+	}
+
+	if id == "" {
+		return nil
 	}
 
 	category, err := v.repo.FindByID(context.Background(), id)

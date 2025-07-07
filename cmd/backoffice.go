@@ -8,6 +8,7 @@ import (
 	httpserver "github.com/abolfazlnorzad/steve/delivery/http_server"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
+	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	"github.com/abolfazlnorzad/steve/internal/seeder"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
@@ -16,15 +17,18 @@ import (
 	mongodbrole "github.com/abolfazlnorzad/steve/repository/mongo/acl/role"
 	mongodbbackoffice "github.com/abolfazlnorzad/steve/repository/mongo/backoffice"
 	mongodbbrand "github.com/abolfazlnorzad/steve/repository/mongo/brand"
+	mongodbcategory "github.com/abolfazlnorzad/steve/repository/mongo/category"
 	mongodbmedia "github.com/abolfazlnorzad/steve/repository/mongo/media"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
 	aclservice "github.com/abolfazlnorzad/steve/service/acl"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
 	brandservice "github.com/abolfazlnorzad/steve/service/brand"
+	categoryservice "github.com/abolfazlnorzad/steve/service/category"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 	backofficevalidatorauth "github.com/abolfazlnorzad/steve/validator/backoffice/auth"
 	brandvalidator "github.com/abolfazlnorzad/steve/validator/brand"
+	categoryvalidator "github.com/abolfazlnorzad/steve/validator/category"
 	mediavalidator "github.com/abolfazlnorzad/steve/validator/media"
 )
 
@@ -61,6 +65,10 @@ func main() {
 	mediaVld := mediavalidator.New(mediaRepo)
 
 	mediaHandler := mediahandler.New(mediaVld, mediaSvc, translator, authSvc, cfg.Auth)
-	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler)
+	categoryRepo := mongodbcategory.New(mongoRepo)
+	categoryVld := categoryvalidator.New(categoryRepo, mediaSvc)
+	categorySvc := categoryservice.NewBackofficeService(categoryRepo, mediaSvc)
+	categoryHandler := categoryhandler.New(categorySvc, categoryVld, translator, authSvc, cfg.Auth, aclSvc)
+	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler)
 	server.Serve()
 }

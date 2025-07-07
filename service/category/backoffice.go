@@ -25,15 +25,23 @@ func NewBackofficeService(repo CategoryReadWriter, mediaSvc MediaService) Backof
 func (s BackofficeService) Create(ctx context.Context, req categoryparam.CreateCategoryRequest) (categoryparam.CreateCategoryResponse, error) {
 	const op = "categoryservice.Create"
 
+	var pid string
+
+	if req.ParentID != nil {
+		pid = *req.ParentID
+	} else {
+		pid = ""
+	}
+
 	c := entity.Category{
 		Name:        req.Name,
 		Description: req.Description,
 		MediaID:     req.MediaID,
-		ParentID:    req.ParentID,
+		ParentID:    pid,
 	}
 
-	if req.ParentID != "" {
-		p, fErr := s.repo.FindByID(ctx, req.ParentID)
+	if req.ParentID != nil {
+		p, fErr := s.repo.FindByID(ctx, *req.ParentID)
 		if fErr != nil {
 			var rErr *richerror.RichError
 			if errors.As(fErr, &rErr) && rErr.Kind() == richerror.KindNotFound {
@@ -63,6 +71,10 @@ func (s BackofficeService) Create(ctx context.Context, req categoryparam.CreateC
 	for {
 		existingCategory, err := s.repo.FindBySlug(ctx, slug)
 		if err != nil {
+			var rErr *richerror.RichError
+			if errors.As(err, &rErr) && rErr.Kind() == richerror.KindNotFound {
+				break
+			}
 			return categoryparam.CreateCategoryResponse{}, richerror.New(op).WithWarpError(err)
 		}
 
