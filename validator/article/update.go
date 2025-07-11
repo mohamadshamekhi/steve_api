@@ -7,7 +7,7 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
-func (v Validator) ValidateUpdateCategoryRequest(req articleparam.UpdateArticleRequest) error {
+func (v Validator) ValidateUpdateArticleRequest(req articleparam.UpdateArticleRequest) error {
 	const op = "categoryvalidator.ValidateUpdateCategoryRequest"
 
 	if err := validation.ValidateStruct(&req,

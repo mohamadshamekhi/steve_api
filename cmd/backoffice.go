@@ -6,6 +6,7 @@ import (
 	liarastorage "github.com/abolfazlnorzad/steve/adapter/storage/liara"
 	"github.com/abolfazlnorzad/steve/config"
 	httpserver "github.com/abolfazlnorzad/steve/delivery/http_server"
+	articlehandler "github.com/abolfazlnorzad/steve/delivery/http_server/article"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
@@ -15,17 +16,20 @@ import (
 	mongodb "github.com/abolfazlnorzad/steve/repository/mongo"
 	mongodbpermission "github.com/abolfazlnorzad/steve/repository/mongo/acl/permission"
 	mongodbrole "github.com/abolfazlnorzad/steve/repository/mongo/acl/role"
+	mongodbarticle "github.com/abolfazlnorzad/steve/repository/mongo/article"
 	mongodbbackoffice "github.com/abolfazlnorzad/steve/repository/mongo/backoffice"
 	mongodbbrand "github.com/abolfazlnorzad/steve/repository/mongo/brand"
 	mongodbcategory "github.com/abolfazlnorzad/steve/repository/mongo/category"
 	mongodbmedia "github.com/abolfazlnorzad/steve/repository/mongo/media"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
 	aclservice "github.com/abolfazlnorzad/steve/service/acl"
+	articleservice "github.com/abolfazlnorzad/steve/service/article"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
 	brandservice "github.com/abolfazlnorzad/steve/service/brand"
 	categoryservice "github.com/abolfazlnorzad/steve/service/category"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
+	articlevalidator "github.com/abolfazlnorzad/steve/validator/article"
 	backofficevalidatorauth "github.com/abolfazlnorzad/steve/validator/backoffice/auth"
 	brandvalidator "github.com/abolfazlnorzad/steve/validator/brand"
 	categoryvalidator "github.com/abolfazlnorzad/steve/validator/category"
@@ -69,6 +73,10 @@ func main() {
 	categoryVld := categoryvalidator.New(categoryRepo, mediaSvc)
 	categorySvc := categoryservice.NewBackofficeService(categoryRepo, mediaSvc)
 	categoryHandler := categoryhandler.New(categorySvc, categoryVld, translator, authSvc, cfg.Auth, aclSvc)
-	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler)
+	articleRepo := mongodbarticle.New(mongoRepo)
+	articleVld := articlevalidator.New(articleRepo, mediaSvc)
+	articleSvc := articleservice.NewBackofficeService(articleRepo, mediaSvc)
+	articleHandler := articlehandler.New(translator, authSvc, cfg.Auth, aclSvc, articleSvc, articleVld)
+	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler)
 	server.Serve()
 }

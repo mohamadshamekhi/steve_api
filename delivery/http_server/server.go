@@ -3,6 +3,7 @@ package httpserver
 import (
 	"fmt"
 	"github.com/abolfazlnorzad/steve/config"
+	articlehandler "github.com/abolfazlnorzad/steve/delivery/http_server/article"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
@@ -22,9 +23,10 @@ type Server struct {
 	brandHandler          brandhandler.Handler
 	mediaHandler          mediahandler.Handler
 	categoryHandler       categoryhandler.Handler
+	articleHandler        articlehandler.Handler
 }
 
-func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler) Server {
+func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler, articleHandler articlehandler.Handler) Server {
 	return Server{
 		config:                cfg,
 		Router:                echo.New(),
@@ -32,6 +34,7 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 		brandHandler:          brandHandler,
 		mediaHandler:          mediaHandler,
 		categoryHandler:       categoryHandler,
+		articleHandler:        articleHandler,
 	}
 }
 
@@ -89,6 +92,7 @@ func (s Server) Serve() {
 	s.mediaHandler.SetRoutes(s.Router)
 	s.brandHandler.SetRoutes(s.Router)
 	s.categoryHandler.SetRoutes(s.Router)
+	s.articleHandler.SetRoutes(s.Router)
 	// Start server
 	address := fmt.Sprintf(":%d", s.config.HTTPServer.Port)
 	fmt.Printf("start echo server on %s\n", address)
