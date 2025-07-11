@@ -1,6 +1,9 @@
 package entity
 
-import "time"
+import (
+	"github.com/oklog/ulid/v2"
+	"time"
+)
 
 type Article struct {
 	ID          string    `bson:"_id"`
@@ -12,4 +15,11 @@ type Article struct {
 	CreatedAt   time.Time `bson:"created_at"`
 	UpdatedAt   time.Time `bson:"updated_at"`
 	DeletedAt   time.Time `bson:"deleted_at"`
+}
+
+func (a *Article) BeforeCreate() {
+	a.ID = ulid.Make().String()
+	now := time.Now()
+	a.CreatedAt = now
+	a.UpdatedAt = now
 }
