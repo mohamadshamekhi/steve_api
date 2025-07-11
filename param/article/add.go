@@ -5,7 +5,7 @@ import "time"
 type AddArticleRequest struct {
 	Title       string `json:"title"`
 	Body        string `json:"body"`
-	IsPublished bool   `bson:"is_published"`
+	IsPublished bool   `json:"is_published"`
 	MediaID     string `json:"media_id"`
 }
 

@@ -114,6 +114,9 @@ func (s BackofficeService) Update(ctx context.Context, req articleparam.UpdateAr
 	if req.Body != nil {
 		article.Body = *req.Body
 	}
+	if req.IsPublished != nil {
+		article.IsPublished = *req.IsPublished
+	}
 
 	if req.MediaID != nil && *req.MediaID != article.MediaID {
 
@@ -226,12 +229,21 @@ func (s BackofficeService) GetAll(ctx context.Context, req articleparam.AllArtic
 		return articleparam.AllArticleResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	var articlesInfo []articleparam.ArticleInfo
-	var mIDS []string
+
+	mediaIDs := make([]string, 0, len(resp.Articles))
+	mediaIDSet := make(map[string]struct{})
 	for _, c := range resp.Articles {
-		mIDS = append(mIDS, c.MediaID)
+		if c.MediaID != "" {
+			if _, exists := mediaIDSet[c.MediaID]; !exists {
+				mediaIDSet[c.MediaID] = struct{}{}
+				mediaIDs = append(mediaIDs, c.MediaID)
+			}
+		}
 	}
-	r, err := s.mediaSvc.GetURLsByMediaIDs(ctx, mediaparam.GetUrlsByIDsRequest{IDs: mIDS})
-	if err != nil {
+
+	urlMap, urlErr := s.mediaSvc.GetURLsByMediaIDs(ctx, mediaparam.GetUrlsByIDsRequest{IDs: mediaIDs})
+	if urlErr != nil {
+		logger.L().Error("warning: could not get media urls", "error", urlErr)
 		return articleparam.AllArticleResponse{}, err
 	}
 
@@ -242,7 +254,7 @@ func (s BackofficeService) GetAll(ctx context.Context, req articleparam.AllArtic
 			Slug:        a.Slug,
 			Body:        a.Body,
 			IsPublished: a.IsPublished,
-			MediaUrl:    r.URLs[a.ID],
+			MediaUrl:    urlMap.URLs[a.MediaID],
 			CreatedAt:   a.CreatedAt,
 			UpdatedAt:   a.UpdatedAt,
 		})

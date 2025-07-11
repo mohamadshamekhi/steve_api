@@ -20,14 +20,14 @@ func (h Handler) All(c echo.Context) error {
 	if sErr != nil {
 		pageSize = commonparam.DefaultPageSize
 	}
-	name := c.QueryParam("name")
+	title := c.QueryParam("title")
 	req := articleparam.AllArticleRequest{
 		Pagination: commonparam.PaginationRequest{
 			PageSize:   uint(pageSize),
 			PageNumber: uint(pageNumber),
 		},
 		Filter: commonparam.FilterRequest{
-			Filter: []map[string]string{{"name": name}},
+			Filter: []map[string]string{{"title": title}},
 		},
 	}
 

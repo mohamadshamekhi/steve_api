@@ -2,6 +2,7 @@ package mongodbarticle
 
 import (
 	"context"
+	"fmt"
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -24,6 +25,7 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 			}
 		}
 	}
+	fmt.Println("filter", filter)
 	totalCount, err := d.collection.CountDocuments(ctx, filter)
 	if err != nil {
 		return articleservice.ListResult{}, richerror.New(op).WithWarpError(err).
@@ -48,7 +50,6 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 		return articleservice.ListResult{}, richerror.New(op).WithWarpError(err).
 			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
 	}
-
 	return articleservice.ListResult{
 		Articles:   articles,
 		TotalCount: totalCount,
