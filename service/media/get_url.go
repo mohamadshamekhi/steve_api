@@ -65,7 +65,6 @@ func (s Service) GetURLsByMediaIDs(ctx context.Context, req mediaparam.GetUrlsBy
 	if len(req.IDs) == 0 {
 		return mediaparam.GetUrlsByIDsResponse{}, nil
 	}
-
 	mediaList, err := s.repository.FindManyByIDs(ctx, req.IDs)
 	if err != nil {
 		return mediaparam.GetUrlsByIDsResponse{}, richerror.New(op).WithWarpError(err)

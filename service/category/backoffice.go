@@ -155,13 +155,20 @@ func (s BackofficeService) GetAll(ctx context.Context, req categoryparam.GetAllC
 	}
 	var categoriesInfo []categoryparam.CategoryInfo
 
-	var mIDS []string
+	mediaIDs := make([]string, 0, len(resp.Categories))
+	mediaIDSet := make(map[string]struct{})
 	for _, c := range resp.Categories {
-		mIDS = append(mIDS, c.MediaID)
+		if c.MediaID != "" {
+			if _, exists := mediaIDSet[c.MediaID]; !exists {
+				mediaIDSet[c.MediaID] = struct{}{}
+				mediaIDs = append(mediaIDs, c.MediaID)
+			}
+		}
 	}
 
-	r, err := s.mediaSvc.GetURLsByMediaIDs(ctx, mediaparam.GetUrlsByIDsRequest{IDs: mIDS})
-	if err != nil {
+	urlMap, urlErr := s.mediaSvc.GetURLsByMediaIDs(ctx, mediaparam.GetUrlsByIDsRequest{IDs: mediaIDs})
+	if urlErr != nil {
+		logger.L().Error("warning: could not get media urls", "error", urlErr)
 		return categoryparam.GetAllCategoriesResponse{}, err
 	}
 	for _, c := range resp.Categories {
@@ -169,7 +176,7 @@ func (s BackofficeService) GetAll(ctx context.Context, req categoryparam.GetAllC
 			ID:          c.ID,
 			Name:        c.Name,
 			Description: c.Description,
-			URL:         r.URLs[c.ID],
+			URL:         urlMap.URLs[c.MediaID],
 			Level:       c.Level,
 			Ancestors:   c.Ancestors,
 			Slug:        c.Slug,
