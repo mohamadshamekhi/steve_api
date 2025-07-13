@@ -33,7 +33,7 @@ func (s StorefrontService) GetSingleStorefrontArticle(ctx context.Context, req a
 	if err != nil {
 		return articleparam.GetStorefrontArticleResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	a := articleparam.ArticleInfo{
+	a := articleparam.StorefrontArticleDetail{
 		ID:          article.ID,
 		Title:       article.Title,
 		Slug:        article.Slug,
@@ -54,7 +54,7 @@ func (s StorefrontService) GetAllStorefrontArticles(ctx context.Context, req art
 	if err != nil {
 		return articleparam.AllStorefrontArticleResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	var articlesInfo []articleparam.ArticleInfo
+	var articlesInfo []articleparam.StorefrontArticle
 
 	mediaIDs := make([]string, 0, len(resp.Articles))
 	mediaIDSet := make(map[string]struct{})
@@ -74,11 +74,10 @@ func (s StorefrontService) GetAllStorefrontArticles(ctx context.Context, req art
 	}
 
 	for _, a := range resp.Articles {
-		articlesInfo = append(articlesInfo, articleparam.ArticleInfo{
+		articlesInfo = append(articlesInfo, articleparam.StorefrontArticle{
 			ID:          a.ID,
 			Title:       a.Title,
 			Slug:        a.Slug,
-			Body:        a.Body,
 			IsPublished: a.IsPublished,
 			MediaUrl:    urlMap.URLs[a.MediaID],
 			CreatedAt:   a.CreatedAt,

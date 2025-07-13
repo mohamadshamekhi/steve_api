@@ -4,5 +4,5 @@ type GetStorefrontArticleRequest struct {
 	ID string `json:"id"`
 }
 type GetStorefrontArticleResponse struct {
-	Article ArticleInfo `json:"article"`
+	Article StorefrontArticleDetail `json:"article"`
 }

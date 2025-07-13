@@ -1,6 +1,9 @@
 package articleparam
 
-import commonparam "github.com/abolfazlnorzad/steve/param/common"
+import (
+	commonparam "github.com/abolfazlnorzad/steve/param/common"
+	"time"
+)
 
 type AllStorefrontArticleRequest struct {
 	Pagination commonparam.PaginationRequest `json:"pagination" ,query:"pagination"`
@@ -8,6 +11,26 @@ type AllStorefrontArticleRequest struct {
 }
 
 type AllStorefrontArticleResponse struct {
-	Articles   []ArticleInfo                  `json:"articles"`
+	Articles   []StorefrontArticle            `json:"articles"`
 	Pagination commonparam.PaginationResponse `json:"pagination"`
+}
+type StorefrontArticle struct {
+	ID          string    `json:"id"`
+	Title       string    `json:"title"`
+	Slug        string    `json:"slug"`
+	IsPublished bool      `json:"is_published"`
+	MediaUrl    string    `json:"media_url"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type StorefrontArticleDetail struct {
+	ID          string    `json:"id"`
+	Title       string    `json:"title"`
+	Slug        string    `json:"slug"`
+	Body        string    `json:"body"`
+	IsPublished bool      `json:"is_published"`
+	MediaUrl    string    `json:"media_url"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
