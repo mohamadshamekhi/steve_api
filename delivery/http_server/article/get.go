@@ -28,3 +28,24 @@ func (h Handler) Get(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
+func (h Handler) GetSingleStorefront(c echo.Context) error {
+	const op = "articlehandler.Get"
+	id := c.Param("id")
+	req := articleparam.GetStorefrontArticleRequest{
+		ID: id,
+	}
+
+	if err := h.storefrontVld.ValidateGetStoreArticleRequest(req); err != nil {
+		return err
+	}
+
+	resp, err := h.storefrontSvc.GetSingleStorefrontArticle(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}
