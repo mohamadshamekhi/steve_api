@@ -15,7 +15,9 @@ type Handler struct {
 	authCfg              authservice.Config
 	aclSvc               aclservice.Service
 	backofficeArticleSvc articleservice.BackofficeService
+	storefrontSvc        articleservice.StorefrontService
 	vld                  articlevalidator.Validator
+	storefrontVld        articlevalidator.StorefrontValidator
 }
 
 func New(
@@ -25,6 +27,8 @@ func New(
 	aclSvc aclservice.Service,
 	backofficeArticleSvc articleservice.BackofficeService,
 	vld articlevalidator.Validator,
+	storefrontSvc articleservice.StorefrontService,
+	storefrontVld articlevalidator.StorefrontValidator,
 ) Handler {
 	return Handler{
 		translator:           translator,
@@ -33,6 +37,8 @@ func New(
 		aclSvc:               aclSvc,
 		backofficeArticleSvc: backofficeArticleSvc,
 		vld:                  vld,
+		storefrontSvc:        storefrontSvc,
+		storefrontVld:        storefrontVld,
 	}
 }
 

@@ -78,7 +78,9 @@ func main() {
 	articleRepo := mongodbarticle.New(mongoRepo)
 	articleVld := articlevalidator.New(articleRepo, mediaSvc)
 	articleSvc := articleservice.NewBackofficeService(articleRepo, mediaSvc)
-	articleHandler := articlehandler.New(translator, authSvc, cfg.Auth, aclSvc, articleSvc, articleVld)
+	storefrontSvc := articleservice.NewStorefrontService(articleRepo, mediaSvc)
+	storefrontVld := articlevalidator.NewStorefrontValidator(articleRepo)
+	articleHandler := articlehandler.New(translator, authSvc, cfg.Auth, aclSvc, articleSvc, articleVld, storefrontSvc, storefrontVld)
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler)
 	server.Serve()
 }
