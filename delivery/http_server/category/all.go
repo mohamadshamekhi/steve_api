@@ -42,3 +42,37 @@ func (h Handler) All(c echo.Context) error {
 	return c.JSON(http.StatusOK, apiResponse)
 
 }
+
+func (h Handler) GetAllStorefront(c echo.Context) error {
+	const op = "categoryhandler.GetAllStorefront"
+	pageNumber, nErr := strconv.ParseUint(c.QueryParam("page_number"), 10, 64)
+	if nErr != nil {
+		pageNumber = commonparam.DefaultPageNumber
+	}
+
+	pageSize, sErr := strconv.ParseUint(c.QueryParam("page_size"), 10, 64)
+	if sErr != nil {
+		pageSize = commonparam.DefaultPageSize
+	}
+	name := c.QueryParam("name")
+	req := categoryparam.GetAllStorefrontCategoriesRequest{
+		Pagination: commonparam.PaginationRequest{
+			PageSize:   uint(pageSize),
+			PageNumber: uint(pageNumber),
+		},
+		Filter: commonparam.FilterRequest{
+			Filter: []map[string]string{{"name": name}},
+		},
+	}
+
+	resp, err := h.storefrontCategorySvc.GetAllCategories(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+
+}

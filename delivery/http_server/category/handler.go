@@ -11,6 +11,7 @@ import (
 
 type Handler struct {
 	backofficeCategorySvc categoryservice.BackofficeService
+	storefrontCategorySvc categoryservice.StorefrontService
 	vld                   categoryvalidator.Validator
 	translator            *i18n.Translator
 	authSvc               authservice.Service
@@ -25,6 +26,7 @@ func New(
 	authSvc authservice.Service,
 	authCfg authservice.Config,
 	aclSvc aclservice.Service,
+	storefrontCategorySvc categoryservice.StorefrontService,
 ) Handler {
 	return Handler{
 		backofficeCategorySvc: backofficeCategorySvc,
@@ -33,6 +35,7 @@ func New(
 		authSvc:               authSvc,
 		authCfg:               authCfg,
 		aclSvc:                aclSvc,
+		storefrontCategorySvc: storefrontCategorySvc,
 	}
 }
 
