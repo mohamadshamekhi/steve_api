@@ -9,8 +9,7 @@ type VariantAttribute struct {
 
 type Variant struct {
 	ID               string             `bson:"id"`
-	SKU              string             `bson:"sku"`
 	Price            int64              `bson:"price"`
-	Stock            int                `bson:"stock"`
+	Quantity         int                `bson:"quantity"`
 	VariantAttribute []VariantAttribute `bson:"variant_attribute,omitempty"`
 }
