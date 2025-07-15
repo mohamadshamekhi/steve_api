@@ -6,6 +6,7 @@ import (
 )
 
 type AttributeDefinition struct {
+	ID   string `bson:"_id"`
 	Key  string `bson:"key"`            // example : "cpu_processor", "main_camera_resolution"
 	Name string `bson:"name"`           //example : "پردازنده", "رزولوشن دوربین اصلی"
 	Unit string `bson:"unit,omitempty"` //example "مگاپیکسل", "گیگابایت", "اینچ"
@@ -24,4 +25,8 @@ func (a *AttributeSet) BeforeCreate() {
 	now := time.Now()
 	a.CreatedAt = now
 	a.UpdatedAt = now
+}
+
+func (a *AttributeDefinition) BeforeCreate() {
+	a.ID = ulid.Make().String()
 }
