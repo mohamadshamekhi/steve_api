@@ -107,12 +107,6 @@ func (d DB) Delete(ctx context.Context, id string) error {
 		return richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
 	}
 
-	if err != nil {
-		return richerror.New(op).WithWarpError(err).
-			WithMessageKey("global.something_wrong").
-			WithKind(richerror.KindUnexpected)
-	}
-
 	if result.DeletedCount == 0 {
 		return richerror.New(op).
 			WithMessageKey("media.not_found").
