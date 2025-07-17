@@ -126,7 +126,7 @@ func (d DB) Delete(ctx context.Context, id string) error {
 
 }
 func (d DB) FindByIDs(ctx context.Context, ids []string) ([]entity.AttributeDefinition, error) {
-	const op = "mongodbattributedefinition.FindByID"
+	const op = "mongodbattributedefinition.FindByIDs"
 	if len(ids) == 0 {
 		return []entity.AttributeDefinition{}, nil
 	}

@@ -13,7 +13,7 @@ func (v Validator) ValidateCreateAttributeDefinitionRequest(req attributedefinit
 		validation.Field(&req.Name,
 			validation.Required.Error("validation.required")),
 		validation.Field(&req.Key,
-			validation.Required.Error("validation.required"), validation.By(v.checkKeyIsExist))); err != nil {
+			validation.Required.Error("validation.required"), validation.By(v.checkKeyIsUnique))); err != nil {
 
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {

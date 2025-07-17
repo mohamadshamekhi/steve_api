@@ -24,9 +24,10 @@ type AttributeRepository interface {
 	FindByID(ctx context.Context, id string) (entity.AttributeSet, error)
 }
 
-func NewAttributeService(repo AttributeRepository) AttributeService {
+func NewAttributeService(repo AttributeRepository, attrdefRepo AttributeDefinitionRepository) AttributeService {
 	return AttributeService{
-		repo: repo,
+		repo:        repo,
+		attrdefRepo: attrdefRepo,
 	}
 }
 

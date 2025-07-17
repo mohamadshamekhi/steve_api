@@ -37,6 +37,21 @@ func (v Validator) checkKeyIsExist(value any) error {
 	}
 	return nil
 }
+func (v Validator) checkKeyIsUnique(value any) error {
+	var key string
+	key, _ = value.(string)
+	_, err := v.repo.FindByKey(context.Background(), key)
+	if err != nil {
+		var rErr *richerror.RichError
+		if errors.As(err, &rErr) {
+			if rErr.Kind() == richerror.KindNotFound {
+				return nil
+			}
+		}
+		return err
+	}
+	return errors.New("validation.attr_def_key_is_already_exist")
+}
 
 func (v Validator) checkAttrIsExistByID(value any) error {
 	var id string

@@ -89,11 +89,12 @@ func main() {
 	storefrontVld := articlevalidator.NewStorefrontValidator(articleRepo)
 	articleHandler := articlehandler.New(translator, authSvc, cfg.Auth, aclSvc, articleSvc, articleVld, storefrontSvc, storefrontVld)
 	attrRepo := mongodbattribute.New(mongoRepo)
+	attrDefRepo := mongodbattributedefinition.New(mongoRepo)
+
 	attrVld := attributevalidator.New(attrRepo)
-	attrSvc := attributeservice.NewAttributeService(attrRepo)
+	attrSvc := attributeservice.NewAttributeService(attrRepo, attrDefRepo)
 	attrHandler := attributehandler.New(authSvc, cfg.Auth, aclSvc, translator, attrVld, attrSvc)
 
-	attrDefRepo := mongodbattributedefinition.New(mongoRepo)
 	attrDefVld := attributedefinitionvalidator.New(attrDefRepo)
 	attrDefSvc := attributeservice.NewAttributeDefinition(attrDefRepo)
 	attrDefHandler := attributedefinitionhandler.New(authSvc, cfg.Auth, aclSvc, translator, attrDefVld, attrDefSvc)
