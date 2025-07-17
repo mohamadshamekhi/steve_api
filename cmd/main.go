@@ -7,6 +7,7 @@ import (
 	"github.com/abolfazlnorzad/steve/config"
 	httpserver "github.com/abolfazlnorzad/steve/delivery/http_server"
 	articlehandler "github.com/abolfazlnorzad/steve/delivery/http_server/article"
+	attributehandler "github.com/abolfazlnorzad/steve/delivery/http_server/attribute"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
@@ -17,6 +18,7 @@ import (
 	mongodbpermission "github.com/abolfazlnorzad/steve/repository/mongo/acl/permission"
 	mongodbrole "github.com/abolfazlnorzad/steve/repository/mongo/acl/role"
 	mongodbarticle "github.com/abolfazlnorzad/steve/repository/mongo/article"
+	mongodbattribute "github.com/abolfazlnorzad/steve/repository/mongo/attribute"
 	mongodbbackoffice "github.com/abolfazlnorzad/steve/repository/mongo/backoffice"
 	mongodbbrand "github.com/abolfazlnorzad/steve/repository/mongo/brand"
 	mongodbcategory "github.com/abolfazlnorzad/steve/repository/mongo/category"
@@ -24,12 +26,14 @@ import (
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
 	aclservice "github.com/abolfazlnorzad/steve/service/acl"
 	articleservice "github.com/abolfazlnorzad/steve/service/article"
+	attributeservice "github.com/abolfazlnorzad/steve/service/attribute"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
 	brandservice "github.com/abolfazlnorzad/steve/service/brand"
 	categoryservice "github.com/abolfazlnorzad/steve/service/category"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 	articlevalidator "github.com/abolfazlnorzad/steve/validator/article"
+	attributevalidator "github.com/abolfazlnorzad/steve/validator/attribute"
 	backofficevalidatorauth "github.com/abolfazlnorzad/steve/validator/backoffice/auth"
 	brandvalidator "github.com/abolfazlnorzad/steve/validator/brand"
 	categoryvalidator "github.com/abolfazlnorzad/steve/validator/category"
@@ -81,6 +85,10 @@ func main() {
 	storefrontSvc := articleservice.NewStorefrontService(articleRepo, mediaSvc)
 	storefrontVld := articlevalidator.NewStorefrontValidator(articleRepo)
 	articleHandler := articlehandler.New(translator, authSvc, cfg.Auth, aclSvc, articleSvc, articleVld, storefrontSvc, storefrontVld)
-	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler)
+	attrRepo := mongodbattribute.New(mongoRepo)
+	attrVld := attributevalidator.New(attrRepo)
+	attrSvc := attributeservice.NewAttributeService(attrRepo)
+	attrHandler := attributehandler.New(authSvc, cfg.Auth, aclSvc, translator, attrVld, attrSvc)
+	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler)
 	server.Serve()
 }
