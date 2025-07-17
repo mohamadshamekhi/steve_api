@@ -2,6 +2,7 @@ package mongodbattributedefinition
 
 import (
 	"context"
+	"errors"
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -144,4 +145,32 @@ func (d DB) FindByIDs(ctx context.Context, ids []string) ([]entity.AttributeDefi
 	}
 
 	return attrs, nil
+}
+func (d DB) FindByKey(ctx context.Context, key string) (entity.AttributeDefinition, error) {
+	const op = "mongodbattributedefinition.FindByKey"
+	filter := bson.M{"key": key}
+	var atte entity.AttributeDefinition
+
+	if err := d.collection.FindOne(ctx, filter).Decode(&atte); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return atte, richerror.New(op).WithWarpError(err).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
+		}
+		return atte, richerror.New(op).WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected).
+			WithMeta(map[string]any{"key": key})
+	}
+	return atte, nil
+}
+func (d DB) FindByID(ctx context.Context, id string) (entity.AttributeDefinition, error) {
+	const op = "mongodbattributedefinition.FindByID"
+	filter := bson.M{"_id": id}
+	var atte entity.AttributeDefinition
+
+	if err := d.collection.FindOne(ctx, filter).Decode(&atte); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return atte, richerror.New(op).WithWarpError(err).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
+		}
+		return atte, richerror.New(op).WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected).
+			WithMeta(map[string]any{"id": id})
+	}
+	return atte, nil
 }
