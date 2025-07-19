@@ -9,6 +9,7 @@ import (
 	articlehandler "github.com/abolfazlnorzad/steve/delivery/http_server/article"
 	attributehandler "github.com/abolfazlnorzad/steve/delivery/http_server/attribute"
 	attributedefinitionhandler "github.com/abolfazlnorzad/steve/delivery/http_server/attributedefinition"
+	backofficehandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
@@ -40,6 +41,7 @@ import (
 	articlevalidator "github.com/abolfazlnorzad/steve/validator/article"
 	attributevalidator "github.com/abolfazlnorzad/steve/validator/attribute"
 	attributedefinitionvalidator "github.com/abolfazlnorzad/steve/validator/attributedefinition"
+	backofficevalidator "github.com/abolfazlnorzad/steve/validator/backoffice"
 	backofficevalidatorauth "github.com/abolfazlnorzad/steve/validator/backoffice/auth"
 	brandvalidator "github.com/abolfazlnorzad/steve/validator/brand"
 	categoryvalidator "github.com/abolfazlnorzad/steve/validator/category"
@@ -109,7 +111,9 @@ func main() {
 	productSvc := productservice.NewBackofficeService(productRepo)
 
 	productHandler := producthandler.NewHandler(translator, authSvc, cfg.Auth, aclSvc, productSvc, productVld)
+	backofficeValidation := backofficevalidator.New(backOfficeMongoRepo)
+	backofficeHandler := backofficehandler.New(backOfficeSvc, backofficeValidation, translator, authSvc, cfg.Auth, aclSvc)
 
-	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler, attrDefHandler, productHandler)
+	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler, attrDefHandler, productHandler, backofficeHandler)
 	server.Serve()
 }
