@@ -6,15 +6,16 @@ import (
 )
 
 type Product struct {
-	ID          string           `bson:"_id"`
-	Name        string           `bson:"name"`
-	ENTitle     string           `bson:"en_title"`
-	Slug        string           `bson:"slug"`
-	BrandID     string           `bson:"brand_id"`
-	CategoryID  string           `bson:"category_id"`
-	Warranty    string           `bson:"warranty"`
-	Gallery     []ProductGallery `bson:"gallery"`
-	IsPublished bool             `bson:"is_published"`
+	ID           string           `bson:"_id"`
+	Name         string           `bson:"name"`
+	ENTitle      string           `bson:"en_title"`
+	Slug         string           `bson:"slug"`
+	BrandID      string           `bson:"brand_id"`
+	CategoryID   string           `bson:"category_id"`
+	Gallery      []ProductGallery `bson:"gallery"`
+	IsPublished  bool             `bson:"is_published"`
+	IsSecondHand bool             `bson:"is_second_hand"`
+	Description  string           `bson:"description"`
 
 	Variants       []Variant       `bson:"variants"`
 	Specifications []Specification `bson:"specifications,omitempty"`
@@ -36,6 +37,7 @@ type Specification struct {
 func (p *Product) BeforeCreate() {
 	p.ID = ulid.Make().String()
 	now := time.Now()
+	p.IsPublished = false
 	p.CreatedAt = now
 	p.UpdatedAt = now
 

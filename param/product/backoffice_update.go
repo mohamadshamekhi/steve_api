@@ -1,0 +1,17 @@
+package productparam
+
+import "github.com/abolfazlnorzad/steve/entity"
+
+type UpdateProductRequest struct {
+	ID           string  `json:"id"`
+	Name         *string `json:"name"`
+	ENTitle      *string `json:"en_title"`
+	BrandID      *string `json:"brand_id"`
+	CategoryID   *string `json:"category_id"`
+	IsSecondHand *bool   `json:"is_second_hand"`
+	Description  *string `json:"description"`
+}
+
+type UpdateProductResponse struct {
+	Product entity.Product `json:"product"`
+}

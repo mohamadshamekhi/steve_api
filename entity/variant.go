@@ -16,6 +16,7 @@ type Variant struct {
 	Price            uint64             `bson:"price"`
 	Quantity         uint64             `bson:"quantity"`
 	VariantAttribute []VariantAttribute `bson:"variant_attribute,omitempty"`
+	Warranty         string             `bson:"warranty"`
 }
 
 func (v *Variant) BeforeCreate() {
