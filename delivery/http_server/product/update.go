@@ -1,0 +1,35 @@
+package producthandler
+
+import (
+	"github.com/abolfazlnorzad/steve/delivery/http_server/response"
+	productparam "github.com/abolfazlnorzad/steve/param/product"
+	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	"github.com/labstack/echo/v4"
+	"net/http"
+)
+
+func (h Handler) Update(c echo.Context) error {
+	const op = "producthandler.Update"
+
+	var req productparam.UpdateProductRequest
+	if bErr := c.Bind(&req); bErr != nil {
+		return richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("validation.invalid_input").
+			WithWarpError(bErr)
+	}
+	req.ID = c.Param("id")
+	if err := h.vld.ValidateUpdateProductRequest(req); err != nil {
+		return err
+	}
+
+	resp, err := h.backofficeProductSvc.UpdateProduct(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}

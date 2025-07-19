@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/abolfazlnorzad/steve/entity"
+	attributeparam "github.com/abolfazlnorzad/steve/param/attribute"
 	categoryparam "github.com/abolfazlnorzad/steve/param/category"
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
@@ -14,12 +15,17 @@ import (
 )
 
 type BackofficeService struct {
-	repo     CategoryReadWriter
-	mediaSvc MediaService
+	repo         CategoryReadWriter
+	mediaSvc     MediaService
+	AttrProvider AttrProvider
 }
 
-func NewBackofficeService(repo CategoryReadWriter, mediaSvc MediaService) BackofficeService {
-	return BackofficeService{repo: repo, mediaSvc: mediaSvc}
+func NewBackofficeService(repo CategoryReadWriter, mediaSvc MediaService, AttrProvider AttrProvider) BackofficeService {
+	return BackofficeService{repo: repo, mediaSvc: mediaSvc, AttrProvider: AttrProvider}
+}
+
+type AttrProvider interface {
+	FindByID(ctx context.Context, req attributeparam.GetAttributeRequest) (attributeparam.GetAttributeResponse, error)
 }
 
 func (s BackofficeService) Create(ctx context.Context, req categoryparam.CreateCategoryRequest) (categoryparam.CreateCategoryResponse, error) {
@@ -34,10 +40,11 @@ func (s BackofficeService) Create(ctx context.Context, req categoryparam.CreateC
 	}
 
 	c := entity.Category{
-		Name:        req.Name,
-		Description: req.Description,
-		MediaID:     req.MediaID,
-		ParentID:    pid,
+		Name:           req.Name,
+		Description:    req.Description,
+		MediaID:        req.MediaID,
+		ParentID:       pid,
+		AttributeSetID: req.AttributeSetID,
 	}
 
 	if req.ParentID != nil {
@@ -128,20 +135,30 @@ func (s BackofficeService) GetCategory(ctx context.Context, req categoryparam.Ge
 	if err != nil {
 		return categoryparam.GetCategoryResponse{}, richerror.New(op).WithWarpError(err)
 	}
+	if !category.DeletedAt.IsZero() {
+		return categoryparam.GetCategoryResponse{}, richerror.New(op).
+			WithKind(richerror.KindNotFound).
+			WithMessageKey("global.not-found")
+	}
 
 	m, err := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: category.MediaID})
+	if err != nil {
+		logger.L().Error(fmt.Sprintf("failed to get media url by id: %s - err:%v", category.MediaID, err))
+	}
+	r, err := s.AttrProvider.FindByID(ctx, attributeparam.GetAttributeRequest{ID: category.AttributeSetID})
 	if err != nil {
 		return categoryparam.GetCategoryResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	return categoryparam.GetCategoryResponse{
 		Category: categoryparam.CategoryInfo{
-			ID:          category.ID,
-			Name:        category.Name,
-			Description: category.Description,
-			URL:         m.URL,
-			Ancestors:   category.Ancestors,
-			Level:       category.Level,
-			Slug:        category.Slug,
+			ID:           category.ID,
+			Name:         category.Name,
+			Description:  category.Description,
+			URL:          m.URL,
+			Ancestors:    category.Ancestors,
+			Level:        category.Level,
+			Slug:         category.Slug,
+			AttributeSet: r.Attr,
 		},
 	}, nil
 }

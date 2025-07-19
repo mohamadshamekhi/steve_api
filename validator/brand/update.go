@@ -17,7 +17,7 @@ func (v Validator) ValidateUpdateBrandRequest(req brandparam.UpdateBrandRequest)
 		validation.Field(&req.Name,
 			validation.When(req.Name != nil,
 				validation.Required.Error("validation.required"),
-				validation.By(v.brandNameIsUniqueForUpdate((req.BrandID))),
+				validation.By(v.brandNameIsUniqueForUpdate(req.BrandID)),
 			)),
 		validation.Field(&req.Description,
 			validation.When(req.Name != nil,

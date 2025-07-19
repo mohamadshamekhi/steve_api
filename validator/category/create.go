@@ -3,6 +3,7 @@ package categoryvalidator
 import (
 	"context"
 	"errors"
+	attributeparam "github.com/abolfazlnorzad/steve/param/attribute"
 	categoryparam "github.com/abolfazlnorzad/steve/param/category"
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -18,6 +19,8 @@ func (v Validator) ValidateCreateCategoryRequest(req categoryparam.CreateCategor
 			validation.When(req.ParentID != nil, validation.Required.Error("validation.required")),
 			validation.By(v.categoryIsExist),
 		),
+		validation.Field(&req.AttributeSetID, validation.Required.Error("validation.required"),
+			validation.By(v.AttrIsExist)),
 		validation.Field(&req.MediaID,
 			validation.Required.Error("validation.required"),
 			validation.By(v.mediaIsExist),
@@ -103,6 +106,40 @@ func (v Validator) categoryIsExist(value any) error {
 	category, err := v.repo.FindByID(context.Background(), id)
 
 	if err != nil || category.ID == "" {
+		var rErr *richerror.RichError
+		if errors.As(err, &rErr) {
+			if rErr.Kind() == richerror.KindNotFound {
+				return errors.New(rErr.MessageKey())
+			}
+		}
+		return err
+	}
+	return nil
+}
+
+func (v Validator) AttrIsExist(value any) error {
+	var id string
+	switch v := value.(type) {
+	case string:
+		id = v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		id = *v
+	default:
+		return richerror.New("brandvalidator.BrandIsUnique.type_assertion").
+			WithKind(richerror.KindUnexpected).
+			WithWarpError(errors.New("unexpected type for brand name"))
+	}
+
+	if id == "" {
+		return nil
+	}
+
+	_, err := v.AttrProvider.FindByID(context.Background(), attributeparam.GetAttributeRequest{ID: id})
+
+	if err != nil {
 		var rErr *richerror.RichError
 		if errors.As(err, &rErr) {
 			if rErr.Kind() == richerror.KindNotFound {

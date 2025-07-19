@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"github.com/abolfazlnorzad/steve/config"
 	articlehandler "github.com/abolfazlnorzad/steve/delivery/http_server/article"
+	attributehandler "github.com/abolfazlnorzad/steve/delivery/http_server/attribute"
+	attributedefinitionhandler "github.com/abolfazlnorzad/steve/delivery/http_server/attributedefinition"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	middleware2 "github.com/abolfazlnorzad/steve/delivery/http_server/middleware"
+	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/labstack/echo/v4"
@@ -24,9 +27,15 @@ type Server struct {
 	mediaHandler          mediahandler.Handler
 	categoryHandler       categoryhandler.Handler
 	articleHandler        articlehandler.Handler
+	attrHandler           attributehandler.Handler
+	attrDefHandler        attributedefinitionhandler.Handler
+	productHandler        producthandler.Handler
 }
 
-func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler, articleHandler articlehandler.Handler) Server {
+func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler,
+	articleHandler articlehandler.Handler, attrHandler attributehandler.Handler, attrDefHandler attributedefinitionhandler.Handler,
+	productHandler producthandler.Handler,
+) Server {
 	return Server{
 		config:                cfg,
 		Router:                echo.New(),
@@ -35,6 +44,9 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 		mediaHandler:          mediaHandler,
 		categoryHandler:       categoryHandler,
 		articleHandler:        articleHandler,
+		attrHandler:           attrHandler,
+		attrDefHandler:        attrDefHandler,
+		productHandler:        productHandler,
 	}
 }
 
@@ -93,6 +105,9 @@ func (s Server) Serve() {
 	s.brandHandler.SetRoutes(s.Router)
 	s.categoryHandler.SetRoutes(s.Router)
 	s.articleHandler.SetRoutes(s.Router)
+	s.attrHandler.SetRoutes(s.Router)
+	s.attrDefHandler.SetRoutes(s.Router)
+	s.productHandler.SetRoutes(s.Router)
 	// Start server
 	address := fmt.Sprintf(":%d", s.config.HTTPServer.Port)
 	fmt.Printf("start echo server on %s\n", address)

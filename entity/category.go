@@ -6,17 +6,18 @@ import (
 )
 
 type Category struct {
-	ID          string     `bson:"_id"`
-	Name        string     `bson:"name"`
-	Slug        string     `bson:"slug"`
-	Description string     `bson:"description,omitempty"`
-	MediaID     string     `bson:"media_id"`
-	ParentID    string     `bson:"parent_id,omitempty"`
-	Ancestors   []Ancestor `bson:"ancestors,omitempty"`
-	Level       int        `bson:"level"`
-	CreatedAt   time.Time  `bson:"created_at"`
-	UpdatedAt   time.Time  `bson:"updated_at"`
-	DeletedAt   time.Time  `bson:"deleted_at,omitempty"`
+	ID             string     `bson:"_id"`
+	Name           string     `bson:"name"`
+	Slug           string     `bson:"slug"`
+	Description    string     `bson:"description,omitempty"`
+	MediaID        string     `bson:"media_id"`
+	ParentID       string     `bson:"parent_id,omitempty"`
+	Ancestors      []Ancestor `bson:"ancestors,omitempty"`
+	Level          int        `bson:"level"`
+	AttributeSetID string     `bson:"attribute_set_id,omitempty"`
+	CreatedAt      time.Time  `bson:"created_at"`
+	UpdatedAt      time.Time  `bson:"updated_at"`
+	DeletedAt      time.Time  `bson:"deleted_at,omitempty"`
 }
 
 type Ancestor struct {
