@@ -82,7 +82,12 @@ func main() {
 
 	mediaHandler := mediahandler.New(mediaVld, mediaSvc, translator, authSvc, cfg.Auth)
 	categoryRepo := mongodbcategory.New(mongoRepo)
-	categoryVld := categoryvalidator.New(categoryRepo, mediaSvc)
+	attrRepo := mongodbattribute.New(mongoRepo)
+	attrDefRepo := mongodbattributedefinition.New(mongoRepo)
+
+	attrVld := attributevalidator.New(attrRepo)
+	attrSvc := attributeservice.NewAttributeService(attrRepo, attrDefRepo)
+	categoryVld := categoryvalidator.New(categoryRepo, mediaSvc, attrSvc)
 	categorySvc := categoryservice.NewBackofficeService(categoryRepo, mediaSvc)
 	storefrontCategorySvc := categoryservice.NewStorefrontService(categoryRepo, mediaSvc)
 	categoryHandler := categoryhandler.New(categorySvc, categoryVld, translator, authSvc, cfg.Auth, aclSvc, storefrontCategorySvc)
@@ -92,11 +97,7 @@ func main() {
 	storefrontSvc := articleservice.NewStorefrontService(articleRepo, mediaSvc)
 	storefrontVld := articlevalidator.NewStorefrontValidator(articleRepo)
 	articleHandler := articlehandler.New(translator, authSvc, cfg.Auth, aclSvc, articleSvc, articleVld, storefrontSvc, storefrontVld)
-	attrRepo := mongodbattribute.New(mongoRepo)
-	attrDefRepo := mongodbattributedefinition.New(mongoRepo)
 
-	attrVld := attributevalidator.New(attrRepo)
-	attrSvc := attributeservice.NewAttributeService(attrRepo, attrDefRepo)
 	attrHandler := attributehandler.New(authSvc, cfg.Auth, aclSvc, translator, attrVld, attrSvc)
 
 	attrDefVld := attributedefinitionvalidator.New(attrDefRepo)

@@ -96,3 +96,12 @@ func (s AttributeService) Update(ctx context.Context, req attributeparam.UpdateA
 
 	return attributeparam.UpdateAttributeResponse{}, nil
 }
+
+func (s AttributeService) FindByID(ctx context.Context, req attributeparam.GetAttributeRequest) (attributeparam.GetAttributeResponse, error) {
+	const op = "attributeService.FindByID"
+	if a, err := s.repo.FindByID(ctx, req.ID); err != nil {
+		return attributeparam.GetAttributeResponse{}, richerror.New(op).WithWarpError(err)
+	} else {
+		return attributeparam.GetAttributeResponse{Attr: a}, err
+	}
+}
