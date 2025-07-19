@@ -8,5 +8,7 @@ import (
 
 func (h Handler) SetRoutes(e *echo.Echo) {
 	g := e.Group("/back-office")
-	g.POST("/add-new-backoffice-user", h.AddNewBackofficeUser, backofficemiddleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.CreateBrand))
+	g.GET("/", h.GetAll, backofficemiddleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ListBackofficeUsers))
+	g.POST("/add-new-backoffice-user", h.AddNewBackofficeUser, backofficemiddleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.CreateBackofficeUser))
+	g.POST("/update/:id", h.UpdateBackofficeUser, backofficemiddleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateBackofficeUser))
 }
