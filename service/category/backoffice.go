@@ -128,6 +128,11 @@ func (s BackofficeService) GetCategory(ctx context.Context, req categoryparam.Ge
 	if err != nil {
 		return categoryparam.GetCategoryResponse{}, richerror.New(op).WithWarpError(err)
 	}
+	if !category.DeletedAt.IsZero() {
+		return categoryparam.GetCategoryResponse{}, richerror.New(op).
+			WithKind(richerror.KindNotFound).
+			WithMessageKey("global.not-found")
+	}
 
 	m, err := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: category.MediaID})
 	if err != nil {

@@ -42,13 +42,17 @@ func (v Validator) checkBrandIsExist(value any) error {
 			WithKind(richerror.KindUnexpected).
 			WithWarpError(errors.New("unexpected type assertion failed"))
 	}
-	resp, err := v.brandProvider.GetBrand(context.Background(), brandparam.GetBrandRequest{ID: id})
+	_, err := v.brandProvider.GetBrand(context.Background(), brandparam.GetBrandRequest{ID: id})
 	if err != nil {
+		var rErr *richerror.RichError
+		if errors.As(err, &rErr) {
+			if rErr.Kind() == richerror.KindNotFound {
+				return errors.New(rErr.MessageKey())
+			}
+		}
 		return err
 	}
-	if resp.ID == "" {
-		return errors.New("global.not-found")
-	}
+
 	return nil
 }
 
@@ -61,6 +65,12 @@ func (v Validator) checkCategoryIsExist(value any) error {
 	}
 	resp, err := v.categoryProvider.GetCategory(context.Background(), categoryparam.GetCategoryRequest{ID: id})
 	if err != nil {
+		var rErr *richerror.RichError
+		if errors.As(err, &rErr) {
+			if rErr.Kind() == richerror.KindNotFound {
+				return errors.New(rErr.MessageKey())
+			}
+		}
 		return err
 	}
 	if resp.Category.ID == "" {
@@ -76,8 +86,8 @@ func (v Validator) checkProductIsExist(value any) error {
 			WithKind(richerror.KindUnexpected).
 			WithWarpError(errors.New("unexpected type assertion failed"))
 	}
-	prod, err := v.repo.FindByID(context.Background(), id)
-	if err != nil || prod.ID == "" {
+	_, err := v.repo.FindByID(context.Background(), id)
+	if err != nil {
 		var rErr *richerror.RichError
 		if errors.As(err, &rErr) {
 			if rErr.Kind() == richerror.KindNotFound {

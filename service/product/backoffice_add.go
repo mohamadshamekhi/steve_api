@@ -18,7 +18,7 @@ func (s BackofficeService) Create(ctx context.Context, req productparam.CreatePr
 		ENTitle:      req.ENTitle,
 		BrandID:      req.BrandID,
 		CategoryID:   req.CategoryID,
-		IsSecondHand: req.IsSecondHand,
+		IsSecondHand: *req.IsSecondHand,
 		Description:  req.Description,
 	}
 	slg := slug.GenerateSlug(p.ENTitle)
@@ -46,5 +46,5 @@ func (s BackofficeService) Create(ctx context.Context, req productparam.CreatePr
 	if err := s.repo.Create(ctx, p); err != nil {
 		return productparam.CreateProductResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	return productparam.CreateProductResponse{}, nil
+	return productparam.CreateProductResponse{Product: p}, nil
 }

@@ -14,7 +14,7 @@ func (v Validator) ValidateCreateProductRequest(req productparam.CreateProductRe
 			validation.Required.Error("validation.required")),
 		validation.Field(&req.Description,
 			validation.Required.Error("validation.required")),
-		validation.Field(&req.IsSecondHand, validation.Required.Error("validation.required")),
+		validation.Field(&req.IsSecondHand, validation.NotNil.Error("validation.required")),
 		validation.Field(&req.ENTitle, validation.Required.Error("validation.required")),
 		validation.Field(&req.BrandID, validation.Required.Error("validation.required"), validation.By(v.checkBrandIsExist)),
 		validation.Field(&req.CategoryID, validation.Required.Error("validation.required"), validation.By(v.checkCategoryIsExist)),

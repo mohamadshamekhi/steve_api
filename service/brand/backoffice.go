@@ -40,6 +40,7 @@ func (s BackofficeService) GetBrand(ctx context.Context, req brandparam.GetBrand
 	const op = "brandservice.GetBrand"
 
 	brand, err := s.repo.FindByID(ctx, req.ID)
+
 	if err != nil {
 		return brandparam.GetBrandResponse{}, richerror.New(op).WithWarpError(err)
 	}
@@ -50,7 +51,7 @@ func (s BackofficeService) GetBrand(ctx context.Context, req brandparam.GetBrand
 	}
 	resp, err := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: brand.MediaID})
 	if err != nil {
-		return brandparam.GetBrandResponse{}, richerror.New(op).WithWarpError(err)
+		logger.L().Error("failed to get url brand , brandID :", brand.ID, err)
 	}
 	return brandparam.GetBrandResponse{
 		ID:          brand.ID,
