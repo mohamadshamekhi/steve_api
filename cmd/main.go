@@ -88,7 +88,7 @@ func main() {
 	attrVld := attributevalidator.New(attrRepo)
 	attrSvc := attributeservice.NewAttributeService(attrRepo, attrDefRepo)
 	categoryVld := categoryvalidator.New(categoryRepo, mediaSvc, attrSvc)
-	categorySvc := categoryservice.NewBackofficeService(categoryRepo, mediaSvc)
+	categorySvc := categoryservice.NewBackofficeService(categoryRepo, mediaSvc, attrSvc)
 	storefrontCategorySvc := categoryservice.NewStorefrontService(categoryRepo, mediaSvc)
 	categoryHandler := categoryhandler.New(categorySvc, categoryVld, translator, authSvc, cfg.Auth, aclSvc, storefrontCategorySvc)
 	articleRepo := mongodbarticle.New(mongoRepo)

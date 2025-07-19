@@ -12,8 +12,6 @@ func (v Validator) ValidateUpdateAttributeDefinitionRequest(req attributedefinit
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.ID,
 			validation.Required.Error("validation.required"), validation.By(v.checkAttrIsExistByID)),
-		validation.Field(&req.Key,
-			validation.When(req.Key != nil, validation.Required.Error("validation.required"))),
 		validation.Field(&req.Unit, validation.When(req.Unit != nil, validation.Required.Error("validation.required"))),
 	); err != nil {
 

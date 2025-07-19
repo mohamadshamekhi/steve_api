@@ -80,10 +80,6 @@ func (s AttributeDefinition) Update(ctx context.Context, req attributedefinition
 	if req.Name != nil {
 		attr.Name = *req.Name
 	}
-	if req.Key != nil {
-		attr.Key = *req.Key
-	}
-
 	if req.Unit != nil {
 		attr.Unit = *req.Unit
 	}
