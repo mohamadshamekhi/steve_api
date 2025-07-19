@@ -55,6 +55,10 @@
     "translation": "برند در حال حاضر موجود میباشد"
   },
   {
+    "id": "validation.phone_number_is_already_exist",
+    "translation": "شماره تلفن در حال حاضر موجود میباشد"
+  },
+  {
     "id": "validation.attr_def_key_is_already_exist",
     "translation": "ویژگی در حال حاضر موجود میباشد"
   },

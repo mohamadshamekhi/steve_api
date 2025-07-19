@@ -12,6 +12,8 @@ type Config struct {
 type Repository interface {
 	GetBackOfficeUserByPhoneNumber(ctx context.Context, phoneNumber string) (entity.BackOffice, error)
 	GetBackOfficeUserByID(ctx context.Context, id string) (entity.BackOffice, error)
+	AddNewBackofficeUser(ctx context.Context, u entity.BackOffice) error
+	UpdateBackofficeUser(context.Context, entity.BackOffice) error
 }
 type Service struct {
 	config  Config
