@@ -13,6 +13,7 @@ import (
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
+	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
 	"github.com/abolfazlnorzad/steve/internal/seeder"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
 	mongodb "github.com/abolfazlnorzad/steve/repository/mongo"
@@ -25,6 +26,7 @@ import (
 	mongodbbrand "github.com/abolfazlnorzad/steve/repository/mongo/brand"
 	mongodbcategory "github.com/abolfazlnorzad/steve/repository/mongo/category"
 	mongodbmedia "github.com/abolfazlnorzad/steve/repository/mongo/media"
+	mongodbproduct "github.com/abolfazlnorzad/steve/repository/mongo/product"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
 	aclservice "github.com/abolfazlnorzad/steve/service/acl"
 	articleservice "github.com/abolfazlnorzad/steve/service/article"
@@ -34,6 +36,7 @@ import (
 	brandservice "github.com/abolfazlnorzad/steve/service/brand"
 	categoryservice "github.com/abolfazlnorzad/steve/service/category"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
+	productservice "github.com/abolfazlnorzad/steve/service/product"
 	articlevalidator "github.com/abolfazlnorzad/steve/validator/article"
 	attributevalidator "github.com/abolfazlnorzad/steve/validator/attribute"
 	attributedefinitionvalidator "github.com/abolfazlnorzad/steve/validator/attributedefinition"
@@ -41,6 +44,7 @@ import (
 	brandvalidator "github.com/abolfazlnorzad/steve/validator/brand"
 	categoryvalidator "github.com/abolfazlnorzad/steve/validator/category"
 	mediavalidator "github.com/abolfazlnorzad/steve/validator/media"
+	productvalidator "github.com/abolfazlnorzad/steve/validator/product"
 )
 
 func main() {
@@ -99,6 +103,12 @@ func main() {
 	attrDefSvc := attributeservice.NewAttributeDefinition(attrDefRepo)
 	attrDefHandler := attributedefinitionhandler.New(authSvc, cfg.Auth, aclSvc, translator, attrDefVld, attrDefSvc)
 
-	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler, attrDefHandler)
+	productRepo := mongodbproduct.New(mongoRepo)
+	productVld := productvalidator.New(categorySvc, backofficebrandsvc, productRepo)
+	productSvc := productservice.NewBackofficeService(productRepo)
+
+	productHandler := producthandler.NewHandler(translator, authSvc, cfg.Auth, aclSvc, productSvc, productVld)
+
+	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler, attrDefHandler, productHandler)
 	server.Serve()
 }

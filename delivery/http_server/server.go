@@ -11,6 +11,7 @@ import (
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	middleware2 "github.com/abolfazlnorzad/steve/delivery/http_server/middleware"
+	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/labstack/echo/v4"
@@ -28,10 +29,12 @@ type Server struct {
 	articleHandler        articlehandler.Handler
 	attrHandler           attributehandler.Handler
 	attrDefHandler        attributedefinitionhandler.Handler
+	productHandler        producthandler.Handler
 }
 
 func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler,
 	articleHandler articlehandler.Handler, attrHandler attributehandler.Handler, attrDefHandler attributedefinitionhandler.Handler,
+	productHandler producthandler.Handler,
 ) Server {
 	return Server{
 		config:                cfg,
@@ -43,6 +46,7 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 		articleHandler:        articleHandler,
 		attrHandler:           attrHandler,
 		attrDefHandler:        attrDefHandler,
+		productHandler:        productHandler,
 	}
 }
 
@@ -103,6 +107,7 @@ func (s Server) Serve() {
 	s.articleHandler.SetRoutes(s.Router)
 	s.attrHandler.SetRoutes(s.Router)
 	s.attrDefHandler.SetRoutes(s.Router)
+	s.productHandler.SetRoutes(s.Router)
 	// Start server
 	address := fmt.Sprintf(":%d", s.config.HTTPServer.Port)
 	fmt.Printf("start echo server on %s\n", address)

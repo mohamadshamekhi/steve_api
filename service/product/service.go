@@ -33,6 +33,10 @@ type BackofficeService struct {
 	repo ArticleReadWriter
 }
 
+func NewBackofficeService(repo ArticleReadWriter) BackofficeService {
+	return BackofficeService{repo: repo}
+}
+
 type MediaService interface {
 	GetURLByMediaID(ctx context.Context, req mediaparam.GetUrlByIDRequest) (mediaparam.GetUrlByIDResponse, error)
 	GetURLsByMediaIDs(ctx context.Context, req mediaparam.GetUrlsByIDsRequest) (mediaparam.GetUrlsByIDsResponse, error)
