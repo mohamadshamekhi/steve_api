@@ -39,3 +39,38 @@ func (d DB) FindByName(ctx context.Context, name string) (entity.Brand, error) {
 	}
 	return brand, nil
 }
+
+func (d DB) GetBrandsByIDs(ctx context.Context, ids []string) (map[string]entity.Brand, error) {
+	const op = "mongodbbrand.GetBrandsByIDs"
+
+	if len(ids) == 0 {
+		return make(map[string]entity.Brand), nil
+	}
+
+	filter := bson.M{"_id": bson.M{"$in": ids}}
+
+	cursor, err := d.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err).
+			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
+	}
+	defer cursor.Close(ctx)
+
+	resultMap := make(map[string]entity.Brand)
+
+	for cursor.Next(ctx) {
+		var brand entity.Brand
+		if err := cursor.Decode(&brand); err != nil {
+			return nil, richerror.New(op).WithWarpError(err).
+				WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
+		}
+		resultMap[brand.ID] = brand
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).
+			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
+	}
+
+	return resultMap, nil
+}

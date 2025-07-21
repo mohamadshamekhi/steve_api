@@ -158,7 +158,7 @@ func (s BackofficeService) GetCategory(ctx context.Context, req categoryparam.Ge
 			Ancestors:    category.Ancestors,
 			Level:        category.Level,
 			Slug:         category.Slug,
-			AttributeSet: r.Attr,
+			AttributeSet: r.Attr.Attributes,
 		},
 	}, nil
 }
@@ -302,4 +302,14 @@ func generateSlug(name string) string {
 	slug = re.ReplaceAllString(slug, "-")
 
 	return strings.Trim(slug, "-")
+}
+
+func (s BackofficeService) GetCategoriesByIDs(ctx context.Context, req categoryparam.GetCategoriesByIDsRequest) (categoryparam.GetCategoriesByIDsResponse, error) {
+	const op = "categoryservice.GetCategoriesByIDs"
+
+	categories, err := s.repo.GetCategoriesByIDs(ctx, req.IDs)
+	if err != nil {
+		return categoryparam.GetCategoriesByIDsResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return categoryparam.GetCategoriesByIDsResponse{Categories: categories}, nil
 }

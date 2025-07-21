@@ -3,6 +3,8 @@ package productservice
 import (
 	"context"
 	"github.com/abolfazlnorzad/steve/entity"
+	brandparam "github.com/abolfazlnorzad/steve/param/brand"
+	categoryparam "github.com/abolfazlnorzad/steve/param/category"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 )
@@ -25,6 +27,8 @@ type ProductWriter interface {
 	AddProductGallery(ctx context.Context, productID string, g entity.ProductGallery) error
 	DeleteProductGallery(ctx context.Context, productID string, mediaID string) error
 	SetPrimary(ctx context.Context, productID string, mediaID string) error
+	UpdateSpecifications(ctx context.Context, productID string, specs []entity.Specification) error
+	UpdateSingleSpecification(ctx context.Context, productID string, key string, value string) error
 }
 
 type ProductReadWriter interface {
@@ -33,12 +37,24 @@ type ProductReadWriter interface {
 }
 
 type BackofficeService struct {
-	repo     ProductReadWriter
-	mediaSvc MediaService
+	repo             ProductReadWriter
+	mediaSvc         MediaService
+	categoryProvider CategoryProvider
+	brandProvider    BrandProvider
 }
 
-func NewBackofficeService(repo ProductReadWriter, mediaSvc MediaService) BackofficeService {
-	return BackofficeService{repo: repo, mediaSvc: mediaSvc}
+func NewBackofficeService(repo ProductReadWriter, mediaSvc MediaService, categoryProvider CategoryProvider, brandProvider BrandProvider) BackofficeService {
+	return BackofficeService{repo: repo, mediaSvc: mediaSvc, categoryProvider: categoryProvider, brandProvider: brandProvider}
+}
+
+type CategoryProvider interface {
+	GetCategory(ctx context.Context, req categoryparam.GetCategoryRequest) (categoryparam.GetCategoryResponse, error)
+	GetCategoriesByIDs(ctx context.Context, req categoryparam.GetCategoriesByIDsRequest) (categoryparam.GetCategoriesByIDsResponse, error)
+}
+
+type BrandProvider interface {
+	GetBrand(ctx context.Context, req brandparam.GetBrandRequest) (brandparam.GetBrandResponse, error)
+	GetBrandsByIDs(ctx context.Context, req brandparam.GetBrandsByIDsRequest) (brandparam.GetBrandsByIDsResponse, error)
 }
 
 type MediaService interface {

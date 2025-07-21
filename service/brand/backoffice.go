@@ -175,3 +175,17 @@ func (s BackofficeService) All(ctx context.Context, req brandparam.GetAllBrandsP
 	}{PageSize: req.Pagination.GetPageSize(), PageNumber: req.Pagination.GetPageNumber(), Total: uint(resp.TotalCount)}}, nil
 
 }
+
+func (s BackofficeService) GetBrandsByIDs(ctx context.Context, req brandparam.GetBrandsByIDsRequest) (brandparam.GetBrandsByIDsResponse, error) {
+	const op = "brandservice.GetBrandsByIDs"
+
+	res, err := s.repo.GetBrandsByIDs(ctx, req.IDs)
+	if err != nil {
+		return brandparam.GetBrandsByIDsResponse{}, err
+	}
+
+	return brandparam.GetBrandsByIDsResponse{
+		Brands: res,
+	}, nil
+
+}
