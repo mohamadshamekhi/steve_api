@@ -7,12 +7,14 @@ import (
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
 	categoryparam "github.com/abolfazlnorzad/steve/param/category"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 )
 
 type Validator struct {
 	categoryProvider CategoryProvider
 	brandProvider    BrandProvider
 	repo             Repository
+	mediaSvc         mediaservice.Service
 }
 
 type CategoryProvider interface {
@@ -27,11 +29,12 @@ type Repository interface {
 	FindByID(ctx context.Context, id string) (entity.Product, error)
 }
 
-func New(CategoryProvider CategoryProvider, BrandProvider BrandProvider, r Repository) Validator {
+func New(CategoryProvider CategoryProvider, BrandProvider BrandProvider, r Repository, mediaSvc mediaservice.Service) Validator {
 	return Validator{
 		categoryProvider: CategoryProvider,
 		brandProvider:    BrandProvider,
 		repo:             r,
+		mediaSvc:         mediaSvc,
 	}
 }
 

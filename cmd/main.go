@@ -107,7 +107,7 @@ func main() {
 	attrDefHandler := attributedefinitionhandler.New(authSvc, cfg.Auth, aclSvc, translator, attrDefVld, attrDefSvc)
 
 	productRepo := mongodbproduct.New(mongoRepo)
-	productVld := productvalidator.New(categorySvc, backofficebrandsvc, productRepo)
+	productVld := productvalidator.New(categorySvc, backofficebrandsvc, productRepo, mediaSvc)
 	productSvc := productservice.NewBackofficeService(productRepo, mediaSvc)
 
 	productHandler := producthandler.NewHandler(translator, authSvc, cfg.Auth, aclSvc, productSvc, productVld)
