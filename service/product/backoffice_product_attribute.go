@@ -46,6 +46,29 @@ func (s BackofficeService) UpdateSpecifications(ctx context.Context, req product
 
 func (s BackofficeService) UpdateSingleAttribute(ctx context.Context, req productparam.UpdateSingleAttributeRequest) (productparam.UpdateSingleAttributeResponse, error) {
 	const op = "productservice.UpdateSingleAttribute"
+	product, err := s.repo.FindByID(ctx, req.ProductID)
+	if err != nil {
+		return productparam.UpdateSingleAttributeResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	resp, err := s.categoryProvider.GetCategory(ctx, categoryparam.GetCategoryRequest{
+		ID: product.CategoryID,
+	})
+	if err != nil {
+		return productparam.UpdateSingleAttributeResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	validKeys := make(map[string]struct{})
+	for _, def := range resp.Category.AttributeSet {
+		validKeys[def.Key] = struct{}{}
+	}
+
+	if _, ok := validKeys[req.Key]; !ok {
+		return productparam.UpdateSingleAttributeResponse{}, richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("product.invalid_specification_key").
+			WithMeta(map[string]any{"invalid_key": req.Key})
+	}
+
 	if err := s.repo.UpdateSingleSpecification(ctx, req.ProductID, req.Key, req.Value); err != nil {
 		return productparam.UpdateSingleAttributeResponse{}, richerror.New(op).WithWarpError(err)
 	}

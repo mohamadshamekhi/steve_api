@@ -5,7 +5,6 @@ import (
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func (d DB) UpdateSpecifications(ctx context.Context, productID string, specs []entity.Specification) error {
@@ -30,17 +29,30 @@ func (d DB) UpdateSpecifications(ctx context.Context, productID string, specs []
 
 func (d DB) UpdateSingleSpecification(ctx context.Context, productID string, specKey string, newValue string) error {
 	const op = "mongodbproduct.UpdateSingleSpecification"
-	filter := bson.M{"_id": productID}
+	updateFilter := bson.M{"_id": productID, "specifications.key": specKey}
+	updateQuery := bson.M{"$set": bson.M{"specifications.$.value": newValue}}
 
-	update := bson.M{
-		"$set": bson.M{"specifications.$[elem].value": newValue},
+	result, err := d.collection.UpdateOne(ctx, updateFilter, updateQuery)
+	if err != nil {
+		return richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
 	}
 
-	arrayFilters := options.Update().SetArrayFilters(options.ArrayFilters{
-		Filters: []interface{}{bson.M{"elem.key": specKey}},
-	})
+	if result.ModifiedCount > 0 {
+		return nil
+	}
 
-	result, err := d.collection.UpdateOne(ctx, filter, update, arrayFilters)
+	addFilter := bson.M{
+		"_id":                productID,
+		"specifications.key": bson.M{"$ne": specKey},
+	}
+
+	newSpecification := entity.Specification{
+		Key:   specKey,
+		Value: newValue,
+	}
+	addQuery := bson.M{"$push": bson.M{"specifications": newSpecification}}
+
+	result, err = d.collection.UpdateOne(ctx, addFilter, addQuery)
 	if err != nil {
 		return richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
 	}
@@ -50,13 +62,6 @@ func (d DB) UpdateSingleSpecification(ctx context.Context, productID string, spe
 			WithKind(richerror.KindNotFound).
 			WithMessageKey("product.not_found").
 			WithMeta(map[string]any{"product_id": productID})
-	}
-
-	if result.ModifiedCount == 0 {
-		return richerror.New(op).
-			WithKind(richerror.KindNotFound).
-			WithMessageKey("product.specification_key_not_found").
-			WithMeta(map[string]any{"spec_key": specKey})
 	}
 
 	return nil

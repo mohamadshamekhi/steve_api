@@ -2,30 +2,39 @@ package mongodbproduct
 
 import (
 	"context"
+	"errors"
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
-	"github.com/oklog/ulid/v2"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func (d DB) AddVariant(ctx context.Context, productID string, variant entity.Variant) error {
 	const op = "mongodbproduct.AddVariant"
 
-	variant.ID = ulid.Make().String()
-
+	var product entity.Product
 	filter := bson.M{"_id": productID}
-	update := bson.M{"$push": bson.M{"variants": variant}}
-
-	result, err := d.collection.UpdateOne(ctx, filter, update)
+	err := d.collection.FindOne(ctx, filter).Decode(&product)
 	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return richerror.New(op).
+				WithKind(richerror.KindNotFound).
+				WithMessageKey("product.not_found")
+		}
 		return richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
 	}
 
-	if result.MatchedCount == 0 {
-		return richerror.New(op).
-			WithKind(richerror.KindNotFound).
-			WithMessageKey("product.not_found").
-			WithMeta(map[string]any{"product_id": productID})
+	if product.Variants == nil {
+		product.Variants = make([]entity.Variant, 0)
+	}
+
+	variant.BeforeCreate()
+
+	product.Variants = append(product.Variants, variant)
+
+	_, err = d.collection.ReplaceOne(ctx, filter, product)
+	if err != nil {
+		return richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
 	}
 
 	return nil

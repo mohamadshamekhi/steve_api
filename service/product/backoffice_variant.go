@@ -49,7 +49,7 @@ func (s BackofficeService) UpdateVariant(ctx context.Context, req productparam.U
 	var variant entity.Variant
 	for _, v := range p.Variants {
 		if v.ID == req.VariantID {
-			variant = &v
+			variant = v
 		}
 	}
 	if variant.ID == "" {
