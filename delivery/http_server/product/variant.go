@@ -43,6 +43,7 @@ func (h Handler) DeleteVariant(c echo.Context) error {
 			WithWarpError(bErr)
 	}
 	req.ProductID = c.Param("id")
+	req.VariantID = c.Param("varid")
 
 	if err := h.vld.ValidateDeleteVariantRequest(req); err != nil {
 		return err
@@ -68,6 +69,7 @@ func (h Handler) UpdateVariant(c echo.Context) error {
 			WithWarpError(bErr)
 	}
 	req.ProductID = c.Param("id")
+	req.VariantID = c.Param("varid")
 
 	if err := h.vld.ValidateUpdateVariantRequest(req); err != nil {
 		return err
