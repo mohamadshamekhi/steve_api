@@ -15,12 +15,12 @@ type GetAllCategoriesResponse struct {
 }
 
 type CategoryInfo struct {
-	ID           string              `json:"id"`
-	Name         string              `json:"name"`
-	Description  string              `json:"description"`
-	URL          string              `json:"url"`
-	Level        int                 `json:"level"`
-	Slug         string              `json:"slug"`
-	Ancestors    []entity.Ancestor   `json:"ancestors"`
-	AttributeSet entity.AttributeSet `json:"attribute_set"`
+	ID           string                       `json:"id"`
+	Name         string                       `json:"name"`
+	Description  string                       `json:"description"`
+	URL          string                       `json:"url"`
+	Level        int                          `json:"level"`
+	Slug         string                       `json:"slug"`
+	Ancestors    []entity.Ancestor            `json:"ancestors"`
+	AttributeSet []entity.AttributeDefinition `json:"attribute_set"`
 }

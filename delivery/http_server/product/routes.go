@@ -14,4 +14,14 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.PATCH("/:id", h.Update, backofficemiddleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
 	g.DELETE("/:id", h.Delete, backofficemiddleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.DeleteProduct))
 
+	g.PATCH("/add-product-gallery", h.AddGallery, backofficemiddleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
+	g.PATCH("/set-primary", h.SetPrimary, backofficemiddleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
+	g.PATCH("/delete-product-gallery", h.DeleteGallery, backofficemiddleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
+
+	g.PATCH("/:id/update-attrs", h.UpdateAttrs, backofficemiddleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
+	g.PATCH("/:id/update-single-attr/:key", h.UpdateSingleAttrs, backofficemiddleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
+
+	g.PATCH("/:id/add-variant", h.AddVariant, backofficemiddleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
+	g.PATCH("/:id/update-variant/:varid", h.UpdateVariant, backofficemiddleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
+	g.PATCH("/:id/delete-variant/:varid", h.DeleteVariant, backofficemiddleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
 }

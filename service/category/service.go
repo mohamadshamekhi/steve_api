@@ -22,6 +22,7 @@ type CategoryWriter interface {
 	Create(ctx context.Context, category entity.Category) error
 	Update(ctx context.Context, category entity.Category) error
 	Delete(ctx context.Context, category entity.Category) error
+	GetCategoriesByIDs(ctx context.Context, ids []string) (map[string]entity.Category, error)
 }
 
 type CategoryReadWriter interface {

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/abolfazlnorzad/steve/adapter/mellipayamak"
 	natsadapter "github.com/abolfazlnorzad/steve/adapter/nats"
 	redisadapter "github.com/abolfazlnorzad/steve/adapter/redis"
 	liarastorage "github.com/abolfazlnorzad/steve/adapter/storage/liara"
@@ -23,4 +24,5 @@ type Config struct {
 	Mongo         mongodb.Config           `koanf:"mongo"`
 	ObjectStorage liarastorage.Config      `koanf:"object_storage"`
 	Media         mediaservice.Config      `koanf:"media"`
+	MelliPayamak  mellipayamak.Config      `koanf:"mellipayamak"`
 }

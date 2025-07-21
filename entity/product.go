@@ -25,9 +25,9 @@ type Product struct {
 	DeletedAt time.Time `bson:"deleted_at,omitempty"`
 }
 type ProductGallery struct {
-	MediaID string `bson:"media_id"`
-	URL     string `bson:"url"`
-	IsMain  bool   `bson:"is_main"`
+	MediaID   string `bson:"media_id"`
+	URL       string `bson:"url"`
+	IsPrimary bool   `bson:"is_primary"`
 }
 type Specification struct {
 	Key   string `bson:"key"`   // ex: "cpu_processor"

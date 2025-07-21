@@ -21,6 +21,7 @@ type BrandWriter interface {
 	Create(ctx context.Context, brand entity.Brand) error
 	Update(ctx context.Context, brand entity.Brand) error
 	Delete(ctx context.Context, brand entity.Brand) error
+	GetBrandsByIDs(ctx context.Context, ids []string) (map[string]entity.Brand, error)
 }
 
 type BrandReadWriter interface {

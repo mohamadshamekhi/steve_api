@@ -10,7 +10,6 @@ import (
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"github.com/nats-io/nats.go"
 	"google.golang.org/protobuf/proto"
-	"math/rand/v2"
 	"time"
 )
 
@@ -22,12 +21,15 @@ func (s Service) GenerateOTPCode(ctx context.Context, phoneNumber string, prefix
 		return richerror.New(op).WithWarpError(cErr)
 	}
 	if !resp {
-		code := fmt.Sprintf("%d", 10000+rand.IntN(99999))
+		// todo - uncomment !!! important !!!
+		//code := fmt.Sprintf("%d", 10000+rand.IntN(99999))
+		code := "77777"
 		sErr := s.repo.StoreNewActiveCodeForUser(ctx, key, code, s.cfg.ExpirationTimeOptCode)
 		if sErr != nil {
 			return richerror.New(op).WithWarpError(sErr)
 		}
-		return s.publishMessageToNats(phoneNumber, code)
+		return nil
+		//return s.publishMessageToNats(phoneNumber, code)
 	}
 
 	return nil
