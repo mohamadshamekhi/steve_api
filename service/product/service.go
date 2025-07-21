@@ -22,8 +22,9 @@ type ProductWriter interface {
 	Create(ctx context.Context, product entity.Product) error
 	Update(ctx context.Context, product entity.Product) error
 	Delete(ctx context.Context, product entity.Product) error
-	AddProductGallery(ctx context.Context, g entity.ProductGallery) error
+	AddProductGallery(ctx context.Context, productID string, g entity.ProductGallery) error
 	DeleteProductGallery(ctx context.Context, productID string, mediaID string) error
+	SetPrimary(ctx context.Context, productID string, mediaID string) error
 }
 
 type ProductReadWriter interface {

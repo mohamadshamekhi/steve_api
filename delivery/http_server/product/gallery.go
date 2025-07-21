@@ -19,7 +19,7 @@ func (h Handler) AddGallery(c echo.Context) error {
 	}
 
 	if err := h.vld.ValidateAddProductGalleryRequest(req); err != nil {
-		return richerror.New(op).WithWarpError(err)
+		return err
 	}
 	resp, err := h.backofficeProductSvc.AddGallery(c.Request().Context(), req)
 	if err != nil {
@@ -56,4 +56,28 @@ func (h Handler) DeleteGallery(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiResponse)
 
+}
+
+func (h Handler) SetPrimary(c echo.Context) error {
+	const op = "producthandler.SetPrimary"
+	var req productparam.SetPrimaryProductGalleryRequest
+	if bErr := c.Bind(&req); bErr != nil {
+		return richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("validation.invalid_input").
+			WithWarpError(bErr)
+	}
+
+	if err := h.vld.ValidateSetPrimaryGalleryRequest(req); err != nil {
+		return err
+	}
+	resp, err := h.backofficeProductSvc.SetPrimary(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
 }

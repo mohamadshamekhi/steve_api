@@ -18,7 +18,7 @@ func (s BackofficeService) AddGallery(ctx context.Context, req productparam.AddP
 		URL:       req.MediaURL,
 		IsPrimary: req.IsPrimary,
 	}
-	if err := s.repo.AddProductGallery(ctx, g); err != nil {
+	if err := s.repo.AddProductGallery(ctx, req.ProductID, g); err != nil {
 		return productparam.AddProductGalleryResponse{}, richerror.New(op).WithWarpError(err)
 	}
 
@@ -44,4 +44,12 @@ func (s BackofficeService) DeleteGallery(ctx context.Context, req productparam.D
 	}
 	return productparam.DeleteProductGalleryResponse{}, nil
 
+}
+
+func (s BackofficeService) SetPrimary(ctx context.Context, req productparam.SetPrimaryProductGalleryRequest) (productparam.SetPrimaryProductGalleryResponse, error) {
+	const op = "productservice.SetPrimary"
+	if err := s.repo.SetPrimary(ctx, req.ProductID, req.MediaID); err != nil {
+		return productparam.SetPrimaryProductGalleryResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return productparam.SetPrimaryProductGalleryResponse{}, nil
 }
