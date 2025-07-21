@@ -29,6 +29,9 @@ type ProductWriter interface {
 	SetPrimary(ctx context.Context, productID string, mediaID string) error
 	UpdateSpecifications(ctx context.Context, productID string, specs []entity.Specification) error
 	UpdateSingleSpecification(ctx context.Context, productID string, key string, value string) error
+	AddVariant(ctx context.Context, ProductID string, v entity.Variant) error
+	DeleteVariant(ctx context.Context, ProductID string, VariantID string) error
+	UpdateVariant(ctx context.Context, ProductID string, variant entity.Variant) error
 }
 
 type ProductReadWriter interface {
