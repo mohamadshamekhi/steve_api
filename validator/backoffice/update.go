@@ -13,14 +13,14 @@ func (v Validator) ValidateUpdateBackofficeUserRequest(req backofficeparam.Updat
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.ID, validation.Required.Error("validation.required"), validation.By(v.checkBackofficeUserExist)),
 		validation.Field(&req.PhoneNumber,
-			validation.Required.Error("validation.required"),
-			validation.By(v.checkPhoneNumberIsUniqueForUpdate(req.ID))),
+			validation.When(req.PhoneNumber != nil, validation.Required.Error("validation.required"),
+				validation.By(v.checkPhoneNumberIsUniqueForUpdate(req.ID)))),
 		validation.Field(&req.Name,
-			validation.Required.Error("validation.required")),
+			validation.When(req.Name != nil, validation.Required.Error("validation.required"))),
 		validation.Field(&req.Address,
-			validation.Required.Error("validation.required")),
+			validation.When(req.Address != nil, validation.Required.Error("validation.required"))),
 		validation.Field(&req.IsActive,
-			validation.NotNil.Error("validation.required")),
+			validation.When(req.IsActive != nil, validation.NotNil.Error("validation.required"))),
 	); err != nil {
 
 		var vErrs validation.Errors
@@ -56,6 +56,10 @@ func (v Validator) checkBackofficeUserExist(value any) error {
 	}
 	_, err := v.repo.GetBackOfficeUserByID(context.Background(), id)
 	if err != nil {
+		var rErr *richerror.RichError
+		if errors.As(err, &rErr) && rErr.Kind() == richerror.KindNotFound {
+			return errors.New(rErr.GetMessageKey())
+		}
 		return err
 	}
 
@@ -64,14 +68,22 @@ func (v Validator) checkBackofficeUserExist(value any) error {
 
 func (v Validator) checkPhoneNumberIsUniqueForUpdate(currentBackofficeUserID string) validation.RuleFunc {
 	return func(value interface{}) error {
-		phonenumber, ok := value.(string)
-		if !ok {
-			return richerror.New("validator.isBackOfficeUserIsExist").
+		var phonenumber string
+		switch v := value.(type) {
+		case string:
+			phonenumber = v
+		case *string:
+			if v == nil {
+				return nil
+			}
+			phonenumber = *v
+		default:
+			return richerror.New("brandvalidator.BrandIsUnique.type_assertion").
 				WithKind(richerror.KindUnexpected).
-				WithWarpError(errors.New("unexpected type assertion failed"))
+				WithWarpError(errors.New("unexpected type for brand name"))
 		}
 
-		existingBrand, err := v.repo.GetBackOfficeUserByPhonenumber(context.Background(), phonenumber)
+		existingBrand, err := v.repo.GetBackOfficeUserByPhoneNumber(context.Background(), phonenumber)
 		if err != nil {
 			var rErr *richerror.RichError
 			if errors.As(err, &rErr) && rErr.Kind() == richerror.KindNotFound {

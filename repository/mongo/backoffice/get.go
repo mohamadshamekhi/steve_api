@@ -10,20 +10,8 @@ import (
 )
 
 func (d DB) GetBackOfficeUserByPhoneNumber(ctx context.Context, phoneNumber string) (entity.BackOffice, error) {
-	const op = "mongodbbackoffice.GetBackOfficeUserByPhoneNumber"
+	const op = "mongodbbackoffice.GetBackOfficeUserByPhonenumber"
 	filter := bson.M{"phone_number": phoneNumber}
-	var backOffice entity.BackOffice
-	if dErr := d.collection.FindOne(ctx, filter).Decode(&backOffice); dErr != nil {
-		return backOffice, richerror.New(op).WithWarpError(dErr).WithMessageKey("global.something_wrong").
-			WithKind(richerror.KindUnexpected)
-	}
-
-	return backOffice, nil
-}
-
-func (d DB) GetBackOfficeUserByID(ctx context.Context, id string) (entity.BackOffice, error) {
-	const op = "mongodbbackoffice.GetBackOfficeUserByID"
-	filter := bson.M{"_id": id}
 	var backOffice entity.BackOffice
 	if dErr := d.collection.FindOne(ctx, filter).Decode(&backOffice); dErr != nil {
 		if errors.Is(dErr, mongo.ErrNoDocuments) {
@@ -36,9 +24,9 @@ func (d DB) GetBackOfficeUserByID(ctx context.Context, id string) (entity.BackOf
 	return backOffice, nil
 }
 
-func (d DB) GetBackOfficeUserByPhonenumber(ctx context.Context, phoneNumber string) (entity.BackOffice, error) {
+func (d DB) GetBackOfficeUserByID(ctx context.Context, id string) (entity.BackOffice, error) {
 	const op = "mongodbbackoffice.GetBackOfficeUserByID"
-	filter := bson.M{"phone_number": phoneNumber}
+	filter := bson.M{"_id": id}
 	var backOffice entity.BackOffice
 	if dErr := d.collection.FindOne(ctx, filter).Decode(&backOffice); dErr != nil {
 		if errors.Is(dErr, mongo.ErrNoDocuments) {

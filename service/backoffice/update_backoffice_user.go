@@ -20,6 +20,9 @@ func (s Service) UpdateBackofficeUser(ctx context.Context, req backofficeparam.U
 	if req.NationCode != nil {
 		u.NationalCode = *req.NationCode
 	}
+	if req.PhoneNumber != nil {
+		u.PhoneNumber = *req.PhoneNumber
+	}
 	if req.Permissions != nil {
 		u.Permissions = *req.Permissions
 	}

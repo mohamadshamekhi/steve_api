@@ -14,7 +14,7 @@ type Validator struct {
 type Repository interface {
 	IsBackOfficeUserIsExistByPhoneNumber(ctx context.Context, phoneNumber string) (bool, error)
 	GetBackOfficeUserByID(ctx context.Context, id string) (entity.BackOffice, error)
-	GetBackOfficeUserByPhonenumber(ctx context.Context, phoneNumber string) (entity.BackOffice, error)
+	GetBackOfficeUserByPhoneNumber(ctx context.Context, phoneNumber string) (entity.BackOffice, error)
 }
 
 func New(repo Repository) Validator {
@@ -33,7 +33,7 @@ func (v Validator) isBackOfficeUserIsExist(value any) error {
 		return err
 	}
 	if isExist {
-		return errors.New("auth.validation.phone_number_is_already_exist")
+		return errors.New("validation.phone_number_is_already_exist")
 	}
 
 	return nil
