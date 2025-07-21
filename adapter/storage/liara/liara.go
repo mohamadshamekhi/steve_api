@@ -51,7 +51,6 @@ func New(credential Config, mcfg mediaservice.Config) *Disk {
 
 	client := s3.New(sess)
 
-	fmt.Println("credential", credential)
 	return &Disk{
 		config:   credential,
 		client:   client,

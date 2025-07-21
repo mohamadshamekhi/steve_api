@@ -22,24 +22,25 @@ type ProductWriter interface {
 	Create(ctx context.Context, product entity.Product) error
 	Update(ctx context.Context, product entity.Product) error
 	Delete(ctx context.Context, product entity.Product) error
+	AddProductGallery(ctx context.Context, g entity.ProductGallery) error
+	DeleteProductGallery(ctx context.Context, productID string, mediaID string) error
 }
 
-type ArticleReadWriter interface {
+type ProductReadWriter interface {
 	ProductReader
 	ProductWriter
 }
 
 type BackofficeService struct {
-	repo ArticleReadWriter
+	repo     ProductReadWriter
+	mediaSvc MediaService
 }
 
-func NewBackofficeService(repo ArticleReadWriter) BackofficeService {
-	return BackofficeService{repo: repo}
+func NewBackofficeService(repo ProductReadWriter, mediaSvc MediaService) BackofficeService {
+	return BackofficeService{repo: repo, mediaSvc: mediaSvc}
 }
 
 type MediaService interface {
-	GetURLByMediaID(ctx context.Context, req mediaparam.GetUrlByIDRequest) (mediaparam.GetUrlByIDResponse, error)
-	GetURLsByMediaIDs(ctx context.Context, req mediaparam.GetUrlsByIDsRequest) (mediaparam.GetUrlsByIDsResponse, error)
 	DeleteMedia(ctx context.Context, req mediaparam.DeleteMediaRequest) (mediaparam.DeleteMediaResponse, error)
 	FindMediaByID(ctx context.Context, req mediaparam.GetMediaByIDRequest) (mediaparam.GetMediaByIDResponse, error)
 }

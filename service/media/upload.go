@@ -35,8 +35,11 @@ func (s Service) UploadFile(ctx context.Context, req mediaparam.UploadMediaReque
 		_ = s.provider.Delete(context.Background(), media)
 		return mediaparam.UploadMediaResponse{}, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
 	}
-
-	return mediaparam.UploadMediaResponse{
+	r, _ := s.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{
 		ID: media.ID,
+	})
+	return mediaparam.UploadMediaResponse{
+		ID:  media.ID,
+		URL: r.URL,
 	}, nil
 }
