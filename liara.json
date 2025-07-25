@@ -7,6 +7,5 @@
   "disks": [],
   "go": {
     "version": "1.23",
-    "procfile" : "/cmd/main.go"
   }
 }
