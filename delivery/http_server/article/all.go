@@ -27,7 +27,7 @@ func (h Handler) All(c echo.Context) error {
 			PageNumber: uint(pageNumber),
 		},
 		Filter: commonparam.FilterRequest{
-			Filter: []map[string]string{{"title": title}},
+			Filter: []map[string]any{{"title": title}},
 		},
 	}
 
@@ -61,7 +61,7 @@ func (h Handler) GetAllStorefront(c echo.Context) error {
 			PageNumber: uint(pageNumber),
 		},
 		Filter: commonparam.FilterRequest{
-			Filter: []map[string]string{{"title": title, "is_published": strconv.FormatBool(isPub)}},
+			Filter: []map[string]any{{"title": title, "is_published": isPub}},
 		},
 	}
 

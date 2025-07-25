@@ -1,5 +1,5 @@
 package commonparam
 
 type FilterRequest struct {
-	Filter []map[string]string
+	Filter []map[string]any
 }

@@ -27,7 +27,7 @@ func (h Handler) GetAll(c echo.Context) error {
 			PageNumber: uint(pageNumber),
 		},
 		Filter: commonparam.FilterRequest{
-			Filter: []map[string]string{{"phone_number": phoneNumber}},
+			Filter: []map[string]any{{"phone_number": phoneNumber}},
 		},
 	}
 
