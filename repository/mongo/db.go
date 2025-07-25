@@ -21,7 +21,7 @@ type DB struct {
 }
 
 func NewMongoDB(cfg Config) *DB {
-	clientOptions := options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s", cfg.Host, cfg.Port))
+	clientOptions := options.Client().ApplyURI(fmt.Sprintf("mongodb://%s:%s@%s:%s/%s?authSource=admin", cfg.Username, cfg.Password, cfg.Host, cfg.Port, cfg.DBName))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
