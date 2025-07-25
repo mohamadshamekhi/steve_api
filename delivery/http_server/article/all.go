@@ -54,13 +54,14 @@ func (h Handler) GetAllStorefront(c echo.Context) error {
 		pageSize = commonparam.DefaultPageSize
 	}
 	title := c.QueryParam("title")
+	isPub := false
 	req := articleparam.AllStorefrontArticleRequest{
 		Pagination: commonparam.PaginationRequest{
 			PageSize:   uint(pageSize),
 			PageNumber: uint(pageNumber),
 		},
 		Filter: commonparam.FilterRequest{
-			Filter: []map[string]string{{"title": title}},
+			Filter: []map[string]string{{"title": title, "is_published": strconv.FormatBool(isPub)}},
 		},
 	}
 
