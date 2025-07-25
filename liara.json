@@ -1,0 +1,8 @@
+{
+  "app": "api-steve",
+  "port": 3000,
+  "build": {
+    "location": "iran"
+  },
+  "disks": []
+}
