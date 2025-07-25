@@ -23,6 +23,8 @@ nats:
 
 mongo:
   host: 127.0.0.1
+  username: "root"
+  password: "password"
   port: 27017
   db_name: "steve"
 

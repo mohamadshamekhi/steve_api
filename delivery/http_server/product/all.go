@@ -32,7 +32,7 @@ func (h Handler) All(c echo.Context) error {
 			PageNumber: uint(pageNumber),
 		},
 		Filter: commonparam.FilterRequest{
-			Filter: []map[string]string{{"en_title": ENTitle}, {"name": name}, {"brand_id": brandID},
+			Filter: []map[string]any{{"en_title": ENTitle}, {"name": name}, {"brand_id": brandID},
 				{"category_id": categoryID}, {"is_published": isPub}, {"is_second_hand": isSecondHand}},
 		},
 	}
