@@ -1,6 +1,6 @@
 {
   "app": "api-steve",
-  "port": 3000,
+  "port": 7777,
   "build": {
     "location": "iran"
   },
