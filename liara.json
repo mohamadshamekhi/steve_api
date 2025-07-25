@@ -2,12 +2,9 @@
   "app": "api-steve",
   "port": 7777,
   "build": {
-    "location": "iran"
+    "location": "germany"
   },
   "disks": [],
-
-  "platform": "golang",
-
   "go": {
     "version": "1.23"
   }
