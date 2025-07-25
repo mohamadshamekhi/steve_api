@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	natsadapter "github.com/abolfazlnorzad/steve/adapter/nats"
 	redisadapter "github.com/abolfazlnorzad/steve/adapter/redis"
 	liarastorage "github.com/abolfazlnorzad/steve/adapter/storage/liara"
@@ -57,7 +56,6 @@ func main() {
 		Host: "localhost",
 		Port: 4222,
 	})
-	fmt.Println("here")
 	authSvc := authservice.New(cfg.Auth, redisotp.New(redisRepo), nats)
 	mongoRepo := mongodb.NewMongoDB(cfg.Mongo)
 	backOfficeMongoRepo := mongodbbackoffice.New(mongoRepo)

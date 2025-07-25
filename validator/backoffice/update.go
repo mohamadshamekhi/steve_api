@@ -78,7 +78,7 @@ func (v Validator) checkPhoneNumberIsUniqueForUpdate(currentBackofficeUserID str
 			}
 			phonenumber = *v
 		default:
-			return richerror.New("brandvalidator.BrandIsUnique.type_assertion").
+			return richerror.New("backofficevalidator.BrandIsUnique.type_assertion").
 				WithKind(richerror.KindUnexpected).
 				WithWarpError(errors.New("unexpected type for brand name"))
 		}

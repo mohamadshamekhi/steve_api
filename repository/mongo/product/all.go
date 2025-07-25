@@ -58,7 +58,6 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 		}
 	}
 
-	fmt.Println("filter", filter)
 	totalCount, err := d.collection.CountDocuments(ctx, filter)
 	if err != nil {
 		return productservice.ListResult{}, richerror.New(op).WithWarpError(err).

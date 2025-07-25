@@ -2,7 +2,6 @@ package mongodbrole
 
 import (
 	"context"
-	"fmt"
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"go.mongodb.org/mongo-driver/bson"
@@ -52,6 +51,5 @@ func (d DB) GetPermissionKeysOfRole(ctx context.Context, roleKeys []string) ([]s
 	for id := range permissionKsySet {
 		result = append(result, id)
 	}
-	fmt.Println("result", result)
 	return result, nil
 }
