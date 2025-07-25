@@ -1,6 +1,6 @@
 module github.com/abolfazlnorzad/steve
 
-go 1.24.3
+go 1.22.10
 
 require (
 	github.com/aws/aws-sdk-go v1.55.7
