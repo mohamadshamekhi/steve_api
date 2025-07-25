@@ -4,5 +4,8 @@
   "build": {
     "location": "iran"
   },
-  "disks": []
+  "disks": [],
+  "go": {
+    "version": "1.23"
+  }
 }
