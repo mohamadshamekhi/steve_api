@@ -1,0 +1,95 @@
+package uservalidator
+
+import (
+	"context"
+	"errors"
+	userauthparam "github.com/abolfazlnorzad/steve/param/user/auth"
+	"github.com/abolfazlnorzad/steve/pkg/constant"
+	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"regexp"
+)
+
+func (v Validator) ValidateUserLoginWithPhoneNumberRequest(req userauthparam.UserSendLoginCodeRequest) error {
+	const op = "uservalidator.ValidateUserLoginWithPhoneNumberRequest"
+	if err := validation.ValidateStruct(&req,
+		validation.Field(&req.PhoneNumber,
+			validation.Required.Error("validation.required"),
+			validation.Match(regexp.MustCompile(constant.PhoneNumberRegex)).Error("validation.phone_number_invalid"),
+			validation.By(v.isUserIsExist))); err != nil {
+
+		var vErrs validation.Errors
+		if errors.As(err, &vErrs) {
+			fieldErrorKeys := make(map[string]string)
+			for field, errMessage := range vErrs {
+				if errMessage != nil {
+					fieldErrorKeys[field] = errMessage.Error()
+				}
+			}
+
+			return richerror.New(op).
+				WithKind(richerror.KindInvalid).
+				WithMessageKey("global.validation_failed").
+				WithMeta(map[string]any{"fields": fieldErrorKeys})
+		}
+
+		return richerror.New(op).WithKind(richerror.KindUnexpected).
+			WithMessageKey("global.something_wrong").WithWarpError(err)
+
+	}
+
+	//nolint
+	return nil
+}
+func (v Validator) isUserIsExist(value any) error {
+	phoneNumber, ok := value.(string)
+	if !ok {
+		return richerror.New("validator.isUserIsExist").
+			WithKind(richerror.KindUnexpected).
+			WithWarpError(errors.New("unexpected type assertion failed"))
+	}
+	isExist, err := v.repo.IsUserIsExistByPhoneNumber(context.Background(), phoneNumber)
+	if err != nil {
+		return err
+	}
+	if !isExist {
+		return errors.New("auth.user_not_found")
+	}
+
+	return nil
+}
+
+func (v Validator) ValidateUserVerifyOTPCodeRequest(req userauthparam.UserVerifyLoginCodeRequest) error {
+	const op = "uservalidator.ValidateUserVerifyOTPCodeRequest"
+	if err := validation.ValidateStruct(&req,
+		validation.Field(&req.Code, validation.Required.Error("validation.required")),
+		validation.Field(&req.PhoneNumber,
+			validation.Required.Error("validation.required"),
+			validation.Match(regexp.MustCompile(constant.PhoneNumberRegex)).Error("validation.phone_number_invalid"),
+			validation.By(v.isUserIsExist))); err != nil {
+
+		var vErrs validation.Errors
+		if errors.As(err, &vErrs) {
+			fieldErrorKeys := make(map[string]string)
+			for field, fieldErr := range vErrs {
+				if fieldErr != nil {
+					fieldErrorKeys[field] = fieldErr.Error()
+				}
+			}
+
+			return richerror.New(op).
+				WithKind(richerror.KindInvalid).
+				WithMessageKey("global.validation_failed").
+				WithMeta(map[string]any{"fields": fieldErrorKeys})
+		}
+
+		return richerror.New(op).
+			WithKind(richerror.KindUnexpected).
+			WithMessageKey("global.something_wrong").
+			WithWarpError(err)
+
+	}
+
+	//nolint
+	return nil
+}
