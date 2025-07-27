@@ -16,7 +16,7 @@ func (v Validator) ValidateUserLoginWithPhoneNumberRequest(req userauthparam.Use
 		validation.Field(&req.PhoneNumber,
 			validation.Required.Error("validation.required"),
 			validation.Match(regexp.MustCompile(constant.PhoneNumberRegex)).Error("validation.phone_number_invalid"),
-			validation.By(v.isUserIsExist))); err != nil {
+		)); err != nil {
 
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {
@@ -48,7 +48,7 @@ func (v Validator) isUserIsExist(value any) error {
 			WithKind(richerror.KindUnexpected).
 			WithWarpError(errors.New("unexpected type assertion failed"))
 	}
-	isExist, err := v.repo.IsUserIsExistByPhoneNumber(context.Background(), phoneNumber)
+	isExist, err := v.repo.CheckUserIsExistByPhoneNumber(context.Background(), phoneNumber)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (v Validator) ValidateUserVerifyOTPCodeRequest(req userauthparam.UserVerify
 		validation.Field(&req.PhoneNumber,
 			validation.Required.Error("validation.required"),
 			validation.Match(regexp.MustCompile(constant.PhoneNumberRegex)).Error("validation.phone_number_invalid"),
-			validation.By(v.isUserIsExist))); err != nil {
+		)); err != nil {
 
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {

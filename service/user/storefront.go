@@ -13,10 +13,11 @@ type StoreFrontService struct {
 	repo    Repository
 }
 
-func NewStoreFrontService(config Config, repo Repository) StoreFrontService {
+func NewStoreFrontService(config Config, repo Repository, authSvc authservice.Service) StoreFrontService {
 	return StoreFrontService{
-		config: config,
-		repo:   repo,
+		config:  config,
+		repo:    repo,
+		authSvc: authSvc,
 	}
 }
 
@@ -40,7 +41,7 @@ func (s StoreFrontService) VerifyOTPCode(ctx context.Context, req userauthparam.
 		return userauthparam.UserVerifyLoginCodeResponse{}, err
 	}
 	if resp {
-		user, iErr := s.repo.GetUserByPhoneNumber(ctx, req.PhoneNumber)
+		user, iErr := s.repo.GetOrCreateUser(ctx, req.PhoneNumber)
 		if iErr != nil {
 			return userauthparam.UserVerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(iErr)
 		}
@@ -52,6 +53,7 @@ func (s StoreFrontService) VerifyOTPCode(ctx context.Context, req userauthparam.
 			Token: token,
 		}, nil
 	}
+
 	return userauthparam.UserVerifyLoginCodeResponse{}, richerror.New(op).WithKind(richerror.KindUnauthorized).
 		WithMessageKey("validation.incorrect_opt_code")
 }

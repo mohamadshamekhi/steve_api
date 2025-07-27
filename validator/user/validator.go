@@ -7,7 +7,7 @@ type Validator struct {
 }
 
 type Repository interface {
-	IsUserIsExistByPhoneNumber(ctx context.Context, phoneNumber string) (bool, error)
+	CheckUserIsExistByPhoneNumber(ctx context.Context, phoneNumber string) (bool, error)
 }
 
 func New(repo Repository) Validator {

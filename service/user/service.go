@@ -10,4 +10,6 @@ type Config struct {
 }
 type Repository interface {
 	GetUserByPhoneNumber(ctx context.Context, phone string) (entity.User, error)
+	AddNewUser(ctx context.Context, u entity.User) error
+	GetOrCreateUser(ctx context.Context, phonenumber string) (entity.User, error)
 }

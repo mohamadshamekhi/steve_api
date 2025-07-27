@@ -4,6 +4,7 @@ import (
 	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/oklog/ulid/v2"
 	"time"
 )
 
@@ -13,6 +14,7 @@ func (s Service) generateToken(id string, subject string, kind string, expireDur
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   subject,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expireDuration)),
+			ID:        ulid.Make().String(),
 		},
 		Kind:           kind,
 		EntityID:       id,
