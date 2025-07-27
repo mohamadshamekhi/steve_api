@@ -2,6 +2,7 @@ package userservice
 
 import (
 	"context"
+	userparam "github.com/abolfazlnorzad/steve/param/user"
 	userauthparam "github.com/abolfazlnorzad/steve/param/user/auth"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
@@ -56,4 +57,24 @@ func (s StoreFrontService) VerifyOTPCode(ctx context.Context, req userauthparam.
 
 	return userauthparam.UserVerifyLoginCodeResponse{}, richerror.New(op).WithKind(richerror.KindUnauthorized).
 		WithMessageKey("validation.incorrect_opt_code")
+}
+
+func (s StoreFrontService) UpdateProfile(ctx context.Context, req userparam.StoreFrontUpdateProfileRequest) (userparam.StoreFrontUpdateProfileResponse, error) {
+	const op = "userservice.UpdateProfile"
+
+	u, gErr := s.repo.GetUserByID(ctx, req.UserID)
+	if gErr != nil {
+		return userparam.StoreFrontUpdateProfileResponse{}, richerror.New(op).WithWarpError(gErr)
+	}
+	if req.Name != nil {
+		u.Name = *req.Name
+	}
+	if req.PhoneNumber != nil {
+		u.PhoneNumber = *req.PhoneNumber
+	}
+	uErr := s.repo.UpdateUser(ctx, u)
+	if uErr != nil {
+		return userparam.StoreFrontUpdateProfileResponse{}, richerror.New(op).WithWarpError(uErr)
+	}
+	return userparam.StoreFrontUpdateProfileResponse{}, nil
 }
