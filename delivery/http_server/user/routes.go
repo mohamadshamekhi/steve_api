@@ -9,4 +9,5 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 
 	g.POST("/send-otp", h.Login)
 	g.POST("/verify-otp", h.VerifyOTPCode)
+	g.PATCH("/:id/update-profile", h.UpdateProfile)
 }
