@@ -2,10 +2,12 @@ package userservice
 
 import (
 	"context"
+	"github.com/abolfazlnorzad/steve/entity"
 	userparam "github.com/abolfazlnorzad/steve/param/user"
 	userauthparam "github.com/abolfazlnorzad/steve/param/user/auth"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
+	"github.com/oklog/ulid/v2"
 )
 
 type StoreFrontService struct {
@@ -77,4 +79,48 @@ func (s StoreFrontService) UpdateProfile(ctx context.Context, req userparam.Stor
 		return userparam.StoreFrontUpdateProfileResponse{}, richerror.New(op).WithWarpError(uErr)
 	}
 	return userparam.StoreFrontUpdateProfileResponse{}, nil
+}
+
+func (s StoreFrontService) AddAddress(ctx context.Context, req userparam.StoreFrontAddAddressRequest) (userparam.StoreFrontAddAddressResponse, error) {
+	const op = "userservice.AddAddress"
+
+	if err := s.repo.AddAddress(ctx, req.UserID, entity.Address{
+		ID:       ulid.Make().String(),
+		Title:    req.Title,
+		Province: req.Province,
+		City:     req.City,
+		Street:   req.Street,
+		Postcode: req.Postcode,
+	}); err != nil {
+		return userparam.StoreFrontAddAddressResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return userparam.StoreFrontAddAddressResponse{}, nil
+}
+
+func (s StoreFrontService) UpdateAddress(ctx context.Context, req userparam.StoreFrontUpdateAddressRequest) (userparam.StoreFrontUpdateAddressResponse, error) {
+	const op = "userservice.UpdateAddress"
+	ad, err := s.repo.FindAddress(ctx, req.UserID, req.ID)
+	if err != nil {
+		return userparam.StoreFrontUpdateAddressResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	if req.City != nil {
+		ad.City = *req.City
+	}
+	if req.Title != nil {
+		ad.Title = *req.Title
+	}
+	if req.Province != nil {
+		ad.Province = *req.Province
+	}
+	if req.Street != nil {
+		ad.Street = *req.Street
+	}
+	if req.Postcode != nil {
+		ad.Postcode = *req.Postcode
+	}
+
+	if err = s.repo.UpdateAddress(ctx, req.UserID, ad); err != nil {
+		return userparam.StoreFrontUpdateAddressResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return userparam.StoreFrontUpdateAddressResponse{}, nil
 }

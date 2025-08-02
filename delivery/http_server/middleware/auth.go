@@ -1,4 +1,4 @@
-package backofficemiddleware
+package middleware
 
 import (
 	"github.com/abolfazlnorzad/steve/config"

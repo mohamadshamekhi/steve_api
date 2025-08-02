@@ -12,7 +12,7 @@ import (
 func (v Validator) ValidateStoreFrontUpdateProfileRequest(req userparam.StoreFrontUpdateProfileRequest) error {
 	const op = "uservalidator.ValidateStoreFrontUpdateProfileRequest"
 	if err := validation.ValidateStruct(&req,
-		validation.Field(&req.UserID, validation.Required.Error("validation.required"), validation.By(v.isUserIsExist)),
+		validation.Field(&req.UserID, validation.Required.Error("validation.required"), validation.By(v.isUserIsExistByID)),
 		validation.Field(&req.PhoneNumber,
 			validation.When(req.PhoneNumber != nil, validation.Required.Error("validation.required"),
 				validation.Match(regexp.MustCompile(constant.PhoneNumberRegex)).Error("validation.phone_number_invalid"),

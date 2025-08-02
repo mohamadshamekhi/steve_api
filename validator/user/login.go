@@ -41,7 +41,7 @@ func (v Validator) ValidateUserLoginWithPhoneNumberRequest(req userauthparam.Use
 	//nolint
 	return nil
 }
-func (v Validator) isUserIsExist(value any) error {
+func (v Validator) isUserIsExistByPhoneNumber(value any) error {
 	phoneNumber, ok := value.(string)
 	if !ok {
 		return richerror.New("validator.isUserIsExist").
@@ -49,6 +49,24 @@ func (v Validator) isUserIsExist(value any) error {
 			WithWarpError(errors.New("unexpected type assertion failed"))
 	}
 	isExist, err := v.repo.CheckUserIsExistByPhoneNumber(context.Background(), phoneNumber)
+	if err != nil {
+		return err
+	}
+	if !isExist {
+		return errors.New("auth.user_not_found")
+	}
+
+	return nil
+}
+
+func (v Validator) isUserIsExistByID(value any) error {
+	id, ok := value.(string)
+	if !ok {
+		return richerror.New("validator.isUserIsExist").
+			WithKind(richerror.KindUnexpected).
+			WithWarpError(errors.New("unexpected type assertion failed"))
+	}
+	isExist, err := v.repo.CheckUserIsExistByID(context.Background(), id)
 	if err != nil {
 		return err
 	}

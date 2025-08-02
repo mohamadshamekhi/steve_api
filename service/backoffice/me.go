@@ -13,6 +13,17 @@ func (s Service) GetMyProfile(ctx context.Context, req backofficeparam.MeRequest
 		return backofficeparam.MeResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	return backofficeparam.MeResponse{
-		Backoffice: user,
+		Backoffice: backofficeparam.BackofficeInfo{
+			ID:           user.ID,
+			Name:         user.Name,
+			PhoneNumber:  user.PhoneNumber,
+			NationalCode: user.NationalCode,
+			Address:      user.Address,
+			ZipCode:      user.ZipCode,
+			IsActive:     user.IsActive,
+			IsSuperAdmin: user.IsSuperAdmin(),
+			Roles:        user.Roles,
+			Permissions:  user.Permissions,
+		},
 	}, nil
 }

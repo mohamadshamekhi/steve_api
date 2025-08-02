@@ -14,6 +14,7 @@ type Validator struct {
 
 type Repository interface {
 	CheckUserIsExistByPhoneNumber(ctx context.Context, phoneNumber string) (bool, error)
+	CheckUserIsExistByID(ctx context.Context, id string) (bool, error)
 	GetUserByPhoneNumber(ctx context.Context, phoneNumber string) (entity.User, error)
 }
 

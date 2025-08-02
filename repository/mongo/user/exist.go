@@ -24,3 +24,18 @@ func (d DB) CheckUserIsExistByPhoneNumber(ctx context.Context, phoneNumber strin
 
 	return true, nil
 }
+
+func (d DB) CheckUserIsExistByID(ctx context.Context, id string) (bool, error) {
+	const op = "mongodbuser.IsBUserIsExistID"
+
+	var user entity.User
+	if err := d.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&user); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return false, nil
+		}
+		return false, richerror.New(op).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected).
+			WithMeta(map[string]any{"phoneNumber": id})
+	}
+
+	return true, nil
+}

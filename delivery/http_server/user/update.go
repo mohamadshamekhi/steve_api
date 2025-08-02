@@ -26,7 +26,7 @@ func (h Handler) UpdateProfile(c echo.Context) error {
 	}
 	lang := getLanguageFromHeader(c.Request().Header)
 
-	successMessage := h.translator.Translate(lang, "auth.login_successful", nil)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
 
 	apiResponse := response.NewSuccessResponse(successMessage, resp)
 
