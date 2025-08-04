@@ -5,6 +5,7 @@ import (
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
+	"time"
 )
 
 type Config struct {
@@ -24,15 +25,21 @@ type Repository interface {
 	AllBackoffice(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
 }
 type Service struct {
-	config  Config
-	authSvc authservice.Service
-	repo    Repository
+	config        Config
+	authSvc       authservice.Service
+	repo          Repository
+	cacheProvider CacheProvider
 }
 
-func New(cfg Config, authSvc authservice.Service, repo Repository) Service {
+type CacheProvider interface {
+	AddToBlocklist(ctx context.Context, kind string, JWTID string, ExpireAt time.Time) error
+}
+
+func New(cfg Config, authSvc authservice.Service, repo Repository, cacheProvider CacheProvider) Service {
 	return Service{
-		config:  cfg,
-		authSvc: authSvc,
-		repo:    repo,
+		config:        cfg,
+		authSvc:       authSvc,
+		repo:          repo,
+		cacheProvider: cacheProvider,
 	}
 }

@@ -60,10 +60,11 @@ func main() {
 		Host: "localhost",
 		Port: 4222,
 	})
-	authSvc := authservice.New(cfg.Auth, redisotp.New(redisRepo), nats)
+	redisotp := redisotp.New(redisRepo)
+	authSvc := authservice.New(cfg.Auth, redisotp, nats)
 	mongoRepo := mongodb.NewMongoDB(cfg.Mongo)
 	backOfficeMongoRepo := mongodbbackoffice.New(mongoRepo)
-	backOfficeSvc := backofficeservice.New(cfg.BackOffice, authSvc, backOfficeMongoRepo)
+	backOfficeSvc := backofficeservice.New(cfg.BackOffice, authSvc, backOfficeMongoRepo, redisotp)
 	backOfficeVld := backofficevalidatorauth.New(backOfficeMongoRepo)
 
 	translator, _ := i18n.New("config/locales", "fa")
