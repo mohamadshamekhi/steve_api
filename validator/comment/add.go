@@ -18,7 +18,7 @@ func (v Validator) ValidateAddCommentRequest(req commentparam.AddCommentRequest)
 		validation.Field(&req.CommentableID, validation.Required,
 			validation.Required.Error("validation.required")),
 		validation.Field(&req.ParentID,
-			validation.When(req.ParentID != nil, validation.Required.Error("validation.required"), validation.By(v.parentCommentIsExist)),
+			validation.When(req.ParentID != nil, validation.Required.Error("validation.required"), validation.By(v.commentIsExist)),
 		)); err != nil {
 
 		var vErrs validation.Errors
@@ -45,7 +45,7 @@ func (v Validator) ValidateAddCommentRequest(req commentparam.AddCommentRequest)
 	return nil
 }
 
-func (v Validator) parentCommentIsExist(value any) error {
+func (v Validator) commentIsExist(value any) error {
 	var id string
 	switch v := value.(type) {
 	case string:

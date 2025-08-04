@@ -11,6 +11,7 @@ import (
 type Repository interface {
 	FindByID(ctx context.Context, id string) (entity.Comment, error)
 	Create(ctx context.Context, comment entity.Comment) error
+	Update(ctx context.Context, comment entity.Comment) error
 }
 type Service struct {
 	repo              Repository
@@ -88,4 +89,17 @@ func (s Service) AddComment(ctx context.Context, req commentparam.AddCommentRequ
 		return commentparam.AddCommentResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	return commentparam.AddCommentResponse{}, nil
+}
+
+func (s Service) UpdateComment(ctx context.Context, req commentparam.UpdateCommentRequest) (commentparam.UpdateCommentResponse, error) {
+	const op = "commentservice.UpdateComment"
+	cm, err := s.repo.FindByID(ctx, req.CommentID)
+	if err != nil {
+		return commentparam.UpdateCommentResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	cm.IsApproved = !cm.IsApproved
+	if err := s.repo.Update(ctx, cm); err != nil {
+		return commentparam.UpdateCommentResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return commentparam.UpdateCommentResponse{}, nil
 }
