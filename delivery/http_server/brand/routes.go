@@ -11,7 +11,7 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g := e.Group("/brand")
 	g.POST("/create", h.Create, middleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.CreateBrand))
 	g.GET("/:id", h.Get)
-	g.GET("/", h.All)
+	g.GET("", h.All)
 	g.PATCH("/:id", h.Update, middleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateBrand))
 	g.DELETE("/:id", h.Delete, middleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.DeleteBrand))
 	g.GET("/storefront", h.GetAllStorefront)
