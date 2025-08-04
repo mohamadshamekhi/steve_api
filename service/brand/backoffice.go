@@ -158,7 +158,7 @@ func (s BackofficeService) All(ctx context.Context, req brandparam.GetAllBrandsP
 	for _, b := range resp.Brands {
 		r, e := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: b.MediaID})
 		if e != nil {
-			return brandparam.GetAllBrandsParamResponse{}, e
+			logger.L().Error("warning: could not get media url", "error", e)
 		}
 		brands = append(brands, brandparam.BrandInfo{
 			ID:          b.ID,

@@ -26,6 +26,7 @@ func NewCentralErrorHandler(translator *i18n.Translator) echo.HTTPErrorHandler {
 	}
 }
 func parseError(err error, translator *i18n.Translator, lang string) (response.APIResponse, int) {
+	fmt.Println("error", err)
 	var richErr *richerror.RichError
 	if errors.As(err, &richErr) {
 		code := mapKindToHTTPStatusCode(richErr.Kind())
