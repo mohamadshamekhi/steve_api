@@ -17,6 +17,7 @@ type Repository interface {
 	CheckUserHasActiveCode(ctx context.Context, key string) (bool, error)
 	GetUserActiveCode(ctx context.Context, key string) (string, error)
 	StoreNewActiveCodeForUser(ctx context.Context, key string, code string, expireTime time.Duration) error
+	IsInBlocklist(ctx context.Context, kind string, JWTID string) (bool, error)
 }
 
 type Service struct {
@@ -27,4 +28,8 @@ type Service struct {
 
 func New(cfg Config, repo Repository, nats *natsadapter.Adapter) Service {
 	return Service{cfg: cfg, repo: repo, nats: nats}
+}
+
+func (s Service) CheckTokenIsInBlockList(ctx context.Context, kind string, id string) (bool, error) {
+	return s.repo.IsInBlocklist(ctx, kind, id)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	backofficeauthparam "github.com/abolfazlnorzad/steve/param/backoffice/auth"
+	"github.com/abolfazlnorzad/steve/pkg/constant"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"regexp"
@@ -14,7 +15,7 @@ func (v Validator) ValidateLoginWithPhoneNumberRequest(req backofficeauthparam.S
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.PhoneNumber,
 			validation.Required.Error("validation.required"),
-			validation.Match(regexp.MustCompile(phoneNumberRegex)).Error("validation.phone_number_invalid"),
+			validation.Match(regexp.MustCompile(constant.PhoneNumberRegex)).Error("validation.phone_number_invalid"),
 			validation.By(v.isBackOfficeUserIsExist))); err != nil {
 
 		var vErrs validation.Errors
@@ -65,7 +66,7 @@ func (v Validator) ValidateVerifyOTPCodeRequest(req backofficeauthparam.VerifyLo
 		validation.Field(&req.Code, validation.Required.Error("validation.required")),
 		validation.Field(&req.PhoneNumber,
 			validation.Required.Error("validation.required"),
-			validation.Match(regexp.MustCompile(phoneNumberRegex)).Error("validation.phone_number_invalid"),
+			validation.Match(regexp.MustCompile(constant.PhoneNumberRegex)).Error("validation.phone_number_invalid"),
 			validation.By(v.isBackOfficeUserIsExist))); err != nil {
 
 		var vErrs validation.Errors

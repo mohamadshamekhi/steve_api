@@ -13,6 +13,7 @@ import (
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	middleware2 "github.com/abolfazlnorzad/steve/delivery/http_server/middleware"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
+	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/labstack/echo/v4"
@@ -32,11 +33,12 @@ type Server struct {
 	attrDefHandler        attributedefinitionhandler.Handler
 	productHandler        producthandler.Handler
 	backofficeHandler     backofficehandler.Handler
+	userHandler           userhandler.Handler
 }
 
 func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler,
 	articleHandler articlehandler.Handler, attrHandler attributehandler.Handler, attrDefHandler attributedefinitionhandler.Handler,
-	productHandler producthandler.Handler, backofficeHandler backofficehandler.Handler,
+	productHandler producthandler.Handler, backofficeHandler backofficehandler.Handler, userHandler userhandler.Handler,
 ) Server {
 	return Server{
 		config:                cfg,
@@ -50,6 +52,7 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 		attrDefHandler:        attrDefHandler,
 		productHandler:        productHandler,
 		backofficeHandler:     backofficeHandler,
+		userHandler:           userHandler,
 	}
 }
 
@@ -112,6 +115,7 @@ func (s Server) Serve() {
 	s.attrDefHandler.SetRoutes(s.Router)
 	s.productHandler.SetRoutes(s.Router)
 	s.backofficeHandler.SetRoutes(s.Router)
+	s.userHandler.SetRoutes(s.Router)
 	// Start server
 	address := fmt.Sprintf(":%d", s.config.HTTPServer.Port)
 	fmt.Printf("start echo server on %s\n", address)

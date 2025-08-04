@@ -4,6 +4,7 @@ import (
 	"context"
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
+	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 )
 
@@ -30,7 +31,7 @@ func (s StorefrontService) GetAllBrands(ctx context.Context, req brandparam.GetA
 	for _, b := range resp.Brands {
 		r, e := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: b.MediaID})
 		if e != nil {
-			return brandparam.GetAllStorefrontBrandsParamResponse{}, e
+			logger.L().Error("warning: could not get media url", "error", e)
 		}
 		brands = append(brands, brandparam.BrandInfo{
 			ID:          b.ID,

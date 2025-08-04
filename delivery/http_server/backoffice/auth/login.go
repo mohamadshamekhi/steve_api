@@ -54,7 +54,6 @@ func (h Handler) VerifyOTPCode(c echo.Context) error {
 
 	successMessage := h.translator.Translate(lang, "auth.login_successful", nil)
 
-	// ✅ استفاده از Helper برای ساخت پاسخ موفقیت
 	apiResponse := response.NewSuccessResponse(successMessage, resp)
 
 	return c.JSON(http.StatusOK, apiResponse)

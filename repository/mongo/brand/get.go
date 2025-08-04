@@ -34,7 +34,7 @@ func (d DB) FindByName(ctx context.Context, name string) (entity.Brand, error) {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return brand, richerror.New(op).WithWarpError(err).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
 		}
-		return brand, richerror.New(op).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected).
+		return brand, richerror.New(op).WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected).
 			WithMeta(map[string]any{"name": name})
 	}
 	return brand, nil

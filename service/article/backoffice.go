@@ -205,7 +205,7 @@ func (s BackofficeService) GetArticle(ctx context.Context, req articleparam.GetA
 	}
 	res, err := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: article.MediaID})
 	if err != nil {
-		return articleparam.GetArticleResponse{}, richerror.New(op).WithWarpError(err)
+		logger.L().Error(fmt.Sprintf("ERROR: article media get failed for ID %s\n", article.MediaID))
 	}
 	a := articleparam.ArticleInfo{
 		ID:          article.ID,
@@ -244,7 +244,6 @@ func (s BackofficeService) GetAll(ctx context.Context, req articleparam.AllArtic
 	urlMap, urlErr := s.mediaSvc.GetURLsByMediaIDs(ctx, mediaparam.GetUrlsByIDsRequest{IDs: mediaIDs})
 	if urlErr != nil {
 		logger.L().Error("warning: could not get media urls", "error", urlErr)
-		return articleparam.AllArticleResponse{}, err
 	}
 
 	for _, a := range resp.Articles {

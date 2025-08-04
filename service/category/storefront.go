@@ -42,7 +42,6 @@ func (s StorefrontService) GetAllCategories(ctx context.Context, req categorypar
 	urlMap, urlErr := s.mediaSvc.GetURLsByMediaIDs(ctx, mediaparam.GetUrlsByIDsRequest{IDs: mediaIDs})
 	if urlErr != nil {
 		logger.L().Error("warning: could not get media urls", "error", urlErr)
-		return categoryparam.GetAllStorefrontCategoriesResponse{}, err
 	}
 	for _, c := range resp.Categories {
 		categoriesInfo = append(categoriesInfo, categoryparam.CategoryInfo{

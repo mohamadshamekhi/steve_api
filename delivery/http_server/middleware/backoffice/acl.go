@@ -12,7 +12,12 @@ func ACL(service aclservice.Service,
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) (err error) {
 			claims := claim.GetClaimsFromEchoContext(c)
-			isAllowed, err := service.CheckAccess(c.Request().Context(), claims.EntityID, claims.RoleKeys, claims.PermissionKeys, permissions...)
+			// todo - add to cfg
+			if claims.Kind != "backoffice" {
+				return richerror.New("backofficemiddleware.ACL").WithMessageKey("global.forbidden").WithKind(richerror.KindForbidden)
+
+			}
+			isAllowed, err := service.CheckAccess(c.Request().Context(), claims.EntityID, permissions...)
 			if err != nil {
 				// TODO - log unexpected error
 				return err

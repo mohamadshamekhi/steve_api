@@ -32,7 +32,7 @@ func (v Validator) articleIsExist(value any) error {
 		}
 		id = *v
 	default:
-		return richerror.New("brandvalidator.BrandIsUnique.type_assertion").
+		return richerror.New("articlevalidator.articleIsExist.type_assertion").
 			WithKind(richerror.KindUnexpected).
 			WithWarpError(errors.New("unexpected type for brand name"))
 	}

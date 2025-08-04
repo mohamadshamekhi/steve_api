@@ -8,7 +8,7 @@ import (
 )
 
 func (v Validator) ValidateGetArticleRequest(req articleparam.GetArticleRequest) error {
-	const op = "backofficevalidatorauth.ValidateGetBrandRequest"
+	const op = "articlevalidator.ValidateGetArticleRequest"
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.ID,
 			validation.Required.Error("validation.required"),

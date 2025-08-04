@@ -9,6 +9,7 @@ import (
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
+	userservice "github.com/abolfazlnorzad/steve/service/user"
 )
 
 type HTTPServer struct {
@@ -19,6 +20,7 @@ type Config struct {
 	HTTPServer    HTTPServer               `koanf:"http_server"`
 	Auth          authservice.Config       `koanf:"auth"`
 	BackOffice    backofficeservice.Config `koanf:"backoffice"`
+	User          userservice.Config       `koanf:"user"`
 	Redis         redisadapter.Config      `koanf:"redis"`
 	Nats          natsadapter.Config       `koanf:"nats"`
 	Mongo         mongodb.Config           `koanf:"mongo"`

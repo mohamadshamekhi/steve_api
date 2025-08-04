@@ -26,6 +26,7 @@ func NewCentralErrorHandler(translator *i18n.Translator) echo.HTTPErrorHandler {
 	}
 }
 func parseError(err error, translator *i18n.Translator, lang string) (response.APIResponse, int) {
+	fmt.Println("error", err)
 	var richErr *richerror.RichError
 	if errors.As(err, &richErr) {
 		code := mapKindToHTTPStatusCode(richErr.Kind())
@@ -59,7 +60,7 @@ func parseError(err error, translator *i18n.Translator, lang string) (response.A
 
 	var echoErr *echo.HTTPError
 	if errors.As(err, &echoErr) {
-		msg := translator.Translate(lang, "global.something_wrong", nil)
+		msg := translator.Translate(lang, err.Error(), nil)
 		return response.NewErrorResponse(msg, nil), echoErr.Code
 	}
 

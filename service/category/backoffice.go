@@ -186,7 +186,6 @@ func (s BackofficeService) GetAll(ctx context.Context, req categoryparam.GetAllC
 	urlMap, urlErr := s.mediaSvc.GetURLsByMediaIDs(ctx, mediaparam.GetUrlsByIDsRequest{IDs: mediaIDs})
 	if urlErr != nil {
 		logger.L().Error("warning: could not get media urls", "error", urlErr)
-		return categoryparam.GetAllCategoriesResponse{}, err
 	}
 	for _, c := range resp.Categories {
 		categoriesInfo = append(categoriesInfo, categoryparam.CategoryInfo{

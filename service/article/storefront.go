@@ -2,6 +2,7 @@ package articleservice
 
 import (
 	"context"
+	"fmt"
 	articleparam "github.com/abolfazlnorzad/steve/param/article"
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
@@ -31,7 +32,7 @@ func (s StorefrontService) GetSingleStorefrontArticle(ctx context.Context, req a
 	}
 	res, err := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: article.MediaID})
 	if err != nil {
-		return articleparam.GetStorefrontArticleResponse{}, richerror.New(op).WithWarpError(err)
+		logger.L().Error(fmt.Sprintf("ERROR: article media get failed for ID %s\n", article.MediaID))
 	}
 	a := articleparam.StorefrontArticleDetail{
 		ID:          article.ID,
@@ -70,7 +71,6 @@ func (s StorefrontService) GetAllStorefrontArticles(ctx context.Context, req art
 	urlMap, urlErr := s.mediaSvc.GetURLsByMediaIDs(ctx, mediaparam.GetUrlsByIDsRequest{IDs: mediaIDs})
 	if urlErr != nil {
 		logger.L().Error("warning: could not get media urls", "error", urlErr)
-		return articleparam.AllStorefrontArticleResponse{}, err
 	}
 
 	for _, a := range resp.Articles {

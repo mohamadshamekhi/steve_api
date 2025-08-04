@@ -1,4 +1,4 @@
-package backofficemiddleware
+package middleware
 
 import (
 	"github.com/abolfazlnorzad/steve/config"
@@ -22,8 +22,14 @@ func Auth(service authservice.Service, cfg authservice.Config) echo.MiddlewareFu
 			if err != nil {
 				return nil, err
 			}
-
-			return claims, nil
+			res, err := service.CheckTokenIsInBlockList(c.Request().Context(), claims.Kind, claims.ID)
+			if err != nil {
+				return nil, err
+			}
+			if !res {
+				return claims, nil
+			}
+			return nil, richerror.New("middleware.auth").WithMessageKey("auth.you_must_logged_in").WithKind(richerror.KindUnauthorized)
 		},
 	})
 }

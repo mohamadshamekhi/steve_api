@@ -15,6 +15,7 @@ import (
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
+	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
 	"github.com/abolfazlnorzad/steve/internal/seeder"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
 	mongodb "github.com/abolfazlnorzad/steve/repository/mongo"
@@ -28,6 +29,7 @@ import (
 	mongodbcategory "github.com/abolfazlnorzad/steve/repository/mongo/category"
 	mongodbmedia "github.com/abolfazlnorzad/steve/repository/mongo/media"
 	mongodbproduct "github.com/abolfazlnorzad/steve/repository/mongo/product"
+	mongodbuser "github.com/abolfazlnorzad/steve/repository/mongo/user"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
 	aclservice "github.com/abolfazlnorzad/steve/service/acl"
 	articleservice "github.com/abolfazlnorzad/steve/service/article"
@@ -38,6 +40,7 @@ import (
 	categoryservice "github.com/abolfazlnorzad/steve/service/category"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 	productservice "github.com/abolfazlnorzad/steve/service/product"
+	userservice "github.com/abolfazlnorzad/steve/service/user"
 	articlevalidator "github.com/abolfazlnorzad/steve/validator/article"
 	attributevalidator "github.com/abolfazlnorzad/steve/validator/attribute"
 	attributedefinitionvalidator "github.com/abolfazlnorzad/steve/validator/attributedefinition"
@@ -47,6 +50,7 @@ import (
 	categoryvalidator "github.com/abolfazlnorzad/steve/validator/category"
 	mediavalidator "github.com/abolfazlnorzad/steve/validator/media"
 	productvalidator "github.com/abolfazlnorzad/steve/validator/product"
+	uservalidator "github.com/abolfazlnorzad/steve/validator/user"
 )
 
 func main() {
@@ -56,10 +60,11 @@ func main() {
 		Host: "localhost",
 		Port: 4222,
 	})
-	authSvc := authservice.New(cfg.Auth, redisotp.New(redisRepo), nats)
+	redisotp := redisotp.New(redisRepo)
+	authSvc := authservice.New(cfg.Auth, redisotp, nats)
 	mongoRepo := mongodb.NewMongoDB(cfg.Mongo)
 	backOfficeMongoRepo := mongodbbackoffice.New(mongoRepo)
-	backOfficeSvc := backofficeservice.New(cfg.BackOffice, authSvc, backOfficeMongoRepo)
+	backOfficeSvc := backofficeservice.New(cfg.BackOffice, authSvc, backOfficeMongoRepo, redisotp)
 	backOfficeVld := backofficevalidatorauth.New(backOfficeMongoRepo)
 
 	translator, _ := i18n.New("config/locales", "fa")
@@ -77,7 +82,7 @@ func main() {
 
 	brandVld := brandvalidator.New(brandRepo, mediaSvc)
 	backOfficeHandler := backofficeauthhandler.New(backOfficeSvc, backOfficeVld, translator)
-	aclSvc := aclservice.New(roleRepo)
+	aclSvc := aclservice.New(roleRepo, backOfficeMongoRepo)
 	brandStorefrontSvc := brandservice.NewStorefrontService(brandRepo, mediaSvc)
 	brandHandler := brandhandler.New(backofficebrandsvc, translator, brandVld, authSvc, cfg.Auth, aclSvc, brandStorefrontSvc)
 	mediaVld := mediavalidator.New(mediaRepo)
@@ -113,7 +118,11 @@ func main() {
 	productHandler := producthandler.NewHandler(translator, authSvc, cfg.Auth, aclSvc, productSvc, productVld)
 	backofficeValidation := backofficevalidator.New(backOfficeMongoRepo)
 	backofficeHandler := backofficehandler.New(backOfficeSvc, backofficeValidation, translator, authSvc, cfg.Auth, aclSvc)
+	userRepo := mongodbuser.New(mongoRepo)
+	userVld := uservalidator.New(userRepo)
+	userSvc := userservice.NewStoreFrontService(cfg.User, userRepo, authSvc)
+	userHandler := userhandler.New(userSvc, userVld, translator, authSvc, cfg.Auth)
 
-	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler, attrDefHandler, productHandler, backofficeHandler)
+	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler, attrDefHandler, productHandler, backofficeHandler, userHandler)
 	server.Serve()
 }

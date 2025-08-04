@@ -12,6 +12,9 @@ redis:
 backoffice:
   prefix: backoffice
 
+user:
+  prefix: user
+
 
 auth:
   expiration_time_opt_code: 5m

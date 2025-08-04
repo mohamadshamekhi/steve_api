@@ -1,7 +1,7 @@
 package mediahandler
 
 import (
-	backofficemiddleware "github.com/abolfazlnorzad/steve/delivery/http_server/middleware/backoffice"
+	backofficemiddleware "github.com/abolfazlnorzad/steve/delivery/http_server/middleware"
 	"github.com/labstack/echo/v4"
 )
 
