@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	commentservice "github.com/abolfazlnorzad/steve/service/comment"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -37,4 +38,7 @@ func (d DB) GetUserByID(ctx context.Context, id string) (entity.User, error) {
 	}
 
 	return user, nil
+}
+func (d DB) FindCommenterByID(ctx context.Context, id string) (commentservice.Commenter, error) {
+	return d.GetUserByID(ctx, id)
 }

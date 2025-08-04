@@ -13,7 +13,21 @@ type Repository interface {
 	Create(ctx context.Context, comment entity.Comment) error
 }
 type Service struct {
-	repo Repository
+	repo              Repository
+	commenterFetchers map[string]CommenterFetcher
+}
+
+type Commenter interface {
+	GetID() string
+	GetName() string
+}
+
+type CommenterFetcher interface {
+	FindCommenterByID(ctx context.Context, id string) (Commenter, error)
+}
+
+func New(repo Repository, fetchers map[string]CommenterFetcher) Service {
+	return Service{repo: repo, commenterFetchers: fetchers}
 }
 
 func (s Service) AddComment(ctx context.Context, req commentparam.AddCommentRequest) (commentparam.AddCommentResponse, error) {
@@ -22,13 +36,24 @@ func (s Service) AddComment(ctx context.Context, req commentparam.AddCommentRequ
 	if req.ParentID != nil {
 		pid = *req.ParentID
 	}
+	fetcher, ok := s.commenterFetchers[req.CommenterType]
+	if !ok {
+		return commentparam.AddCommentResponse{}, richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("comment.invalid_commenter_type").
+			WithMeta(map[string]any{"type": req.CommenterType})
+	}
+	commenter, err := fetcher.FindCommenterByID(ctx, req.CommenterID)
+	if err != nil {
+		return commentparam.AddCommentResponse{}, richerror.New(op).WithWarpError(err)
+	}
 	cm := entity.Comment{
 		Body:            req.Body,
 		CommentableID:   req.CommentableID,
 		CommentableType: req.CommentableType,
-		CommenterID:     req.CommentableID,
-		CommenterType:   req.CommentableType,
-		CommenterName:   req.CommenterName,
+		CommenterID:     commenter.GetID(),
+		CommenterType:   req.CommenterType,
+		CommenterName:   commenter.GetName(),
 		ParentID:        pid,
 	}
 	if req.ParentID != nil {

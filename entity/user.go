@@ -29,3 +29,9 @@ func (u *User) BeforeCreate() {
 	u.CreatedAt = now
 	u.UpdatedAt = now
 }
+func (u User) GetID() string {
+	return u.ID
+}
+func (u User) GetName() string {
+	return u.Name
+}

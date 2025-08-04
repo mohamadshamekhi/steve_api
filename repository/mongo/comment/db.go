@@ -1,4 +1,4 @@
-package comment
+package mongodbcomment
 
 import (
 	mongodb "github.com/abolfazlnorzad/steve/repository/mongo"
