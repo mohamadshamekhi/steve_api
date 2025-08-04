@@ -10,7 +10,7 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 
 	g.POST("/send-otp", h.Login)
 	g.POST("/verify-otp", h.VerifyOTPCode)
-	g.PATCH("/:id/update-profile", h.UpdateProfile)
+	g.PATCH("/:id/update-profile", h.UpdateProfile, middleware.Auth(h.authSvc, h.authCfg))
 	g.POST("/add-address", h.AddAddress, middleware.Auth(h.authSvc, h.authCfg))
 	g.POST("/update-address/:id", h.UpdateAddress, middleware.Auth(h.authSvc, h.authCfg))
 }
