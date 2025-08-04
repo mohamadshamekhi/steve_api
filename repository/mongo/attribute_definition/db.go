@@ -117,7 +117,7 @@ func (d DB) Delete(ctx context.Context, id string) error {
 
 	if result.DeletedCount == 0 {
 		return richerror.New(op).
-			WithMessageKey("media.not_found").
+			WithMessageKey("global.not-found").
 			WithKind(richerror.KindNotFound).
 			WithMeta(map[string]any{"id": id})
 	}
