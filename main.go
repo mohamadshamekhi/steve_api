@@ -82,7 +82,7 @@ func main() {
 
 	brandVld := brandvalidator.New(brandRepo, mediaSvc)
 	backOfficeHandler := backofficeauthhandler.New(backOfficeSvc, backOfficeVld, translator)
-	aclSvc := aclservice.New(roleRepo)
+	aclSvc := aclservice.New(roleRepo, backOfficeMongoRepo)
 	brandStorefrontSvc := brandservice.NewStorefrontService(brandRepo, mediaSvc)
 	brandHandler := brandhandler.New(backofficebrandsvc, translator, brandVld, authSvc, cfg.Auth, aclSvc, brandStorefrontSvc)
 	mediaVld := mediavalidator.New(mediaRepo)
