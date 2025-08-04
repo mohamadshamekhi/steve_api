@@ -103,7 +103,7 @@ func (s Server) Serve() {
 	}))
 
 	s.Router.Use(middleware.Recover())
-	s.Router.Pre(middleware.AddTrailingSlash())
+
 	//set routes
 	s.backofficeAuthHandler.SetRoutes(s.Router)
 

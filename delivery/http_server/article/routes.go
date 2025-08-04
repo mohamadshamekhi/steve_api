@@ -15,6 +15,8 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.PATCH("/:id", h.Update, middleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateArticle))
 	g.DELETE("/:id", h.Delete, middleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.DeleteArticle))
 
-	g.GET("/storefront", h.GetAllStorefront)
-	g.GET("/storefront/:id", h.GetSingleStorefront)
+	storefrontGroup := e.Group("article/storefront")
+	storefrontGroup.GET("", h.GetAllStorefront)
+	storefrontGroup.GET("/:id", h.GetSingleStorefront)
+
 }

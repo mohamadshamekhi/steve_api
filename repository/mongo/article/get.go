@@ -3,6 +3,7 @@ package mongodbarticle
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -14,6 +15,7 @@ func (d DB) FindByID(ctx context.Context, id string) (entity.Article, error) {
 	const op = "mongodbarticle.FindByID"
 	filter := bson.M{"_id": id}
 	var article entity.Article
+	fmt.Printf("DEBUG: Executing FindOne with filter: %v\n", filter)
 
 	if err := d.collection.FindOne(ctx, filter).Decode(&article); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -27,7 +29,7 @@ func (d DB) FindByID(ctx context.Context, id string) (entity.Article, error) {
 }
 
 func (d DB) FindBySlug(ctx context.Context, slug string) (entity.Article, error) {
-	const op = "mongodbarticle.FindByID"
+	const op = "mongodbarticle.FindBySlug"
 	filter := bson.M{"slug": slug}
 	var article entity.Article
 

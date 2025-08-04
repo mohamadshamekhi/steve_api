@@ -59,7 +59,7 @@ func parseError(err error, translator *i18n.Translator, lang string) (response.A
 
 	var echoErr *echo.HTTPError
 	if errors.As(err, &echoErr) {
-		msg := translator.Translate(lang, "global.something_wrong", nil)
+		msg := translator.Translate(lang, err.Error(), nil)
 		return response.NewErrorResponse(msg, nil), echoErr.Code
 	}
 
