@@ -41,6 +41,7 @@ import (
 	brandservice "github.com/abolfazlnorzad/steve/service/brand"
 	categoryservice "github.com/abolfazlnorzad/steve/service/category"
 	commentservice "github.com/abolfazlnorzad/steve/service/comment"
+	fetcherservice "github.com/abolfazlnorzad/steve/service/fetcher"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 	productservice "github.com/abolfazlnorzad/steve/service/product"
 	userservice "github.com/abolfazlnorzad/steve/service/user"
@@ -128,11 +129,10 @@ func main() {
 	userHandler := userhandler.New(userSvc, userVld, translator, authSvc, cfg.Auth)
 	commentRepo := mongodbcomment.New(mongoRepo)
 	commentVld := commentvalidator.New(commentRepo)
-	fetchers := map[string]commentservice.CommenterFetcher{
-		"user":       userRepo,
-		"backoffice": backOfficeMongoRepo,
-	}
-	commentSvc := commentservice.New(commentRepo, fetchers)
+
+	commentableFetecher := fetcherservice.NewCommentableFetcher(*productRepo, *articleRepo)
+	commenterFetecher := fetcherservice.NewCommenterFetcher(*userRepo, *backOfficeMongoRepo)
+	commentSvc := commentservice.New(commentRepo, commenterFetecher, commentableFetecher)
 	commentHandler := commenthandler.New(commentSvc, translator, commentVld, authSvc, cfg.Auth, aclSvc)
 
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,

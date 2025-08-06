@@ -11,4 +11,6 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g := e.Group("/comment")
 	g.POST("/add", h.AddComment, middleware.Auth(h.authSvc, h.authCfg))
 	g.POST("/update/:id", h.UpdateComment, middleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateComment))
+
+	g.GET("", h.GetAllComments, middleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ListComment))
 }

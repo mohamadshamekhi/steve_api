@@ -2,6 +2,7 @@ package attributevalidator
 
 import (
 	"errors"
+
 	attributeparam "github.com/abolfazlnorzad/steve/param/attribute"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	validation "github.com/go-ozzo/ozzo-validation/v4"

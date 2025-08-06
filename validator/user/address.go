@@ -2,6 +2,7 @@ package uservalidator
 
 import (
 	"errors"
+
 	userparam "github.com/abolfazlnorzad/steve/param/user"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	validation "github.com/go-ozzo/ozzo-validation/v4"

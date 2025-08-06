@@ -1,12 +1,13 @@
 package commenthandler
 
 import (
+	"net/http"
+
 	"github.com/abolfazlnorzad/steve/delivery/http_server/response"
 	commentparam "github.com/abolfazlnorzad/steve/param/comment"
 	"github.com/abolfazlnorzad/steve/pkg/claim"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 func (h Handler) AddComment(c echo.Context) error {

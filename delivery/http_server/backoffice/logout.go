@@ -1,11 +1,12 @@
 package backofficehandler
 
 import (
+	"net/http"
+
 	"github.com/abolfazlnorzad/steve/delivery/http_server/response"
 	backofficeparam "github.com/abolfazlnorzad/steve/param/backoffice"
 	"github.com/abolfazlnorzad/steve/pkg/claim"
 	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 func (h Handler) Logout(c echo.Context) error {

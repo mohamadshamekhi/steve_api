@@ -2,6 +2,8 @@ package httpserver
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/abolfazlnorzad/steve/config"
 	articlehandler "github.com/abolfazlnorzad/steve/delivery/http_server/article"
 	attributehandler "github.com/abolfazlnorzad/steve/delivery/http_server/attribute"
@@ -19,7 +21,6 @@ import (
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"net/http"
 )
 
 type Server struct {
