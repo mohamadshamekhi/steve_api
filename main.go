@@ -126,7 +126,8 @@ func main() {
 	userRepo := mongodbuser.New(mongoRepo)
 	userVld := uservalidator.New(userRepo)
 	userSvc := userservice.NewStoreFrontService(cfg.User, userRepo, authSvc)
-	userHandler := userhandler.New(userSvc, userVld, translator, authSvc, cfg.Auth)
+	backofficeUserSvc := userservice.NewBackofficeService(userRepo)
+	userHandler := userhandler.New(backofficeUserSvc, userSvc, userVld, translator, authSvc, cfg.Auth, aclSvc)
 	commentRepo := mongodbcomment.New(mongoRepo)
 	commentVld := commentvalidator.New(commentRepo)
 
