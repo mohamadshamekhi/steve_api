@@ -3,6 +3,7 @@ package mongodbcomment
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
@@ -18,11 +19,28 @@ func (d DB) List(ctx context.Context, f commonparam.FilterRequest, p commonparam
 	filter := bson.M{
 		"deleted_at": bson.M{"$exists": false},
 	}
-	for _, f := range f.Filter {
-		for key, value := range f {
-			filter[key] = value
+	for _, filterItem := range f.Filter {
+		for key, value := range filterItem {
+
+			valueStr := fmt.Sprintf("%v", value)
+
+			if valueStr == "" {
+				continue
+			}
+
+			switch key {
+
+			case "is_approved":
+				if boolValue, err := strconv.ParseBool(valueStr); err == nil {
+					filter[key] = boolValue
+				}
+
+			default:
+				filter[key] = value
+			}
 		}
 	}
+
 	offset := p.GetOffset()
 	limit := p.GetPageSize()
 	findOptions := options.Find().

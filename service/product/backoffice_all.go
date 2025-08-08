@@ -18,6 +18,7 @@ func (s BackofficeService) GetAllProducts(ctx context.Context, req productparam.
 	if err != nil {
 		return productparam.GetAllProductsResponse{}, richerror.New(op).WithWarpError(err)
 	}
+	
 	var productList []productparam.ProductList
 
 	var CateIds []string
