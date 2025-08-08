@@ -11,6 +11,10 @@ type BackofficeService struct {
 	repo Repository
 }
 
+func NewBackofficeService(repo Repository) BackofficeService {
+	return BackofficeService{repo: repo}
+}
+
 func (s BackofficeService) GetAllUsers(ctx context.Context, req userparam.GetAllUsersRequest) (userparam.GetAllUsersResponse, error) {
 	const op = "userservice.GetAllUsers"
 
