@@ -3,11 +3,12 @@ package backofficevalidatorauth
 import (
 	"context"
 	"errors"
+	"regexp"
+
 	backofficeauthparam "github.com/abolfazlnorzad/steve/param/backoffice/auth"
 	"github.com/abolfazlnorzad/steve/pkg/constant"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"regexp"
 )
 
 func (v Validator) ValidateLoginWithPhoneNumberRequest(req backofficeauthparam.SendLoginCodeRequest) error {

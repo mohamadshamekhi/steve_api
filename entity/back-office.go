@@ -1,8 +1,9 @@
 package entity
 
 import (
-	"github.com/oklog/ulid/v2"
 	"time"
+
+	"github.com/oklog/ulid/v2"
 )
 
 type BackOffice struct {
@@ -21,7 +22,7 @@ type BackOffice struct {
 	UpdatedAt    time.Time `bson:"updated_at" json:"-"`
 }
 
-func (b BackOffice) IsSuperAdmin() bool {
+func (b *BackOffice) IsSuperAdmin() bool {
 	return b.isSuperAdmin
 }
 
@@ -30,4 +31,10 @@ func (b *BackOffice) BeforeCreate() {
 	now := time.Now()
 	b.CreatedAt = now
 	b.UpdatedAt = now
+}
+func (b BackOffice) GetID() string {
+	return b.ID
+}
+func (b BackOffice) GetName() string {
+	return b.Name
 }

@@ -2,6 +2,7 @@ package mediavalidator
 
 import (
 	"errors"
+
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	validation "github.com/go-ozzo/ozzo-validation/v4"

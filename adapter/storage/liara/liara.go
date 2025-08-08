@@ -3,23 +3,25 @@ package liarastorage
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
-	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 
-	"github.com/oklog/ulid/v2"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/oklog/ulid/v2"
 )
 
 type Config struct {

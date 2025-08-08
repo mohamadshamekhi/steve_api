@@ -13,6 +13,7 @@ import (
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
+	commenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/comment"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
 	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
@@ -27,6 +28,7 @@ import (
 	mongodbbackoffice "github.com/abolfazlnorzad/steve/repository/mongo/backoffice"
 	mongodbbrand "github.com/abolfazlnorzad/steve/repository/mongo/brand"
 	mongodbcategory "github.com/abolfazlnorzad/steve/repository/mongo/category"
+	mongodbcomment "github.com/abolfazlnorzad/steve/repository/mongo/comment"
 	mongodbmedia "github.com/abolfazlnorzad/steve/repository/mongo/media"
 	mongodbproduct "github.com/abolfazlnorzad/steve/repository/mongo/product"
 	mongodbuser "github.com/abolfazlnorzad/steve/repository/mongo/user"
@@ -38,6 +40,8 @@ import (
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
 	brandservice "github.com/abolfazlnorzad/steve/service/brand"
 	categoryservice "github.com/abolfazlnorzad/steve/service/category"
+	commentservice "github.com/abolfazlnorzad/steve/service/comment"
+	fetcherservice "github.com/abolfazlnorzad/steve/service/fetcher"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 	productservice "github.com/abolfazlnorzad/steve/service/product"
 	userservice "github.com/abolfazlnorzad/steve/service/user"
@@ -48,6 +52,7 @@ import (
 	backofficevalidatorauth "github.com/abolfazlnorzad/steve/validator/backoffice/auth"
 	brandvalidator "github.com/abolfazlnorzad/steve/validator/brand"
 	categoryvalidator "github.com/abolfazlnorzad/steve/validator/category"
+	commentvalidator "github.com/abolfazlnorzad/steve/validator/comment"
 	mediavalidator "github.com/abolfazlnorzad/steve/validator/media"
 	productvalidator "github.com/abolfazlnorzad/steve/validator/product"
 	uservalidator "github.com/abolfazlnorzad/steve/validator/user"
@@ -122,7 +127,15 @@ func main() {
 	userVld := uservalidator.New(userRepo)
 	userSvc := userservice.NewStoreFrontService(cfg.User, userRepo, authSvc)
 	userHandler := userhandler.New(userSvc, userVld, translator, authSvc, cfg.Auth)
+	commentRepo := mongodbcomment.New(mongoRepo)
+	commentVld := commentvalidator.New(commentRepo)
 
-	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler, attrDefHandler, productHandler, backofficeHandler, userHandler)
+	commentableFetecher := fetcherservice.NewCommentableFetcher(*productRepo, *articleRepo)
+	commenterFetecher := fetcherservice.NewCommenterFetcher(*userRepo, *backOfficeMongoRepo)
+	commentSvc := commentservice.New(commentRepo, commenterFetecher, commentableFetecher)
+	commentHandler := commenthandler.New(commentSvc, translator, commentVld, authSvc, cfg.Auth, aclSvc)
+
+	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
+		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler)
 	server.Serve()
 }

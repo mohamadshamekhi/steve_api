@@ -2,12 +2,13 @@ package userhandler
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/abolfazlnorzad/steve/delivery/http_server/response"
 	userparam "github.com/abolfazlnorzad/steve/param/user"
 	"github.com/abolfazlnorzad/steve/pkg/claim"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 func (h Handler) AddAddress(c echo.Context) error {

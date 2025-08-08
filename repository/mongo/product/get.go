@@ -3,6 +3,7 @@ package mongodbproduct
 import (
 	"context"
 	"errors"
+
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -50,4 +51,32 @@ func (d DB) FindBySlug(ctx context.Context, slug string) (entity.Product, error)
 	}
 
 	return p, nil
+}
+
+func (d DB) FindManyByIDs(ctx context.Context, ids []string) ([]entity.Product, error) {
+	const op = "mongodbproduct.FindManyByIDs"
+	if len(ids) == 0 {
+		return []entity.Product{}, nil
+	}
+
+
+	filter := bson.M{
+		"_id":        bson.M{"$in": ids},
+		"deleted_at": bson.M{"$exists": false},
+	}
+
+	cursor, err := d.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err).
+			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
+	}
+	defer cursor.Close(ctx)
+
+	var products []entity.Product
+	if err := cursor.All(ctx, &products); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).
+			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
+	}
+
+	return products, nil
 }

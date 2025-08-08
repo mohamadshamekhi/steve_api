@@ -2,9 +2,10 @@ package natsadapter
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/nats-io/nats.go"
-	"time"
 )
 
 type Config struct {

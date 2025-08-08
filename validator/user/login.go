@@ -3,11 +3,12 @@ package uservalidator
 import (
 	"context"
 	"errors"
+	"regexp"
+
 	userauthparam "github.com/abolfazlnorzad/steve/param/user/auth"
 	"github.com/abolfazlnorzad/steve/pkg/constant"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"regexp"
 )
 
 func (v Validator) ValidateUserLoginWithPhoneNumberRequest(req userauthparam.UserSendLoginCodeRequest) error {

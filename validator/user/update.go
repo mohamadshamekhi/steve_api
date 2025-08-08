@@ -2,11 +2,12 @@ package uservalidator
 
 import (
 	"errors"
+	"regexp"
+
 	userparam "github.com/abolfazlnorzad/steve/param/user"
 	"github.com/abolfazlnorzad/steve/pkg/constant"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"regexp"
 )
 
 func (v Validator) ValidateStoreFrontUpdateProfileRequest(req userparam.StoreFrontUpdateProfileRequest) error {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/key"
 	mongodbpermission "github.com/abolfazlnorzad/steve/repository/mongo/acl/permission"
@@ -69,6 +70,8 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.ApproveUsedPhone, Description: "تایید درخواست فروش گوشی دست دوم"},
 	{Name: key.RejectUsedPhone, Description: "رد کردن درخواست فروش گوشی دست دوم"},
 	{Name: key.UpdateSettings, Description: "ویرایش تنظیمات کلی سایت"},
+	{Name: key.UpdateComment, Description: "ویرایش کامنت"},
+	{Name: key.ListComment, Description: "لیست کامنت"},
 }
 
 func Run(permissionRepo *mongodbpermission.DB, roleRepo *mongodbrole.DB, backooficeRepo *mongodbbackoffice.DB) error {
@@ -100,7 +103,7 @@ func seedPermissions(ctx context.Context, repo *mongodbpermission.DB) error {
 				Name:        p.Name,
 				Description: p.Description,
 			}
-			newPermission.BeforeCreate() // تولید ID
+			newPermission.BeforeCreate()
 			if err := repo.Create(ctx, newPermission); err != nil {
 				return err
 			}

@@ -1,8 +1,9 @@
 package entity
 
 import (
-	"github.com/oklog/ulid/v2"
 	"time"
+
+	"github.com/oklog/ulid/v2"
 )
 
 type Product struct {
@@ -44,4 +45,11 @@ func (p *Product) BeforeCreate() {
 	for i := range p.Variants {
 		p.Variants[i].ID = ulid.Make().String()
 	}
+}
+
+func (p Product) GetTitle() string {
+	return p.Name
+}
+func (p Product) GetID() string {
+	return p.ID
 }

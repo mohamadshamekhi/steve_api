@@ -2,6 +2,7 @@ package attributedefinitionvalidator
 
 import (
 	"errors"
+
 	attributedefinitionparam "github.com/abolfazlnorzad/steve/param/attribute_definition"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	validation "github.com/go-ozzo/ozzo-validation/v4"

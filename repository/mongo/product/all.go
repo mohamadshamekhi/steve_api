@@ -3,13 +3,14 @@ package mongodbproduct
 import (
 	"context"
 	"fmt"
+	"strconv"
+
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	productservice "github.com/abolfazlnorzad/steve/service/product"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"strconv"
 )
 
 func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.PaginationRequest) (productservice.ListResult, error) {
@@ -20,26 +21,20 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 	for _, filterItem := range f.Filter {
 		for key, value := range filterItem {
 
-			// مقدار را به رشتهتبدیل می‌کنیم تا بتوانیم آن را پردازش کنیم.
-			// این روش کد را در برابر انواع مختلف ورودی مقاوم می‌کند.
 			valueStr := fmt.Sprintf("%v", value)
 
-			// رشته‌های خالی را نادیده می‌گیریم تا فیلترهای ناخواسته ایجاد نشود.
 			if valueStr == "" {
 				continue
 			}
 
-			// بر اساس نام کلید، تصمیم می‌گیریم چگونه فیلتر را بسازیم.
 			switch key {
 			case "name", "slug", "en_title":
 				filter[key] = bson.M{"$regex": valueStr, "$options": "i"}
 
 			case "is_published", "is_second_hand":
-				// تلاش می‌کنیم رشته را به بولین تبدیل کنیم.
 				if boolValue, err := strconv.ParseBool(valueStr); err == nil {
 					filter[key] = boolValue
 				}
-				// اگر تبدیل ناموفق بود، این فیلتر را نادیده می‌گیریم تا از خطای کوئری جلوگیری شود.
 
 			case "brand_id", "category_id":
 				// برای شناسه‌ها، از برابری دقیق استفاده می‌کنیم.

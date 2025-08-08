@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+
 	natsadapter "github.com/abolfazlnorzad/steve/adapter/nats"
 	"github.com/abolfazlnorzad/steve/contract/goproto/auth"
 	"github.com/abolfazlnorzad/steve/pkg/constant"

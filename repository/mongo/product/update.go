@@ -2,10 +2,11 @@ package mongodbproduct
 
 import (
 	"context"
+	"time"
+
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"go.mongodb.org/mongo-driver/bson"
-	"time"
 )
 
 func (d DB) Update(ctx context.Context, p entity.Product) error {

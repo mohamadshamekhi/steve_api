@@ -2,12 +2,13 @@ package mongodbuser
 
 import (
 	"context"
+	"time"
+
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"github.com/oklog/ulid/v2"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"time"
 )
 
 func (d DB) AddNewUser(ctx context.Context, u entity.User) error {
