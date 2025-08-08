@@ -1,11 +1,12 @@
 package userhandler
 
 import (
+	"net/http"
+
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	userservice "github.com/abolfazlnorzad/steve/service/user"
 	uservalidator "github.com/abolfazlnorzad/steve/validator/user"
-	"net/http"
 )
 
 type Handler struct {

@@ -3,6 +3,7 @@ package uservalidator
 import (
 	"context"
 	"errors"
+
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	validation "github.com/go-ozzo/ozzo-validation/v4"

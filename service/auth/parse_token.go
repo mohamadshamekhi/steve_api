@@ -1,8 +1,9 @@
 package authservice
 
 import (
-	"github.com/golang-jwt/jwt/v4"
 	"strings"
+
+	"github.com/golang-jwt/jwt/v4"
 )
 
 func (s Service) ParseToken(bearerToken string) (*Claims, error) {

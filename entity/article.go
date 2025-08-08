@@ -1,8 +1,9 @@
 package entity
 
 import (
-	"github.com/oklog/ulid/v2"
 	"time"
+
+	"github.com/oklog/ulid/v2"
 )
 
 type Article struct {
@@ -22,4 +23,11 @@ func (a *Article) BeforeCreate() {
 	now := time.Now()
 	a.CreatedAt = now
 	a.UpdatedAt = now
+}
+
+func (a Article) GetTitle() string {
+	return a.Title
+}
+func (a Article) GetID() string {
+	return a.ID
 }

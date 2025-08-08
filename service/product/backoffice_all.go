@@ -3,6 +3,7 @@ package productservice
 import (
 	"context"
 	"fmt"
+
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
 	categoryparam "github.com/abolfazlnorzad/steve/param/category"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
@@ -17,6 +18,7 @@ func (s BackofficeService) GetAllProducts(ctx context.Context, req productparam.
 	if err != nil {
 		return productparam.GetAllProductsResponse{}, richerror.New(op).WithWarpError(err)
 	}
+	
 	var productList []productparam.ProductList
 
 	var CateIds []string

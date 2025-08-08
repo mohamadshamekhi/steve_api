@@ -2,8 +2,9 @@ package authservice
 
 import (
 	"context"
-	natsadapter "github.com/abolfazlnorzad/steve/adapter/nats"
 	"time"
+
+	natsadapter "github.com/abolfazlnorzad/steve/adapter/nats"
 )
 
 type Config struct {
