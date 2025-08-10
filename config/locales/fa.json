@@ -67,6 +67,11 @@
     "translation": "ورودی نا معتبر میباشد."
   },
 
+  {
+    "id": "validation.invalid_ids_exist",
+    "translation": "شناسه‌های زیر نامعتبر هستند: {{.InvalidIDs}}"
+  },
+
 
   {
     "id": "attr.phone_number",
