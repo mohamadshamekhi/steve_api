@@ -15,7 +15,7 @@ type ListResult struct {
 
 type DiscountReader interface {
 	FindByID(ctx context.Context, id string) (entity.Discount, error)
-	All(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
+	All(ctx context.Context, page commonparam.PaginationRequest) (ListResult, error)
 }
 
 type DiscountWriter interface {

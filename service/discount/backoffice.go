@@ -85,7 +85,7 @@ func (s BackofficeService) Update(ctx context.Context, req discountparam.UpdateD
 func (s BackofficeService) GetAll(ctx context.Context, req discountparam.GetAllDiscountsParamRequest) (discountparam.GetAllDiscountsParamResponse, error) {
 	const op = "backofficeservice.GetAll"
 
-	resp, err := s.repo.All(ctx, req.Filter, req.Pagination)
+	resp, err := s.repo.All(ctx, req.Pagination)
 	if err != nil {
 		return discountparam.GetAllDiscountsParamResponse{}, richerror.New(op).WithWarpError(err)
 	}

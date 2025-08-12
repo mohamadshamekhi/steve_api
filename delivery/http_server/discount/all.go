@@ -21,23 +21,13 @@ func (h Handler) All(c echo.Context) error {
 	if sErr != nil {
 		pageSize = commonparam.DefaultPageSize
 	}
-	code := c.QueryParam("code")
-	value := c.QueryParam("value")
-	starts_at := c.QueryParam("starts_at")
-	expires_at := c.QueryParam("expires_at")
-	is_active := c.QueryParam("is_active")
-	t := c.QueryParam("type")
 
 	req := discountparam.GetAllDiscountsParamRequest{
 		Pagination: commonparam.PaginationRequest{
 			PageSize:   uint(pageSize),
 			PageNumber: uint(pageNumber),
 		},
-		Filter: commonparam.FilterRequest{
-			Filter: []map[string]any{{"code": code}, {"type": t}, {"value": value}, {"starts_at": starts_at}, {"expires_at": expires_at}, {"is_active": is_active}},
-		},
 	}
-
 	resp, err := h.backofficeSvc.GetAll(c.Request().Context(), req)
 	if err != nil {
 		return err
