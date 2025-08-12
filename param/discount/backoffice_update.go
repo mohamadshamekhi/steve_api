@@ -3,7 +3,7 @@ package discountparam
 import "time"
 
 type UpdateDiscountRequest struct {
-	ID                    string
+	ID                    string     `json:"id"`
 	Value                 *uint      `json:"value"`
 	MinimumPurchaseAmount *uint      `json:"minimum_purchase_amount"`
 	ExpiresAt             *time.Time `json:"expires_at"`

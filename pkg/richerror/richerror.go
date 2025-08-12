@@ -108,7 +108,7 @@ func (r *RichError) MessageKey() string {
 
 func (r *RichError) TemplateData() map[string]any {
 	if r.templateData != nil {
-		return r.templateData
+		return r.meta
 	}
 	var re *RichError
 	if errors.As(r.wrappedError, &re) {

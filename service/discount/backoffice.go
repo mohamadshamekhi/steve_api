@@ -5,14 +5,15 @@ import (
 
 	"github.com/abolfazlnorzad/steve/entity"
 	discountparam "github.com/abolfazlnorzad/steve/param/discount"
+	"github.com/abolfazlnorzad/steve/pkg/richerror"
 )
 
 type BackofficeService struct {
 	repo DiscountReadWriter
 }
 
-func NewBackofficeService() BackofficeService {
-	return BackofficeService{}
+func NewBackofficeService(repo DiscountReadWriter) BackofficeService {
+	return BackofficeService{repo: repo}
 }
 
 func (s BackofficeService) Create(ctx context.Context, req discountparam.AddDiscountRequest) (discountparam.AddDiscountResponse, error) {
@@ -75,7 +76,7 @@ func (s BackofficeService) Update(ctx context.Context, req discountparam.UpdateD
 	}
 
 	if err := s.repo.Update(ctx, discount); err != nil {
-		return discountparam.UpdateDiscountResponse{}, err
+		return discountparam.UpdateDiscountResponse{}, richerror.New(op).WithWarpError(err)
 	}
 
 	return discountparam.UpdateDiscountResponse{}, nil
@@ -86,7 +87,7 @@ func (s BackofficeService) GetAll(ctx context.Context, req discountparam.GetAllD
 
 	resp, err := s.repo.All(ctx, req.Filter, req.Pagination)
 	if err != nil {
-		return discountparam.GetAllDiscountsParamResponse{}, err
+		return discountparam.GetAllDiscountsParamResponse{}, richerror.New(op).WithWarpError(err)
 	}
 
 	return discountparam.GetAllDiscountsParamResponse{Discounts: resp.Discounts, Pagination: struct {
@@ -94,4 +95,17 @@ func (s BackofficeService) GetAll(ctx context.Context, req discountparam.GetAllD
 		PageNumber uint `json:"page_number"`
 		Total      uint `json:"total"`
 	}{PageSize: req.Pagination.GetPageSize(), PageNumber: req.Pagination.GetPageNumber(), Total: uint(resp.TotalCount)}}, nil
+}
+
+func (s BackofficeService) GetSingle(ctx context.Context, req discountparam.GetSingleDiscountRequest) (discountparam.GetSingleDiscountResponse, error) {
+	const op = "backofficeservice.GetSingle"
+	discount, err := s.repo.FindByID(ctx, req.ID)
+	if err != nil {
+		return discountparam.GetSingleDiscountResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	return discountparam.GetSingleDiscountResponse{
+		Discount: discount,
+	}, nil
+
 }

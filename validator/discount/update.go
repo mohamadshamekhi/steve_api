@@ -2,7 +2,6 @@ package discountvalidator
 
 import (
 	"errors"
-	"time"
 
 	discountparam "github.com/abolfazlnorzad/steve/param/discount"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -14,20 +13,21 @@ func (v Validator) ValidateUpdateDiscountRequest(req discountparam.UpdateDiscoun
 
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.ID, validation.Required.Error("validation.required"), validation.By(v.checkDiscountIsExist)),
-		validation.Field(&req.Value, validation.Required.Error("validation.required")),
-		validation.Field(&req.ExpiresAt, validation.Required.Error("validation.required"), validation.Date(time.RFC3339).Error("validation.invalid_date_format")),
+		validation.Field(&req.Value, validation.When(req.Value != nil, validation.Required.Error("validation.required"))),
+		validation.Field(&req.ExpiresAt, validation.When(req.ExpiresAt != nil, validation.Required.Error("validation.required"))),
 		validation.Field(&req.MinimumPurchaseAmount,
 			validation.When(req.MinimumPurchaseAmount != nil,
-				validation.Min(0).Error("validation.must_be_positive_number"),
-			),
+				validation.When(req.MinimumPurchaseAmount != nil,
+					validation.Min(0).Error("validation.must_be_positive_number"),
+				)),
 		),
-		validation.Field(&req.ApplicableCategoryIDs, validation.By(v.categoriesExist)),
-		validation.Field(&req.ApplicableProductIDs, validation.By(v.productsExist)),
-		validation.Field(&req.ApplicableUserIDs, validation.By(v.usersExist)),
+		validation.Field(&req.ApplicableCategoryIDs, validation.When(req.ApplicableCategoryIDs != nil, validation.By(v.categoriesExist))),
+		validation.Field(&req.ApplicableProductIDs, validation.When(req.ApplicableProductIDs != nil, validation.By(v.productsExist))),
+		validation.Field(&req.ApplicableUserIDs, validation.When(req.ApplicableUserIDs != nil, validation.By(v.usersExist))),
 		validation.Field(&req.TotalUsageLimit,
-			validation.When(req.MinimumPurchaseAmount != nil,
+			validation.When(req.TotalUsageLimit != nil, validation.When(req.MinimumPurchaseAmount != nil,
 				validation.Min(0).Error("validation.must_be_positive_number"),
-			),
+			)),
 		),
 	); err != nil {
 

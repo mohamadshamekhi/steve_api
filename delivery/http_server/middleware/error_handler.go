@@ -42,7 +42,7 @@ func parseError(err error, translator *i18n.Translator, lang string) (response.A
 				// الف) آیا خطای داخلی از نوع richerror است؟ (برای قوانین سفارشی پیچیده)
 				if errors.As(fieldErr, &innerRichErr) {
 					// پیام را با استفاده از کلید و داده‌های داینامیک خود آن ترجمه می‌کنیم.
-					templateData := innerRichErr.TemplateData()
+					templateData := innerRichErr.GetMeta()
 
 					if ids, dataOK := templateData["InvalidIDs"].([]string); dataOK {
 						templateData["InvalidIDs"] = strings.Join(ids, ", ")

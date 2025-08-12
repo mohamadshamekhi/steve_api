@@ -53,10 +53,22 @@ func (v Validator) checkCodeIsUnique(value any) error {
 
 func (v Validator) categoriesExist(value any) error {
 	const op = "mongodbcategory.categoriesExist"
-	list, ok := value.([]string)
-	if !ok {
-		return richerror.New(op).WithKind(richerror.KindBadRequest).WithMessageKey("global.validation_failed")
+
+	var list []string
+	switch v := value.(type) {
+	case []string:
+		list = v
+	case *[]string:
+		if v == nil {
+			return nil
+		}
+		list = *v
+	default:
+		return richerror.New(op).
+			WithKind(richerror.KindUnexpected).
+			WithWarpError(errors.New("unexpected type for brand name"))
 	}
+
 	notFoundIDs, err := v.categoryProvider.FindNonExistingIDs(context.Background(), list)
 	if err != nil {
 		return err
@@ -64,14 +76,24 @@ func (v Validator) categoriesExist(value any) error {
 	if len(notFoundIDs) == 0 {
 		return nil
 	}
-	return richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("global.validation_failed").WithMeta(map[string]any{"InvalidIDs": notFoundIDs})
+	return richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("validation.invalid_ids_exist").WithMeta(map[string]any{"InvalidIDs": notFoundIDs})
 }
 
 func (v Validator) productsExist(value any) error {
-	const op = "mongodbcategory.productsExist"
-	list, ok := value.([]string)
-	if !ok {
-		return richerror.New(op).WithKind(richerror.KindBadRequest).WithMessageKey("global.validation_failed")
+	const op = "discountvalidator.productsExist"
+	var list []string
+	switch v := value.(type) {
+	case []string:
+		list = v
+	case *[]string:
+		if v == nil {
+			return nil
+		}
+		list = *v
+	default:
+		return richerror.New(op).
+			WithKind(richerror.KindUnexpected).
+			WithWarpError(errors.New("unexpected type for brand name"))
 	}
 	notFoundIDs, err := v.productProvider.FindNonExistingIDs(context.Background(), list)
 	if err != nil {
@@ -80,14 +102,24 @@ func (v Validator) productsExist(value any) error {
 	if len(notFoundIDs) == 0 {
 		return nil
 	}
-	return richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("global.validation_failed").WithMeta(map[string]any{"InvalidIDs": notFoundIDs})
+	return richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("validation.invalid_ids_exist").WithMeta(map[string]any{"InvalidIDs": notFoundIDs})
 }
 
 func (v Validator) usersExist(value any) error {
-	const op = "mongodbcategory.usersExist"
-	list, ok := value.([]string)
-	if !ok {
-		return richerror.New(op).WithKind(richerror.KindBadRequest).WithMessageKey("global.validation_failed")
+	const op = "discountvalidator.usersExist"
+	var list []string
+	switch v := value.(type) {
+	case []string:
+		list = v
+	case *[]string:
+		if v == nil {
+			return nil
+		}
+		list = *v
+	default:
+		return richerror.New(op).
+			WithKind(richerror.KindUnexpected).
+			WithWarpError(errors.New("unexpected type for brand name"))
 	}
 	notFoundIDs, err := v.userProvider.FindNonExistingIDs(context.Background(), list)
 	if err != nil {
@@ -96,11 +128,11 @@ func (v Validator) usersExist(value any) error {
 	if len(notFoundIDs) == 0 {
 		return nil
 	}
-	return richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("global.validation_failed").WithMeta(map[string]any{"InvalidIDs": notFoundIDs})
+	return richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("validation.invalid_ids_exist").WithMeta(map[string]any{"InvalidIDs": notFoundIDs})
 }
 
 func (v Validator) checkDiscountIsExist(value any) error {
-	const op = "mongodbcategory.checkDiscountIsExist"
+	const op = "discountvalidator.checkDiscountIsExist"
 	id, ok := value.(string)
 	if !ok {
 		return richerror.New(op).WithKind(richerror.KindBadRequest).WithMessageKey("global.validation_failed")

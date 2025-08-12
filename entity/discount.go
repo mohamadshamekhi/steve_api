@@ -48,6 +48,5 @@ func (d *Discount) BeforeCreate() {
 	now := time.Now()
 	d.CreatedAt = now
 	d.UpdatedAt = now
-	d.IsActive = true
 	d.UsageCount = 0
 }

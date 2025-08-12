@@ -18,14 +18,18 @@ type DB struct {
 func New(c *mongodb.DB) *DB {
 	collection := c.Connection().Collection(collectionName)
 
-	indexes := []mongo.IndexModel{
-		{
-			Keys:    bson.D{{Key: "code", Value: 1}},
-			Options: options.Index().SetUnique(true),
-		},
+	indexModel := mongo.IndexModel{
+		Keys: bson.D{{Key: "code", Value: 1}},
+		Options: options.Index().
+			SetUnique(true).
+			SetPartialFilterExpression(bson.M{
+				"code": bson.M{
+					"$type": "string",
+				},
+			}),
 	}
 
-	_, err := collection.Indexes().CreateMany(context.Background(), indexes)
+	_, err := collection.Indexes().CreateOne(context.Background(), indexModel)
 	if err != nil {
 		panic(err)
 	}
