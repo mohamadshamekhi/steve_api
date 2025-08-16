@@ -14,7 +14,7 @@ type GetAllUsersRequest struct {
 
 type GetAllUsersResponse struct {
 	Pagination commonparam.PaginationResponse `json:"pagination"`
-	Users      []UserInfo
+	Users      []UserInfo                     `json:"users"`
 }
 
 type UserInfo struct {
