@@ -16,7 +16,7 @@ type GetAllDiscountsParamResponse struct {
 }
 
 type DiscountsList struct {
-	ID              string    `json:"id"`
+	ID              string    `json:"id" bson:"_id"`
 	Code            string    `json:"code"`
 	Type            string    `json:"type"`
 	Value           uint      `json:"value"`
