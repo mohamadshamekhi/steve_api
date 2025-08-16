@@ -16,21 +16,21 @@ type GetProductResponse struct {
 }
 
 type ProductInfo struct {
-	ID           string                     `bson:"_id"`
-	Name         string                     `bson:"name"`
-	ENTitle      string                     `bson:"en_title"`
-	Slug         string                     `bson:"slug"`
-	Brand        brandparam.BrandInfo       `bson:"brand"`
-	Category     categoryparam.CategoryInfo `bson:"category"`
-	Gallery      []entity.ProductGallery    `bson:"gallery"`
-	IsPublished  bool                       `bson:"is_published"`
-	IsSecondHand bool                       `bson:"is_second_hand"`
-	Description  string                     `bson:"description"`
+	ID           string                     `json:"_id"`
+	Name         string                     `json:"name"`
+	ENTitle      string                     `json:"en_title"`
+	Slug         string                     `json:"slug"`
+	Brand        brandparam.BrandInfo       `json:"brand"`
+	Category     categoryparam.CategoryInfo `json:"category"`
+	Gallery      []entity.ProductGallery    `json:"gallery"`
+	IsPublished  bool                       `json:"is_published"`
+	IsSecondHand bool                       `json:"is_second_hand"`
+	Description  string                     `json:"description"`
 
-	Variants       []entity.Variant       `bson:"variants"`
-	Specifications []entity.Specification `bson:"specifications,omitempty"`
+	Variants       []entity.Variant       `json:"variants"`
+	Specifications []entity.Specification `json:"specifications,omitempty"`
 
-	CreatedAt time.Time `bson:"created_at"`
-	UpdatedAt time.Time `bson:"updated_at"`
-	DeletedAt time.Time `bson:"deleted_at,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	DeletedAt time.Time `json:"deleted_at,omitempty"`
 }
