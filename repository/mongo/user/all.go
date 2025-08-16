@@ -2,6 +2,7 @@ package mongodbuser
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
@@ -50,13 +51,12 @@ func (d DB) GetAllUsers(ctx context.Context, f commonparam.FilterRequest, p comm
 	}
 	defer cursor.Close(ctx)
 	var users []entity.User
-	if err := cursor.All(ctx, &users); err != nil {
-		return userservice.ListResult{}, richerror.New(op).WithWarpError(err).
+	if gErr := cursor.All(ctx, &users); gErr != nil {
+		return userservice.ListResult{}, richerror.New(op).WithWarpError(gErr).
 			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
 	}
-
 	return userservice.ListResult{
-		Users:     users,
+		Users:      users,
 		TotalCount: totalCount,
 	}, nil
 }
