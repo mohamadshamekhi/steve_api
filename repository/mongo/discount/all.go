@@ -2,6 +2,8 @@ package mongodbdiscount
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	discountparam "github.com/abolfazlnorzad/steve/param/discount"
@@ -11,12 +13,47 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (d DB) All(ctx context.Context, p commonparam.PaginationRequest) (discountservice.ListResult, error) {
+func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.PaginationRequest) (discountservice.ListResult, error) {
 	const op = "mongodbdiscount.All"
 
 	filter := bson.M{
 		"deleted_at": bson.M{"$exists": false},
 	}
+
+	for _, filterItem := range f.Filter {
+		for key, value := range filterItem {
+
+			valueStr := fmt.Sprintf("%v", value)
+
+			if valueStr == "" {
+				continue
+			}
+
+			switch key {
+			case "code":
+				filter[key] = bson.M{"$regex": valueStr, "$options": "i"}
+
+			case "is_active":
+				if boolValue, err := strconv.ParseBool(valueStr); err == nil {
+					filter[key] = boolValue
+				}
+
+			case "starts_at", "expires_at":
+				filter[key] = valueStr
+
+			// می‌توانید case های دیگری برای فیلدهای عددی اضافه کنید.
+			// case "min_price":
+			// 	if price, err := strconv.Atoi(valueStr); err == nil {
+			// 		filter["price"] = bson.M{"$gte": price}
+			// 	}
+
+			default:
+				// برای هر کلید ناشناخته دیگری، از برابری دقیق استفاده می‌کنیم.
+				filter[key] = value
+			}
+		}
+	}
+
 	totalCount, err := d.collection.CountDocuments(ctx, filter)
 	if err != nil {
 		return discountservice.ListResult{}, richerror.New(op).WithWarpError(err).

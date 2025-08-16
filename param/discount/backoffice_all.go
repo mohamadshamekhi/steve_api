@@ -8,6 +8,7 @@ import (
 
 type GetAllDiscountsParamRequest struct {
 	Pagination commonparam.PaginationRequest `json:"pagination" ,query:"pagination"`
+	Filter     commonparam.FilterRequest     `json:"filter"`
 }
 type GetAllDiscountsParamResponse struct {
 	Pagination commonparam.PaginationResponse `json:"pagination"`
