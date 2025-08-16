@@ -14,6 +14,7 @@ import (
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
 	commenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/comment"
+	discounthandler "github.com/abolfazlnorzad/steve/delivery/http_server/discount"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
 	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
@@ -29,6 +30,7 @@ import (
 	mongodbbrand "github.com/abolfazlnorzad/steve/repository/mongo/brand"
 	mongodbcategory "github.com/abolfazlnorzad/steve/repository/mongo/category"
 	mongodbcomment "github.com/abolfazlnorzad/steve/repository/mongo/comment"
+	mongodbdiscount "github.com/abolfazlnorzad/steve/repository/mongo/discount"
 	mongodbmedia "github.com/abolfazlnorzad/steve/repository/mongo/media"
 	mongodbproduct "github.com/abolfazlnorzad/steve/repository/mongo/product"
 	mongodbuser "github.com/abolfazlnorzad/steve/repository/mongo/user"
@@ -41,6 +43,7 @@ import (
 	brandservice "github.com/abolfazlnorzad/steve/service/brand"
 	categoryservice "github.com/abolfazlnorzad/steve/service/category"
 	commentservice "github.com/abolfazlnorzad/steve/service/comment"
+	discountservice "github.com/abolfazlnorzad/steve/service/discount"
 	fetcherservice "github.com/abolfazlnorzad/steve/service/fetcher"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 	productservice "github.com/abolfazlnorzad/steve/service/product"
@@ -53,6 +56,7 @@ import (
 	brandvalidator "github.com/abolfazlnorzad/steve/validator/brand"
 	categoryvalidator "github.com/abolfazlnorzad/steve/validator/category"
 	commentvalidator "github.com/abolfazlnorzad/steve/validator/comment"
+	discountvalidator "github.com/abolfazlnorzad/steve/validator/discount"
 	mediavalidator "github.com/abolfazlnorzad/steve/validator/media"
 	productvalidator "github.com/abolfazlnorzad/steve/validator/product"
 	uservalidator "github.com/abolfazlnorzad/steve/validator/user"
@@ -135,8 +139,11 @@ func main() {
 	commenterFetecher := fetcherservice.NewCommenterFetcher(*userRepo, *backOfficeMongoRepo)
 	commentSvc := commentservice.New(commentRepo, commenterFetecher, commentableFetecher)
 	commentHandler := commenthandler.New(commentSvc, translator, commentVld, authSvc, cfg.Auth, aclSvc)
-
+	discountRepo := mongodbdiscount.New(mongoRepo)
+	discountVld := discountvalidator.New(discountRepo, categoryRepo, productRepo, userRepo)
+	discountbackofficeSvc := discountservice.NewBackofficeService(discountRepo)
+	discountHandler := discounthandler.New(discountbackofficeSvc, translator, discountVld, authSvc, cfg.Auth, aclSvc)
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
-		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler)
+		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler)
 	server.Serve()
 }

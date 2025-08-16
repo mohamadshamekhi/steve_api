@@ -40,11 +40,19 @@ func New(CategoryProvider CategoryProvider, BrandProvider BrandProvider, r Repos
 }
 
 func (v Validator) checkBrandIsExist(value any) error {
-	id, ok := value.(string)
-	if !ok {
-		return richerror.New("productvalidator.checkBrandIsExist").
+	var id string
+	switch v := value.(type) {
+	case string:
+		id = v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		id = *v
+	default:
+		return richerror.New("brandvalidator.BrandIsUnique.type_assertion").
 			WithKind(richerror.KindUnexpected).
-			WithWarpError(errors.New("unexpected type assertion failed"))
+			WithWarpError(errors.New("unexpected type for brand name"))
 	}
 	_, err := v.brandProvider.GetBrand(context.Background(), brandparam.GetBrandRequest{ID: id})
 	if err != nil {
@@ -61,11 +69,19 @@ func (v Validator) checkBrandIsExist(value any) error {
 }
 
 func (v Validator) checkCategoryIsExist(value any) error {
-	id, ok := value.(string)
-	if !ok {
-		return richerror.New("productvalidator.checkCategoryIsExist").
+	var id string
+	switch v := value.(type) {
+	case string:
+		id = v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		id = *v
+	default:
+		return richerror.New("brandvalidator.BrandIsUnique.type_assertion").
 			WithKind(richerror.KindUnexpected).
-			WithWarpError(errors.New("unexpected type assertion failed"))
+			WithWarpError(errors.New("unexpected type for brand name"))
 	}
 	resp, err := v.categoryProvider.GetCategory(context.Background(), categoryparam.GetCategoryRequest{ID: id})
 	if err != nil {
@@ -84,11 +100,19 @@ func (v Validator) checkCategoryIsExist(value any) error {
 }
 
 func (v Validator) checkProductIsExist(value any) error {
-	id, ok := value.(string)
-	if !ok {
-		return richerror.New("productvalidator.checkProductIsExist").
+	var id string
+	switch v := value.(type) {
+	case string:
+		id = v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		id = *v
+	default:
+		return richerror.New("brandvalidator.BrandIsUnique.type_assertion").
 			WithKind(richerror.KindUnexpected).
-			WithWarpError(errors.New("unexpected type assertion failed"))
+			WithWarpError(errors.New("unexpected type for brand name"))
 	}
 	_, err := v.repo.FindByID(context.Background(), id)
 	if err != nil {
