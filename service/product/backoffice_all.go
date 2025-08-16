@@ -18,7 +18,7 @@ func (s BackofficeService) GetAllProducts(ctx context.Context, req productparam.
 	if err != nil {
 		return productparam.GetAllProductsResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	
+
 	var productList []productparam.ProductList
 
 	var CateIds []string
@@ -38,7 +38,12 @@ func (s BackofficeService) GetAllProducts(ctx context.Context, req productparam.
 		logger.L().Error(fmt.Sprintf("cann't get category's of product-err%s - %v", op, cErr))
 	}
 	for _, p := range resp.Products {
-
+		url := ""
+		for _, g := range p.Gallery {
+			if g.IsPrimary {
+				url = g.URL
+			}
+		}
 		productList = append(productList, productparam.ProductList{
 			ID:           p.ID,
 			Name:         p.Name,
@@ -48,6 +53,7 @@ func (s BackofficeService) GetAllProducts(ctx context.Context, req productparam.
 			IsPublished:  p.IsPublished,
 			IsSecondHand: p.IsSecondHand,
 			Slug:         p.Slug,
+			ThumbnailURL: url,
 		})
 	}
 
