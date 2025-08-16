@@ -16,12 +16,17 @@ func (d DB) GetAllUsers(ctx context.Context, f commonparam.FilterRequest, p comm
 	filter := bson.M{
 		"deleted_at": bson.M{"$exists": false},
 	}
-	for _, f := range f.Filter {
-		for key, value := range f {
-			if key == "name" || key == "phone_number" {
-				filter[key] = bson.M{"$regex": value, "$options": "i"}
-			} else {
-				filter[key] = value
+	for _, filterItem := range f.Filter {
+		for key, value := range filterItem {
+			if value != nil {
+				valueStr := fmt.Sprintf("%v", value)
+				if valueStr != "" {
+					if key == "name" || key == "phone_number" {
+						filter[key] = bson.M{"$regex": valueStr, "$options": "i"}
+					} else {
+						filter[key] = value
+					}
+				}
 			}
 		}
 	}
