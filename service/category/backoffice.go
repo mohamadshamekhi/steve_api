@@ -189,14 +189,17 @@ func (s BackofficeService) GetAll(ctx context.Context, req categoryparam.GetAllC
 		logger.L().Error("warning: could not get media urls", "error", urlErr)
 	}
 	for _, c := range resp.Categories {
+		r, _ := s.AttrProvider.FindByID(ctx, attributeparam.GetAttributeRequest{ID: c.AttributeSetID})
+
 		categoriesInfo = append(categoriesInfo, categoryparam.CategoryInfo{
-			ID:          c.ID,
-			Name:        c.Name,
-			Description: c.Description,
-			URL:         urlMap.URLs[c.MediaID],
-			Level:       c.Level,
-			Ancestors:   c.Ancestors,
-			Slug:        c.Slug,
+			ID:           c.ID,
+			Name:         c.Name,
+			Description:  c.Description,
+			URL:          urlMap.URLs[c.MediaID],
+			Level:        c.Level,
+			Ancestors:    c.Ancestors,
+			Slug:         c.Slug,
+			AttributeSet: r.Attr.Attributes,
 		})
 	}
 

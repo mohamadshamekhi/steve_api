@@ -12,6 +12,7 @@ import (
 	backofficehandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
+	carthandler "github.com/abolfazlnorzad/steve/delivery/http_server/cart"
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
 	commenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/comment"
 	discounthandler "github.com/abolfazlnorzad/steve/delivery/http_server/discount"
@@ -28,6 +29,7 @@ import (
 	mongodbattributedefinition "github.com/abolfazlnorzad/steve/repository/mongo/attribute_definition"
 	mongodbbackoffice "github.com/abolfazlnorzad/steve/repository/mongo/backoffice"
 	mongodbbrand "github.com/abolfazlnorzad/steve/repository/mongo/brand"
+	mongodbcart "github.com/abolfazlnorzad/steve/repository/mongo/cart"
 	mongodbcategory "github.com/abolfazlnorzad/steve/repository/mongo/category"
 	mongodbcomment "github.com/abolfazlnorzad/steve/repository/mongo/comment"
 	mongodbdiscount "github.com/abolfazlnorzad/steve/repository/mongo/discount"
@@ -41,6 +43,7 @@ import (
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
 	brandservice "github.com/abolfazlnorzad/steve/service/brand"
+	cartservice "github.com/abolfazlnorzad/steve/service/cart"
 	categoryservice "github.com/abolfazlnorzad/steve/service/category"
 	commentservice "github.com/abolfazlnorzad/steve/service/comment"
 	discountservice "github.com/abolfazlnorzad/steve/service/discount"
@@ -54,6 +57,7 @@ import (
 	backofficevalidator "github.com/abolfazlnorzad/steve/validator/backoffice"
 	backofficevalidatorauth "github.com/abolfazlnorzad/steve/validator/backoffice/auth"
 	brandvalidator "github.com/abolfazlnorzad/steve/validator/brand"
+	cartvalidator "github.com/abolfazlnorzad/steve/validator/cart"
 	categoryvalidator "github.com/abolfazlnorzad/steve/validator/category"
 	commentvalidator "github.com/abolfazlnorzad/steve/validator/comment"
 	discountvalidator "github.com/abolfazlnorzad/steve/validator/discount"
@@ -143,7 +147,11 @@ func main() {
 	discountVld := discountvalidator.New(discountRepo, categoryRepo, productRepo, userRepo)
 	discountbackofficeSvc := discountservice.NewBackofficeService(discountRepo)
 	discountHandler := discounthandler.New(discountbackofficeSvc, translator, discountVld, authSvc, cfg.Auth, aclSvc)
+	cartRepo := mongodbcart.New(mongoRepo)
+	cartVld := cartvalidator.New(productRepo)
+	cartSvc := cartservice.NewStorefrontService(cartRepo, productRepo)
+	cartHandler := carthandler.New(cartSvc, cartVld, translator, authSvc, cfg.Auth, aclSvc)
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
-		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler)
+		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler)
 	server.Serve()
 }
