@@ -150,7 +150,8 @@ func main() {
 	cartRepo := mongodbcart.New(mongoRepo)
 	cartVld := cartvalidator.New(productRepo)
 	cartSvc := cartservice.NewStorefrontService(cartRepo, productRepo)
-	cartHandler := carthandler.New(cartSvc, cartVld, translator, authSvc, cfg.Auth, aclSvc)
+	cartBackofficeSvc := cartservice.NewBackofficeService(cartRepo, userRepo)
+	cartHandler := carthandler.New(cartSvc, cartBackofficeSvc, cartVld, translator, authSvc, cfg.Auth, aclSvc)
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler)
 	server.Serve()
