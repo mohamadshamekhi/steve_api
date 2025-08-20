@@ -1,6 +1,7 @@
 package carthandler
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/abolfazlnorzad/steve/delivery/http_server/response"
@@ -26,7 +27,8 @@ func (h Handler) AddItemToCart(c echo.Context) error {
 	if err := h.vld.ValidateAddItemToCartRequest(req); err != nil {
 		return err
 	}
-	resp, err := h.storefrontSvc.AddItemToCart(c.Request().Context(), req)
+	ctx := context.WithValue(c.Request().Context(), "user_id", cl.EntityID)
+	resp, err := h.storefrontSvc.AddItemToCart(ctx, req)
 	if err != nil {
 		return err
 	}
