@@ -10,6 +10,7 @@ import (
 
 type CartReader interface {
 	FindByID(ctx context.Context, id string) (entity.Cart, error)
+	GetUserActiveCart(ctx context.Context, userID string) (*entity.Cart, error)
 }
 
 type CartWriter interface {
@@ -21,16 +22,18 @@ type ListResult struct {
 	TotalCount int64
 }
 
-type CartBackofficeReader interface {
+type CartBackofficeWrite interface {
 	CartWriter
 	GetAll(ctx context.Context, filter cartparam.BackofficeFilterCart, pagination commonparam.PaginationRequest) (ListResult, error)
 }
+
 type CartReadWriter interface {
 	CartWriter
 	CartReader
 }
 type CartBackofficeReadWriter interface {
-	CartBackofficeReader
+	CartBackofficeWrite
+	CartReadWriter
 }
 
 type PRepository interface {

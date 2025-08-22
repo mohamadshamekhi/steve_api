@@ -148,9 +148,9 @@ func main() {
 	discountbackofficeSvc := discountservice.NewBackofficeService(discountRepo)
 	discountHandler := discounthandler.New(discountbackofficeSvc, translator, discountVld, authSvc, cfg.Auth, aclSvc)
 	cartRepo := mongodbcart.New(mongoRepo)
-	cartVld := cartvalidator.New(productRepo)
-	cartSvc := cartservice.NewStorefrontService(cartRepo, productRepo)
-	cartBackofficeSvc := cartservice.NewBackofficeService(cartRepo, userRepo)
+	cartVld := cartvalidator.New(productRepo, cartRepo)
+	cartSvc := cartservice.NewStorefrontService(cartRepo, productRepo, userRepo)
+	cartBackofficeSvc := cartservice.NewBackofficeService(cartRepo, userRepo, productRepo)
 	cartHandler := carthandler.New(cartSvc, cartBackofficeSvc, cartVld, translator, authSvc, cfg.Auth, aclSvc)
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler)
