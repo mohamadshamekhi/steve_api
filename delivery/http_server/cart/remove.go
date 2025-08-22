@@ -1,6 +1,7 @@
 package carthandler
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/abolfazlnorzad/steve/delivery/http_server/response"
@@ -22,11 +23,12 @@ func (h Handler) RemoveItem(c echo.Context) error {
 
 	cl := claim.GetClaimsFromEchoContext(c)
 	c.Set("user_id", cl.EntityID)
+	ctx := context.WithValue(c.Request().Context(), "user_id", cl.EntityID)
 
 	if err := h.vld.ValidateRemoveFromCartRequest(req); err != nil {
 		return err
 	}
-	resp, err := h.storefrontSvc.RemoveFromCart(c.Request().Context(), req)
+	resp, err := h.storefrontSvc.RemoveFromCart(ctx, req)
 	if err != nil {
 		return err
 	}

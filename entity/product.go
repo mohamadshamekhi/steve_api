@@ -53,3 +53,15 @@ func (p Product) GetTitle() string {
 func (p Product) GetID() string {
 	return p.ID
 }
+
+func (p Product) GetMainGallery() ProductGallery {
+	if len(p.Gallery) == 0 {
+		return ProductGallery{}
+	}
+	for _, gallery := range p.Gallery {
+		if gallery.IsPrimary {
+			return gallery
+		}
+	}
+	return p.Gallery[0]
+}

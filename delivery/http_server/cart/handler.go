@@ -12,6 +12,7 @@ import (
 
 type Handler struct {
 	storefrontSvc cartservice.StoreFrontService
+	backofficeSvc cartservice.BackofficeService
 	vld           cartvalidator.Validator
 	translator    *i18n.Translator
 	authSvc       authservice.Service
@@ -20,13 +21,16 @@ type Handler struct {
 }
 
 func New(storefrontSvc cartservice.StoreFrontService,
+	backofficeSvc cartservice.BackofficeService,
 	vld cartvalidator.Validator,
 	translator *i18n.Translator,
 	authSvc authservice.Service,
 	authCfg authservice.Config,
+
 	aclSvc aclservice.Service) Handler {
 	return Handler{
 		storefrontSvc: storefrontSvc,
+		backofficeSvc: backofficeSvc,
 		vld:           vld,
 		translator:    translator,
 		authSvc:       authSvc,
