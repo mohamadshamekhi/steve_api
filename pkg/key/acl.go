@@ -59,6 +59,9 @@ const (
 	PublishArticle = "article:publish"
 	DeleteArticle  = "article:delete"
 
+	ListComment   = "comment:list"
+	UpdateComment = "comment:update"
+
 	ListReviews   = "review:list"
 	ApproveReview = "review:approve"
 	DeleteReview  = "review:delete"

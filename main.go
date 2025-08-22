@@ -12,7 +12,10 @@ import (
 	backofficehandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
+	carthandler "github.com/abolfazlnorzad/steve/delivery/http_server/cart"
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
+	commenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/comment"
+	discounthandler "github.com/abolfazlnorzad/steve/delivery/http_server/discount"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
 	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
@@ -26,7 +29,10 @@ import (
 	mongodbattributedefinition "github.com/abolfazlnorzad/steve/repository/mongo/attribute_definition"
 	mongodbbackoffice "github.com/abolfazlnorzad/steve/repository/mongo/backoffice"
 	mongodbbrand "github.com/abolfazlnorzad/steve/repository/mongo/brand"
+	mongodbcart "github.com/abolfazlnorzad/steve/repository/mongo/cart"
 	mongodbcategory "github.com/abolfazlnorzad/steve/repository/mongo/category"
+	mongodbcomment "github.com/abolfazlnorzad/steve/repository/mongo/comment"
+	mongodbdiscount "github.com/abolfazlnorzad/steve/repository/mongo/discount"
 	mongodbmedia "github.com/abolfazlnorzad/steve/repository/mongo/media"
 	mongodbproduct "github.com/abolfazlnorzad/steve/repository/mongo/product"
 	mongodbuser "github.com/abolfazlnorzad/steve/repository/mongo/user"
@@ -37,7 +43,11 @@ import (
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
 	brandservice "github.com/abolfazlnorzad/steve/service/brand"
+	cartservice "github.com/abolfazlnorzad/steve/service/cart"
 	categoryservice "github.com/abolfazlnorzad/steve/service/category"
+	commentservice "github.com/abolfazlnorzad/steve/service/comment"
+	discountservice "github.com/abolfazlnorzad/steve/service/discount"
+	fetcherservice "github.com/abolfazlnorzad/steve/service/fetcher"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 	productservice "github.com/abolfazlnorzad/steve/service/product"
 	userservice "github.com/abolfazlnorzad/steve/service/user"
@@ -47,7 +57,10 @@ import (
 	backofficevalidator "github.com/abolfazlnorzad/steve/validator/backoffice"
 	backofficevalidatorauth "github.com/abolfazlnorzad/steve/validator/backoffice/auth"
 	brandvalidator "github.com/abolfazlnorzad/steve/validator/brand"
+	cartvalidator "github.com/abolfazlnorzad/steve/validator/cart"
 	categoryvalidator "github.com/abolfazlnorzad/steve/validator/category"
+	commentvalidator "github.com/abolfazlnorzad/steve/validator/comment"
+	discountvalidator "github.com/abolfazlnorzad/steve/validator/discount"
 	mediavalidator "github.com/abolfazlnorzad/steve/validator/media"
 	productvalidator "github.com/abolfazlnorzad/steve/validator/product"
 	uservalidator "github.com/abolfazlnorzad/steve/validator/user"
@@ -121,8 +134,25 @@ func main() {
 	userRepo := mongodbuser.New(mongoRepo)
 	userVld := uservalidator.New(userRepo)
 	userSvc := userservice.NewStoreFrontService(cfg.User, userRepo, authSvc)
-	userHandler := userhandler.New(userSvc, userVld, translator, authSvc, cfg.Auth)
+	backofficeUserSvc := userservice.NewBackofficeService(userRepo)
+	userHandler := userhandler.New(backofficeUserSvc, userSvc, userVld, translator, authSvc, cfg.Auth, aclSvc)
+	commentRepo := mongodbcomment.New(mongoRepo)
+	commentVld := commentvalidator.New(commentRepo)
 
-	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler, attrDefHandler, productHandler, backofficeHandler, userHandler)
+	commentableFetecher := fetcherservice.NewCommentableFetcher(*productRepo, *articleRepo)
+	commenterFetecher := fetcherservice.NewCommenterFetcher(*userRepo, *backOfficeMongoRepo)
+	commentSvc := commentservice.New(commentRepo, commenterFetecher, commentableFetecher)
+	commentHandler := commenthandler.New(commentSvc, translator, commentVld, authSvc, cfg.Auth, aclSvc)
+	discountRepo := mongodbdiscount.New(mongoRepo)
+	discountVld := discountvalidator.New(discountRepo, categoryRepo, productRepo, userRepo)
+	discountbackofficeSvc := discountservice.NewBackofficeService(discountRepo)
+	discountHandler := discounthandler.New(discountbackofficeSvc, translator, discountVld, authSvc, cfg.Auth, aclSvc)
+	cartRepo := mongodbcart.New(mongoRepo)
+	cartVld := cartvalidator.New(productRepo, cartRepo)
+	cartSvc := cartservice.NewStorefrontService(cartRepo, productRepo, userRepo)
+	cartBackofficeSvc := cartservice.NewBackofficeService(cartRepo, userRepo, productRepo)
+	cartHandler := carthandler.New(cartSvc, cartBackofficeSvc, cartVld, translator, authSvc, cfg.Auth, aclSvc)
+	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
+		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler)
 	server.Serve()
 }

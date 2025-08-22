@@ -2,6 +2,7 @@ package productvalidator
 
 import (
 	"errors"
+
 	"github.com/abolfazlnorzad/steve/entity"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -31,17 +32,10 @@ func (v Validator) ValidateUpdateSpecificationsRequest(req productparam.AddProdu
 	); err != nil {
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {
-			fieldErrorKeys := make(map[string]string)
-			for field, errMessage := range vErrs {
-				if errMessage != nil {
-					fieldErrorKeys[field] = errMessage.Error()
-				}
-
-			}
 			return richerror.New(op).
 				WithKind(richerror.KindInvalid).
 				WithMessageKey("global.validation_failed").
-				WithMeta(map[string]any{"fields": fieldErrorKeys})
+				WithMeta(map[string]any{"fields": vErrs})
 		}
 		return richerror.New(op).WithKind(richerror.KindUnexpected).WithWarpError(err)
 	}
@@ -59,17 +53,11 @@ func (v Validator) ValidateUpdateSingleSpecificationRequest(req productparam.Upd
 	); err != nil {
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {
-			fieldErrorKeys := make(map[string]string)
-			for field, errMessage := range vErrs {
-				if errMessage != nil {
-					fieldErrorKeys[field] = errMessage.Error()
-				}
 
-			}
 			return richerror.New(op).
 				WithKind(richerror.KindInvalid).
 				WithMessageKey("global.validation_failed").
-				WithMeta(map[string]any{"fields": fieldErrorKeys})
+				WithMeta(map[string]any{"fields": vErrs})
 		}
 		return richerror.New(op).WithKind(richerror.KindUnexpected).WithWarpError(err)
 	}

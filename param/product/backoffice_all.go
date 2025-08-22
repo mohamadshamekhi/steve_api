@@ -22,4 +22,5 @@ type ProductList struct {
 	IsPublished  bool   `json:"is_published"`
 	IsSecondHand bool   `json:"is_second_hand"`
 	Slug         string `json:"slug"`
+	ThumbnailURL string `json:"thumbnail_url,omitempty"`
 }

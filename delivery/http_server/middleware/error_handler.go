@@ -3,12 +3,14 @@ package middleware
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/abolfazlnorzad/steve/delivery/http_server/response"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
-	"net/http"
-
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/labstack/echo/v4"
 )
 
@@ -26,29 +28,65 @@ func NewCentralErrorHandler(translator *i18n.Translator) echo.HTTPErrorHandler {
 	}
 }
 func parseError(err error, translator *i18n.Translator, lang string) (response.APIResponse, int) {
-	fmt.Println("error", err)
 	var richErr *richerror.RichError
 	if errors.As(err, &richErr) {
 		code := mapKindToHTTPStatusCode(richErr.Kind())
 		mainMessage := translator.Translate(lang, richErr.MessageKey(), richErr.TemplateData())
 
-		if fieldErrorKeys, ok := richErr.GetMeta()["fields"].(map[string]string); ok {
+		if vErrs, ok := richErr.GetMeta()["fields"].(validation.Errors); ok {
 			translatedFieldErrors := make(map[string]string)
 
-			for field, key := range fieldErrorKeys {
-				attributeKey := "attr." + field
-				translatedAttribute := translator.Translate(lang, attributeKey, nil)
+			for field, fieldErr := range vErrs {
+				var innerRichErr *richerror.RichError
 
-				templateData := map[string]any{
-					"Attribute": translatedAttribute,
+				// الف) آیا خطای داخلی از نوع richerror است؟ (برای قوانین سفارشی پیچیده)
+				if errors.As(fieldErr, &innerRichErr) {
+					// پیام را با استفاده از کلید و داده‌های داینامیک خود آن ترجمه می‌کنیم.
+					templateData := innerRichErr.GetMeta()
+
+					if ids, dataOK := templateData["InvalidIDs"].([]string); dataOK {
+						templateData["InvalidIDs"] = strings.Join(ids, ", ")
+					}
+
+					translatedFieldErrors[field] = translator.Translate(lang, innerRichErr.MessageKey(), templateData)
+
+				} else if fieldErr != nil {
+					// ب) ✅ اگر یک خطای ساده بود (مانند validation.Required)...
+					// ۱. ابتدا نام خود فیلد را ترجمه می‌کنیم (مثلاً "PhoneNumber" -> "شماره تلفن")
+					attributeKey := "attr." + field
+					translatedAttribute := translator.Translate(lang, attributeKey, nil)
+
+					// ۲. سپس پیام خطا را با نام ترجمه شده فیلد، می‌سازیم.
+					templateData := map[string]any{
+						"Attribute": translatedAttribute,
+					}
+					// پیام خطا (fieldErr.Error()) همان کلید i18n ماست (مثلاً "validation.required")
+					finalMessage := translator.Translate(lang, fieldErr.Error(), templateData)
+
+					translatedFieldErrors[field] = finalMessage
 				}
-				finalMessage := translator.Translate(lang, key, templateData)
-
-				translatedFieldErrors[field] = finalMessage
 			}
 
 			return response.NewErrorResponse(mainMessage, translatedFieldErrors), code
 		}
+
+		//if fieldErrorKeys, ok := richErr.GetMeta()["fields"].(map[string]string); ok {
+		//	translatedFieldErrors := make(map[string]string)
+		//
+		//	for field, key := range fieldErrorKeys {
+		//		attributeKey := "attr." + field
+		//		translatedAttribute := translator.Translate(lang, attributeKey, nil)
+		//
+		//		templateData := map[string]any{
+		//			"Attribute": translatedAttribute,
+		//		}
+		//		finalMessage := translator.Translate(lang, key, templateData)
+		//
+		//		translatedFieldErrors[field] = finalMessage
+		//	}
+		//
+		//	return response.NewErrorResponse(mainMessage, translatedFieldErrors), code
+		//}
 
 		if code >= http.StatusInternalServerError {
 			mainMessage = translator.Translate(lang, "global.something_wrong", nil)

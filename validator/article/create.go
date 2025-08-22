@@ -3,6 +3,7 @@ package articlevalidator
 import (
 	"context"
 	"errors"
+
 	articleparam "github.com/abolfazlnorzad/steve/param/article"
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -24,17 +25,10 @@ func (v Validator) ValidateCreateArticleRequest(req articleparam.AddArticleReque
 
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {
-			fieldErrorKeys := make(map[string]string)
-			for field, errMessage := range vErrs {
-				if errMessage != nil {
-					fieldErrorKeys[field] = errMessage.Error()
-				}
-			}
-
 			return richerror.New(op).
 				WithKind(richerror.KindInvalid).
 				WithMessageKey("global.validation_failed").
-				WithMeta(map[string]any{"fields": fieldErrorKeys})
+				WithMeta(map[string]any{"fields": vErrs})
 		}
 
 		return richerror.New(op).WithKind(richerror.KindUnexpected).

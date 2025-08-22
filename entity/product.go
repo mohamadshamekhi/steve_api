@@ -1,8 +1,9 @@
 package entity
 
 import (
-	"github.com/oklog/ulid/v2"
 	"time"
+
+	"github.com/oklog/ulid/v2"
 )
 
 type Product struct {
@@ -25,13 +26,13 @@ type Product struct {
 	DeletedAt time.Time `bson:"deleted_at,omitempty"`
 }
 type ProductGallery struct {
-	MediaID   string `bson:"media_id"`
-	URL       string `bson:"url"`
-	IsPrimary bool   `bson:"is_primary"`
+	MediaID   string `bson:"media_id" json:"media_id"`
+	URL       string `bson:"url" json:"url"`
+	IsPrimary bool   `bson:"is_primary" json:"is_primary"`
 }
 type Specification struct {
-	Key   string `bson:"key"`   // ex: "cpu_processor"
-	Value string `bson:"value"` // ex: "A18 Bionic"
+	Key   string `bson:"key" json:"key"`     // ex: "cpu_processor"
+	Value string `bson:"value" json:"value"` // ex: "A18 Bionic"
 }
 
 func (p *Product) BeforeCreate() {
@@ -44,4 +45,23 @@ func (p *Product) BeforeCreate() {
 	for i := range p.Variants {
 		p.Variants[i].ID = ulid.Make().String()
 	}
+}
+
+func (p Product) GetTitle() string {
+	return p.Name
+}
+func (p Product) GetID() string {
+	return p.ID
+}
+
+func (p Product) GetMainGallery() ProductGallery {
+	if len(p.Gallery) == 0 {
+		return ProductGallery{}
+	}
+	for _, gallery := range p.Gallery {
+		if gallery.IsPrimary {
+			return gallery
+		}
+	}
+	return p.Gallery[0]
 }

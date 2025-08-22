@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -42,4 +43,32 @@ func (d DB) FindBySlug(ctx context.Context, slug string) (entity.Article, error)
 	}
 
 	return article, nil
+}
+
+func (d DB) FindManyByIDs(ctx context.Context, ids []string) ([]entity.Article, error) {
+	const op = "mongodbarticle.FindManyByIDs"
+	if len(ids) == 0 {
+		return []entity.Article{}, nil
+	}
+
+
+	filter := bson.M{
+		"_id":        bson.M{"$in": ids},
+		"deleted_at": bson.M{"$exists": false},
+	}
+
+	cursor, err := d.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err).
+			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
+	}
+	defer cursor.Close(ctx)
+
+	var articles []entity.Article
+	if err := cursor.All(ctx, &articles); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).
+			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
+	}
+
+	return articles, nil
 }

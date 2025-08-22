@@ -3,6 +3,8 @@ package authservice
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/abolfazlnorzad/steve/contract/goproto/auth"
 	"github.com/abolfazlnorzad/steve/pkg/constant"
 	"github.com/abolfazlnorzad/steve/pkg/errmsg"
@@ -10,7 +12,6 @@ import (
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"github.com/nats-io/nats.go"
 	"google.golang.org/protobuf/proto"
-	"time"
 )
 
 func (s Service) GenerateOTPCode(ctx context.Context, phoneNumber string, prefix string) error {

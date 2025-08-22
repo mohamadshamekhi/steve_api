@@ -1,8 +1,9 @@
 package articleparam
 
 import (
-	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	"time"
+
+	commonparam "github.com/abolfazlnorzad/steve/param/common"
 )
 
 type AllStorefrontArticleRequest struct {

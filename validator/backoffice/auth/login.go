@@ -3,11 +3,12 @@ package backofficevalidatorauth
 import (
 	"context"
 	"errors"
+	"regexp"
+
 	backofficeauthparam "github.com/abolfazlnorzad/steve/param/backoffice/auth"
 	"github.com/abolfazlnorzad/steve/pkg/constant"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"regexp"
 )
 
 func (v Validator) ValidateLoginWithPhoneNumberRequest(req backofficeauthparam.SendLoginCodeRequest) error {
@@ -20,17 +21,10 @@ func (v Validator) ValidateLoginWithPhoneNumberRequest(req backofficeauthparam.S
 
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {
-			fieldErrorKeys := make(map[string]string)
-			for field, errMessage := range vErrs {
-				if errMessage != nil {
-					fieldErrorKeys[field] = errMessage.Error()
-				}
-			}
-
 			return richerror.New(op).
 				WithKind(richerror.KindInvalid).
 				WithMessageKey("global.validation_failed").
-				WithMeta(map[string]any{"fields": fieldErrorKeys})
+				WithMeta(map[string]any{"fields": vErrs})
 		}
 
 		return richerror.New(op).WithKind(richerror.KindUnexpected).
@@ -71,17 +65,10 @@ func (v Validator) ValidateVerifyOTPCodeRequest(req backofficeauthparam.VerifyLo
 
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {
-			fieldErrorKeys := make(map[string]string)
-			for field, fieldErr := range vErrs {
-				if fieldErr != nil {
-					fieldErrorKeys[field] = fieldErr.Error()
-				}
-			}
-
 			return richerror.New(op).
 				WithKind(richerror.KindInvalid).
 				WithMessageKey("global.validation_failed").
-				WithMeta(map[string]any{"fields": fieldErrorKeys})
+				WithMeta(map[string]any{"fields": vErrs})
 		}
 
 		return richerror.New(op).

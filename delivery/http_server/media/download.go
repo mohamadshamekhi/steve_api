@@ -1,11 +1,12 @@
 package mediahandler
 
 import (
+	"net/http"
+
 	"github.com/abolfazlnorzad/steve/delivery/http_server/response"
 	"github.com/abolfazlnorzad/steve/entity"
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 func (h Handler) GetURL(c echo.Context) error {

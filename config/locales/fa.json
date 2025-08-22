@@ -67,6 +67,11 @@
     "translation": "ورودی نا معتبر میباشد."
   },
 
+  {
+    "id": "validation.invalid_ids_exist",
+    "translation": "شناسه‌های زیر نامعتبر هستند: {{.InvalidIDs}}"
+  },
+
 
   {
     "id": "attr.phone_number",
@@ -247,5 +252,13 @@
   {
     "id": "media.file_not_provided",
     "translation": "لطفا فایل را اپلود کنید"
+  },
+  {
+    "id": "product.sold-out",
+    "translation": "موجودی محصول به اتمام رسیده است."
+  },
+  {
+    "id": "product.is-not-published",
+    "translation": "محصول مورد نظر هنوز منتشر نشده است"
   }
 ]

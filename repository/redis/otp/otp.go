@@ -3,10 +3,11 @@ package redisotp
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"github.com/redis/go-redis/v9"
-	"time"
 )
 
 func (d DB) CheckUserHasActiveCode(ctx context.Context, key string) (bool, error) {

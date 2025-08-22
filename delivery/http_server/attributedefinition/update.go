@@ -1,11 +1,12 @@
 package attributedefinitionhandler
 
 import (
+	"net/http"
+
 	"github.com/abolfazlnorzad/steve/delivery/http_server/response"
 	attributedefinitionparam "github.com/abolfazlnorzad/steve/param/attribute_definition"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 func (h Handler) Update(c echo.Context) error {

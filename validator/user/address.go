@@ -2,6 +2,7 @@ package uservalidator
 
 import (
 	"errors"
+
 	userparam "github.com/abolfazlnorzad/steve/param/user"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -19,17 +20,10 @@ func (v Validator) ValidateStoreFrontAddAddressRequest(req userparam.StoreFrontA
 
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {
-			fieldErrorKeys := make(map[string]string)
-			for field, fieldErr := range vErrs {
-				if fieldErr != nil {
-					fieldErrorKeys[field] = fieldErr.Error()
-				}
-			}
-
 			return richerror.New(op).
 				WithKind(richerror.KindInvalid).
 				WithMessageKey("global.validation_failed").
-				WithMeta(map[string]any{"fields": fieldErrorKeys})
+				WithMeta(map[string]any{"fields": vErrs})
 		}
 
 		return richerror.New(op).
@@ -56,17 +50,10 @@ func (v Validator) ValidateStoreFrontUpdateAddressRequest(req userparam.StoreFro
 
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {
-			fieldErrorKeys := make(map[string]string)
-			for field, fieldErr := range vErrs {
-				if fieldErr != nil {
-					fieldErrorKeys[field] = fieldErr.Error()
-				}
-			}
-
 			return richerror.New(op).
 				WithKind(richerror.KindInvalid).
 				WithMessageKey("global.validation_failed").
-				WithMeta(map[string]any{"fields": fieldErrorKeys})
+				WithMeta(map[string]any{"fields": vErrs})
 		}
 
 		return richerror.New(op).
