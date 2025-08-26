@@ -260,5 +260,29 @@
   {
     "id": "product.is-not-published",
     "translation": "محصول مورد نظر هنوز منتشر نشده است"
+  },
+  {
+    "id": "discount.is_not_active",
+    "translation": "این کد تخفیف در حال حاضر فعال نیست."
+  },
+  {
+    "id": "discount.not_yet_started",
+    "translation": "زمان استفاده از این تخفیف هنوز شروع نشده است."
+  },
+  {
+    "id": "discount.has_expired",
+    "translation": "این کد تخفیف منقضی شده است."
+  },
+  {
+    "id": "discount.usage_limit_reached",
+    "translation": "ظرفیت استفاده از این کد تخفیف به اتمام رسیده است."
+  },
+  {
+    "id": "discount.minimum_purchase_not_met",
+    "translation": "حداقل مبلغ خرید برای استفاده از این تخفیف رعایت نشده است."
+  },
+  {
+    "id": "discount.not_applicable_for_user",
+    "translation": "این کد تخفیف برای شما معتبر نمی‌باشد."
   }
 ]

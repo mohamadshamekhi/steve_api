@@ -105,6 +105,7 @@ func (s StoreFrontService) GetMyActiveCart(ctx context.Context, req cartparam.My
 		Items:     cartItems,
 		CreatedAt: cart.CreatedAt,
 		UpdatedAt: cart.UpdatedAt,
+		Subtotal:  cart.CalculateSubtotal(),
 	}
 	return cartparam.MyActiveCartResponse{
 		Cart: c,

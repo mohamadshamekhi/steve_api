@@ -54,3 +54,26 @@ func (c *Cart) BeforeCreate() {
 		c.Items = make([]CartItem, 0)
 	}
 }
+
+func (c *Cart) CalculateSubtotal() uint {
+	var total uint = 0
+	for _, item := range c.Items {
+		total += uint(item.PriceAtTime) * uint(item.Quantity)
+	}
+	return total
+}
+
+type CheckoutItemResult struct {
+	CartItem
+	HasStockIssue   bool
+	HasPriceChanged bool
+	CurrentPrice    int64
+}
+
+type CheckoutSummary struct {
+	Items            []CheckoutItemResult
+	Subtotal         int64
+	AppliedDiscounts []AppliedDiscount
+	FinalPrice       int64
+	IsReady          bool
+}
