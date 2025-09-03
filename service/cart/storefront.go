@@ -6,6 +6,7 @@ import (
 	"github.com/abolfazlnorzad/steve/entity"
 	cartparam "github.com/abolfazlnorzad/steve/param/cart"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	discountservice "github.com/abolfazlnorzad/steve/service/discount"
 )
 
 type StoreFrontService struct {
@@ -110,4 +111,22 @@ func (s StoreFrontService) GetMyActiveCart(ctx context.Context, req cartparam.My
 	return cartparam.MyActiveCartResponse{
 		Cart: c,
 	}, nil
+}
+
+func (s StoreFrontService) GetEnrichedCart(ctx context.Context, cart *entity.Cart) (discountservice.EnrichedCart, error) {
+	var pids []string
+	var cids []string
+
+	for _, item := range cart.Items {
+		pids = append(pids, item.ProductID)
+		p, _ := s.pRepo.FindByID(ctx, item.ProductID)
+		cids = append(cids, p.CategoryID)
+	}
+	res := discountservice.EnrichedCart{
+		Cart:        cart,
+		ProductIDs:  pids,
+		CategoryIDs: cids,
+		Subtotal:    int64(cart.CalculateSubtotal()),
+	}
+	return res, nil
 }

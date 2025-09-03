@@ -96,3 +96,20 @@ func (d *Discount) CheckIsValidForUser(userID string, amount uint) error {
 
 	return nil
 }
+
+func (d *Discount) CalculateAmount(eligibleAmount uint) uint {
+	switch d.Type {
+	case PercentageDiscount:
+
+		return (eligibleAmount * d.Value) / 100
+
+	case FixedAmountDiscount:
+		if d.Value > eligibleAmount {
+			return eligibleAmount
+		}
+		return d.Value
+
+	default:
+		return 0
+	}
+}

@@ -68,12 +68,14 @@ type CheckoutItemResult struct {
 	HasStockIssue   bool
 	HasPriceChanged bool
 	CurrentPrice    int64
+	DiscountAmount  uint
 }
 
 type CheckoutSummary struct {
-	Items            []CheckoutItemResult
-	Subtotal         int64
-	AppliedDiscounts []AppliedDiscount
-	FinalPrice       int64
-	IsReady          bool
+	Items              []CheckoutItemResult
+	Subtotal           int64
+	AppliedDiscounts   []AppliedDiscount
+	FinalPrice         int64
+	IsReady            bool
+	DiscountedSubtotal uint
 }

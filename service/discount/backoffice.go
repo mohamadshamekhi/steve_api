@@ -30,8 +30,9 @@ type EnrichedCart struct {
 	Subtotal    int64
 }
 
-func NewBackofficeService(repo DiscountReadWriter) BackofficeService {
-	return BackofficeService{repo: repo}
+func NewBackofficeService(repo DiscountReadWriter, cartInfoProvider CartInfoProvider,
+	productInfoProvider ProductInfoProvider) BackofficeService {
+	return BackofficeService{repo: repo, cartInfoProvider: cartInfoProvider, productInfoProvider: productInfoProvider}
 }
 
 func (s BackofficeService) Create(ctx context.Context, req discountparam.AddDiscountRequest) (discountparam.AddDiscountResponse, error) {

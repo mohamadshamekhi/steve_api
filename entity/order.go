@@ -74,6 +74,9 @@ type AppliedDiscount struct {
 }
 
 type ShippingInfo struct {
-	CompanyName  string `bson:"company_name,omitempty"`
-	TrackingCode string `bson:"tracking_code,omitempty"`
+	ID          string `bson:"_id"`
+	Name        string `bson:"name"`
+	Description string `bson:"description"`
+	Cost        uint64 `bson:"cost"`
+	IsActive    bool   `bson:"is_active"`
 }

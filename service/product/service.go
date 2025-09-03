@@ -8,6 +8,7 @@ import (
 	categoryparam "github.com/abolfazlnorzad/steve/param/category"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
+	productparam "github.com/abolfazlnorzad/steve/param/product"
 )
 
 type ListResult struct {
@@ -19,6 +20,8 @@ type ProductReader interface {
 	FindByID(ctx context.Context, id string) (entity.Product, error)
 	FindBySlug(ctx context.Context, slug string) (entity.Product, error)
 	All(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
+	GetProductCategoriesForCartItems(ctx context.Context, items []entity.CartItem) (map[string][]string, error)
+	GetVariantsByIDs(ctx context.Context, variantIDs []string) (map[string]entity.Variant, error)
 }
 
 type ProductWriter interface {
@@ -45,6 +48,16 @@ type BackofficeService struct {
 	mediaSvc         MediaService
 	categoryProvider CategoryProvider
 	brandProvider    BrandProvider
+}
+
+func (s BackofficeService) GetVariantsByIDs(ctx context.Context, req productparam.GetVariantsByIDsRequest) (response productparam.GetVariantsByIDsResponse, err error) {
+	res, err := s.repo.GetVariantsByIDs(ctx, req.IDs)
+	if err != nil {
+		return productparam.GetVariantsByIDsResponse{}, err
+	}
+	return productparam.GetVariantsByIDsResponse{
+		Variants: res,
+	}, nil
 }
 
 func NewBackofficeService(repo ProductReadWriter, mediaSvc MediaService, categoryProvider CategoryProvider, brandProvider BrandProvider) BackofficeService {

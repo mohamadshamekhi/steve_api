@@ -31,10 +31,23 @@ type StorefrontDiscountProvider interface {
 }
 type StorefrontProductProvider interface {
 	GetVariantsByIDs(ctx context.Context, req productparam.GetVariantsByIDsRequest) (response productparam.GetVariantsByIDsResponse, err error)
+	GetProductCategoriesForCartItems(ctx context.Context, req productparam.GetProductCategoriesForCartItemsRequest) (productparam.GetProductCategoriesForCartItemsResponse, error)
 }
 
 type Repository interface {
 	Create(ctx context.Context, order entity.Order) error
+}
+
+func New(cartProvider StorefrontCartProvider,
+	discountProvider StorefrontDiscountProvider,
+	productProvider StorefrontProductProvider,
+	repo Repository) StoreFrontService {
+	return StoreFrontService{
+		cartProvider:     cartProvider,
+		discountProvider: discountProvider,
+		productProvider:  productProvider,
+		repo:             repo,
+	}
 }
 
 func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.RegisterOrderRequest) (orderparam.RegisterOrderResponse, error) {
@@ -44,14 +57,16 @@ func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.Reg
 	if gCErr != nil {
 		return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(gCErr)
 	}
-	discountResp, gDErr := s.discountProvider.GetByCode(ctx, discountparam.GetSingleDiscountByCodeRequest{Code: req.DiscountCode})
-	if gDErr != nil {
-		return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(gDErr)
-	}
+	if req.DiscountCode != "" {
+		discountResp, gDErr := s.discountProvider.GetByCode(ctx, discountparam.GetSingleDiscountByCodeRequest{Code: req.DiscountCode})
+		if gDErr != nil {
+			return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(gDErr)
+		}
 
-	dErr := discountResp.Discount.CheckIsValidForUser(userID, activeCartResp.Cart.Subtotal)
-	if dErr != nil {
-		return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(dErr)
+		dErr := discountResp.Discount.CheckIsValidForUser(userID, activeCartResp.Cart.Subtotal)
+		if dErr != nil {
+			return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(dErr)
+		}
 	}
 	var cartItem []entity.CartItem
 	for _, item := range activeCartResp.Cart.Items {
@@ -135,7 +150,7 @@ func (s StoreFrontService) FinalizeCartForCheckout(ctx context.Context, cart ent
 		return entity.CheckoutSummary{}, richerror.New(op).WithWarpError(err)
 	}
 
-	s.applyDiscounts(&cart, &summary, validDiscountsResp.Discounts, discountCode)
+	s.calculateFinalPrice(ctx, &cart, &summary, validDiscountsResp.Discounts, discountCode)
 
 	return summary, nil
 }
@@ -221,3 +236,130 @@ func (s StoreFrontService) applyDiscounts(cart *entity.Cart, summary *entity.Che
 	summary.FinalPrice = currentPrice
 	summary.AppliedDiscounts = appliedDiscounts
 }
+
+func (s *StoreFrontService) calculateFinalPrice(ctx context.Context, cart *entity.Cart, summary *entity.CheckoutSummary, allValidDiscounts []entity.Discount, userCode string) error {
+	const op = "orderservice.calculateFinalPrice"
+
+	productCategories, err := s.productProvider.GetProductCategoriesForCartItems(ctx, productparam.GetProductCategoriesForCartItemsRequest{Items: cart.Items})
+	if err != nil {
+		return richerror.New(op).WithWarpError(err)
+	}
+
+	var autoDiscounts []entity.Discount
+	var coupon *entity.Discount
+	for _, d := range allValidDiscounts {
+		discountCopy := d
+		if d.Code != "" && d.Code == userCode {
+			coupon = &discountCopy
+		} else if d.Code == "" {
+			autoDiscounts = append(autoDiscounts, discountCopy)
+		}
+	}
+
+	var totalDiscountAmount int64 = 0
+	appliedDiscountsMap := make(map[string]entity.AppliedDiscount)
+
+	for i, item := range summary.Items {
+		var itemTotalDiscount int64 = 0
+		itemBasePrice := item.PriceAtTime * int64(item.Quantity)
+
+		var bestAutoDiscountAmount int64 = 0
+		var bestAutoDiscount *entity.Discount = nil
+		for _, autoDiscount := range autoDiscounts {
+			if s.isDiscountApplicableToItem(autoDiscount, item.CartItem, productCategories.CategoryIDs[item.ProductID], cart.UserID) {
+				currentDiscountAmount := autoDiscount.CalculateAmount(uint(itemBasePrice))
+				if currentDiscountAmount > uint(bestAutoDiscountAmount) {
+					bestAutoDiscountAmount = int64(currentDiscountAmount)
+					bestAutoDiscount = &autoDiscount
+				}
+			}
+		}
+
+		if bestAutoDiscount != nil {
+			itemTotalDiscount += bestAutoDiscountAmount
+			ad := appliedDiscountsMap[bestAutoDiscount.ID]
+			ad.DiscountID = bestAutoDiscount.ID
+			ad.Amount += bestAutoDiscountAmount
+			appliedDiscountsMap[bestAutoDiscount.ID] = ad
+		}
+
+		if coupon != nil {
+			if s.isDiscountApplicableToItem(*coupon, item.CartItem, productCategories.CategoryIDs[item.ProductID], cart.UserID) {
+				priceForItemCoupon := itemBasePrice - itemTotalDiscount
+				couponAmountOnItem := coupon.CalculateAmount(uint(priceForItemCoupon))
+
+				itemTotalDiscount += int64(couponAmountOnItem)
+				ad := appliedDiscountsMap[coupon.ID]
+				ad.DiscountID = coupon.ID
+				ad.DiscountCode = coupon.Code
+				ad.Amount += int64(couponAmountOnItem)
+				appliedDiscountsMap[coupon.ID] = ad
+			}
+		}
+
+		if itemTotalDiscount > itemBasePrice {
+			itemTotalDiscount = itemBasePrice
+		}
+		summary.Items[i].DiscountAmount = uint(itemTotalDiscount)
+		totalDiscountAmount += itemTotalDiscount
+	}
+
+	summary.DiscountedSubtotal = uint(summary.Subtotal - totalDiscountAmount)
+	summary.FinalPrice = int64(summary.DiscountedSubtotal)
+
+	summary.AppliedDiscounts = make([]entity.AppliedDiscount, 0, len(appliedDiscountsMap))
+	for _, ad := range appliedDiscountsMap {
+		summary.AppliedDiscounts = append(summary.AppliedDiscounts, ad)
+	}
+
+	return nil
+}
+
+func (s *StoreFrontService) isDiscountApplicableToItem(d entity.Discount, item entity.CartItem, categoryIDs []string, userID string) bool {
+	if len(d.ApplicableUserIDs) > 0 {
+		userIsAllowed := false
+		for _, allowedUserID := range d.ApplicableUserIDs {
+			if userID == allowedUserID {
+				userIsAllowed = true
+				break
+			}
+		}
+		if !userIsAllowed {
+			return false
+		}
+	}
+
+	productIsApplicable := len(d.ApplicableProductIDs) == 0
+	if !productIsApplicable {
+		for _, applicableID := range d.ApplicableProductIDs {
+			if item.ProductID == applicableID {
+				productIsApplicable = true
+				break
+			}
+		}
+	}
+
+	categoryIsApplicable := len(d.ApplicableCategoryIDs) == 0
+	if !categoryIsApplicable {
+		allowedCategorySet := make(map[string]struct{}, len(d.ApplicableCategoryIDs))
+		for _, catID := range d.ApplicableCategoryIDs {
+			allowedCategorySet[catID] = struct{}{}
+		}
+		for _, itemCatID := range categoryIDs {
+			if _, ok := allowedCategorySet[itemCatID]; ok {
+				categoryIsApplicable = true
+				break
+			}
+		}
+	}
+
+	return productIsApplicable && categoryIsApplicable
+}
+
+/*
+
+1- update quantity of product
+2- update usage of discount
+3- update cart status
+
+*/
