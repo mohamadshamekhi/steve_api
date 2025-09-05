@@ -8,5 +8,6 @@ import (
 func (h Handler) SetRoutes(e *echo.Echo) {
 	g := e.Group("/order")
 	g.POST("/register", h.Register, middleware.Auth(h.authSvc, h.authCfg))
+	g.GET("/all", h.GetAll, middleware.Auth(h.authSvc, h.authCfg))
 
 }

@@ -17,7 +17,7 @@ type StoreFrontService struct {
 	cartProvider     StorefrontCartProvider
 	discountProvider StorefrontDiscountProvider
 	productProvider  StorefrontProductProvider
-	repo             Repository
+	repo             OrderReadWriter
 }
 
 type StorefrontCartProvider interface {
@@ -37,14 +37,10 @@ type StorefrontProductProvider interface {
 	UpdateProductVariantQuantityAfterRegisterOrder(ctx context.Context, req productparam.UpdateProductVariantQuantityAfterRegisterOrderRequest) (productparam.UpdateProductVariantQuantityAfterRegisterOrderResponse, error)
 }
 
-type Repository interface {
-	Create(ctx context.Context, order entity.Order) error
-}
-
 func New(cartProvider StorefrontCartProvider,
 	discountProvider StorefrontDiscountProvider,
 	productProvider StorefrontProductProvider,
-	repo Repository) StoreFrontService {
+	repo OrderReadWriter) StoreFrontService {
 	return StoreFrontService{
 		cartProvider:     cartProvider,
 		discountProvider: discountProvider,
@@ -128,7 +124,6 @@ func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.Reg
 
 	s.discountProvider.UpdateDiscountUsageAfterRegisterOrder(ctx, discountparam.UpdateDiscountUsageAfterRegisterOrderRequest{AppliedDiscount: newOrder.AppliedDiscounts})
 
-	fmt.Println("cart", cart.ID)
 	if _, err = s.cartProvider.UpdateCartStatus(ctx, cartparam.UpdateCartStatusRequest{
 		CartID: cart.ID,
 		Status: entity.PendingPayment,

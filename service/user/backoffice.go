@@ -43,3 +43,22 @@ func (s BackofficeService) GetAllUsers(ctx context.Context, req userparam.GetAll
 	}, nil
 
 }
+
+func (s BackofficeService) GetUsersByIDs(ctx context.Context, req userparam.GetUsersByIDsRequest) (userparam.GetUsersByIDsResponse, error) {
+	const op = "userservice.GetUsersByIDs"
+	users, err := s.repo.GetUsersByIDs(ctx, req.IDs)
+	if err != nil {
+		return userparam.GetUsersByIDsResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	var userInfos []userparam.UserInfo
+	for _, u := range users {
+		userInfos = append(userInfos, userparam.UserInfo{
+			ID:          u.ID,
+			Name:        u.Name,
+			PhoneNumber: u.PhoneNumber,
+			CreatedAt:   u.CreatedAt,
+			Addresses:   u.Addresses,
+		})
+	}
+	return userparam.GetUsersByIDsResponse{Users: userInfos}, nil
+}

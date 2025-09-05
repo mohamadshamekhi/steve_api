@@ -13,7 +13,7 @@ import (
 )
 
 func (d DB) GetAllUsers(ctx context.Context, f commonparam.FilterRequest, p commonparam.PaginationRequest) (userservice.ListResult, error) {
-	const op = "userservice.GetAllUsers"
+	const op = "mongodbuser.GetAllUsers"
 	filter := bson.M{
 		"deleted_at": bson.M{"$exists": false},
 	}
@@ -59,4 +59,29 @@ func (d DB) GetAllUsers(ctx context.Context, f commonparam.FilterRequest, p comm
 		Users:      users,
 		TotalCount: totalCount,
 	}, nil
+}
+
+func (d DB) GetUsersByIDs(ctx context.Context, ids []string) ([]entity.User, error) {
+	const op = "mongodbuser.GetUsersByIDs"
+	if len(ids) == 0 {
+		return []entity.User{}, nil
+	}
+
+	filter := bson.M{
+		"_id":        bson.M{"$in": ids},
+		"deleted_at": bson.M{"$exists": false}, // برای پشتیبانی از حذف نرم
+	}
+
+	cursor, err := d.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+	defer cursor.Close(ctx)
+
+	var users []entity.User
+	if err := cursor.All(ctx, &users); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+
+	return users, nil
 }
