@@ -37,6 +37,7 @@ const (
 type Order struct {
 	ID               string            `bson:"_id"`
 	UserID           string            `bson:"user_id"`
+	CartID           string            `bson:"cart_id"`
 	Items            []OrderItem       `bson:"items"`
 	ShippingAddress  Address           `bson:"shipping_address"`
 	SubtotalAmount   uint              `bson:"subtotal_amount"`

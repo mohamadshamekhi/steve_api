@@ -102,6 +102,7 @@ func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.Reg
 
 	newOrder := entity.Order{
 		UserID:           userID,
+		CartID:           cart.ID,
 		Items:            buildOrderItems(summary.Items),
 		SubtotalAmount:   uint(summary.Subtotal),
 		AppliedDiscounts: summary.AppliedDiscounts,

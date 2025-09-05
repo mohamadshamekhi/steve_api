@@ -21,7 +21,7 @@ type Discount struct {
 
 	Value uint `bson:"value" json:"value"`
 
-	MinimumPurchaseAmount uint `bson:"minimum_purchase_amount,omitempty"json:"minimum_purchase_amount,omitempty"`
+	MinimumPurchaseAmount uint `bson:"minimum_purchase_amount,omitempty" json:"minimum_purchase_amount,omitempty"`
 
 	StartsAt time.Time `bson:"starts_at" json:"starts_at ,omitempty"`
 
