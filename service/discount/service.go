@@ -23,6 +23,7 @@ type DiscountReader interface {
 type DiscountWriter interface {
 	Create(ctx context.Context, discount entity.Discount) error
 	Update(ctx context.Context, discount entity.Discount) error
+	UpdateUsageCount(ctx context.Context, discountID string) error
 }
 
 type DiscountReadWriter interface {

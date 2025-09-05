@@ -130,3 +130,11 @@ func (s StoreFrontService) GetEnrichedCart(ctx context.Context, cart *entity.Car
 	}
 	return res, nil
 }
+
+func (s StoreFrontService) UpdateCartStatus(ctx context.Context, req cartparam.UpdateCartStatusRequest) (cartparam.UpdateCartStatusResponse, error) {
+	const op = "cartservice.UpdateCartStatus"
+	if err := s.repo.UpdateStatus(ctx, req.CartID, req.Status); err != nil {
+		return cartparam.UpdateCartStatusResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return cartparam.UpdateCartStatusResponse{}, nil
+}

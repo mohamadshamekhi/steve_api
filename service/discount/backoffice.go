@@ -8,6 +8,7 @@ import (
 	discountparam "github.com/abolfazlnorzad/steve/param/discount"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	"github.com/labstack/gommon/log"
 )
 
 type BackofficeService struct {
@@ -280,4 +281,14 @@ func (s BackofficeService) calculateEligibleAmount(ctx context.Context, d entity
 	}
 
 	return eligibleAmount, nil
+}
+
+func (s BackofficeService) UpdateDiscountUsageAfterRegisterOrder(ctx context.Context, req discountparam.UpdateDiscountUsageAfterRegisterOrderRequest) (discountparam.UpdateDiscountUsageAfterRegisterOrderResponse, error) {
+	const op = "discount.UpdateDiscountUsageAfterRegisterOrder"
+	for _, d := range req.AppliedDiscount {
+		if err := s.repo.UpdateUsageCount(ctx, d.DiscountID); err != nil {
+			log.Error(ctx, op, err, "failed to update discount usage - discount id", d.DiscountID)
+		}
+	}
+	return discountparam.UpdateDiscountUsageAfterRegisterOrderResponse{}, nil
 }

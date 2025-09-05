@@ -16,6 +16,7 @@ type CartReader interface {
 type CartWriter interface {
 	AddToCart(ctx context.Context, userID string, item entity.CartItem) error
 	RemoveFromCart(ctx context.Context, userID string, productID string, variantID string) error
+	UpdateStatus(ctx context.Context, cartID string, status entity.CartStatus) error
 }
 type ListResult struct {
 	Carts      []entity.Cart

@@ -1,6 +1,10 @@
 package discountparam
 
-import "time"
+import (
+	"time"
+
+	"github.com/abolfazlnorzad/steve/entity"
+)
 
 type UpdateDiscountRequest struct {
 	ID                    string     `json:"id"`
@@ -16,4 +20,11 @@ type UpdateDiscountRequest struct {
 }
 
 type UpdateDiscountResponse struct {
+}
+
+type UpdateDiscountUsageAfterRegisterOrderRequest struct {
+	AppliedDiscount []entity.AppliedDiscount
+}
+
+type UpdateDiscountUsageAfterRegisterOrderResponse struct {
 }

@@ -22,16 +22,19 @@ type StoreFrontService struct {
 
 type StorefrontCartProvider interface {
 	GetMyActiveCart(ctx context.Context, req cartparam.MyActiveCartRequest) (cartparam.MyActiveCartResponse, error)
+	UpdateCartStatus(ctx context.Context, req cartparam.UpdateCartStatusRequest) (cartparam.UpdateCartStatusResponse, error)
 }
 
 type StorefrontDiscountProvider interface {
 	GetByCode(ctx context.Context, req discountparam.GetSingleDiscountByCodeRequest) (discountparam.GetSingleDiscountByCodeResponse, error)
 	GetValidDiscountsForCart(ctx context.Context, req discountparam.GetValidDiscountsForSpecificCartRequest) (discountparam.GetValidDiscountsForSpecificCartResponse, error)
 	CalculateDiscountAmount(ctx context.Context, d entity.Discount, cart entity.Cart) (int64, error)
+	UpdateDiscountUsageAfterRegisterOrder(ctx context.Context, req discountparam.UpdateDiscountUsageAfterRegisterOrderRequest) (discountparam.UpdateDiscountUsageAfterRegisterOrderResponse, error)
 }
 type StorefrontProductProvider interface {
 	GetVariantsByIDs(ctx context.Context, req productparam.GetVariantsByIDsRequest) (response productparam.GetVariantsByIDsResponse, err error)
 	GetProductCategoriesForCartItems(ctx context.Context, req productparam.GetProductCategoriesForCartItemsRequest) (productparam.GetProductCategoriesForCartItemsResponse, error)
+	UpdateProductVariantQuantityAfterRegisterOrder(ctx context.Context, req productparam.UpdateProductVariantQuantityAfterRegisterOrderRequest) (productparam.UpdateProductVariantQuantityAfterRegisterOrderResponse, error)
 }
 
 type Repository interface {
@@ -96,6 +99,7 @@ func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.Reg
 			WithMessageKey("order.cart_not_ready_for_checkout").
 			WithMeta(map[string]any{"summary": summary})
 	}
+	fmt.Println("summary AppliedDiscounts", summary.AppliedDiscounts)
 
 	newOrder := entity.Order{
 		UserID:           userID,
@@ -109,6 +113,29 @@ func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.Reg
 	if err := s.repo.Create(ctx, newOrder); err != nil {
 		return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(err)
 	}
+	/*
+
+		1- update quantity of product
+
+		2- update usage of discount
+
+		3- update cart status
+	*/
+
+	if _, err = s.productProvider.UpdateProductVariantQuantityAfterRegisterOrder(ctx, productparam.UpdateProductVariantQuantityAfterRegisterOrderRequest{Order: newOrder}); err != nil {
+		return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	s.discountProvider.UpdateDiscountUsageAfterRegisterOrder(ctx, discountparam.UpdateDiscountUsageAfterRegisterOrderRequest{AppliedDiscount: newOrder.AppliedDiscounts})
+
+	fmt.Println("cart", cart.ID)
+	if _, err = s.cartProvider.UpdateCartStatus(ctx, cartparam.UpdateCartStatusRequest{
+		CartID: cart.ID,
+		Status: entity.PendingPayment,
+	}); err != nil {
+		return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
 	return orderparam.RegisterOrderResponse{OrderID: newOrder.ID}, nil
 }
 
@@ -355,11 +382,3 @@ func (s *StoreFrontService) isDiscountApplicableToItem(d entity.Discount, item e
 
 	return productIsApplicable && categoryIsApplicable
 }
-
-/*
-
-1- update quantity of product
-2- update usage of discount
-3- update cart status
-
-*/

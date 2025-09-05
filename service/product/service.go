@@ -36,6 +36,7 @@ type ProductWriter interface {
 	AddVariant(ctx context.Context, ProductID string, v entity.Variant) error
 	DeleteVariant(ctx context.Context, ProductID string, VariantID string) error
 	UpdateVariant(ctx context.Context, ProductID string, variant entity.Variant) error
+	UpdateQuantity(ctx context.Context, ProductID string, variant entity.Variant, finalQuantity uint) error
 }
 
 type ProductReadWriter interface {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/abolfazlnorzad/steve/entity"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"github.com/abolfazlnorzad/steve/pkg/slug"
@@ -64,4 +65,26 @@ func (s BackofficeService) UpdateProduct(ctx context.Context, req productparam.U
 		return productparam.UpdateProductResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	return productparam.UpdateProductResponse{Product: p}, nil
+}
+
+func (s BackofficeService) UpdateProductVariantQuantityAfterRegisterOrder(ctx context.Context, req productparam.UpdateProductVariantQuantityAfterRegisterOrderRequest) (productparam.UpdateProductVariantQuantityAfterRegisterOrderResponse, error) {
+	const op = "productservice.UpdateProductVariantQuantityAfterRegisterOrder"
+
+	for _, item := range req.Order.Items {
+		p, _ := s.repo.FindByID(ctx, item.ProductID)
+		var v entity.Variant
+		for _, variant := range p.Variants {
+			if variant.ID == item.VariantID {
+				v = variant
+			}
+		}
+		if uint(v.Quantity) < item.Quantity {
+			return productparam.UpdateProductVariantQuantityAfterRegisterOrderResponse{}, richerror.New(op).WithKind(richerror.KindUnexpected)
+		}
+		finalQuantity := uint(v.Quantity) - item.Quantity
+		if err := s.repo.UpdateQuantity(ctx, p.ID, v, finalQuantity); err != nil {
+			return productparam.UpdateProductVariantQuantityAfterRegisterOrderResponse{}, richerror.New(op).WithWarpError(err)
+		}
+	}
+	return productparam.UpdateProductVariantQuantityAfterRegisterOrderResponse{}, nil
 }

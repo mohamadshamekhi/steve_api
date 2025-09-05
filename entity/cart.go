@@ -9,14 +9,15 @@ import (
 type CartStatus string
 
 const (
-	CartActive   CartStatus = "active"
-	CartInactive CartStatus = "inactive"
-	CartPaid     CartStatus = "paid"
-	CartCanceled CartStatus = "cancelled"
+	CartActive     CartStatus = "active"
+	CartInactive   CartStatus = "inactive"
+	CartPaid       CartStatus = "paid"
+	CartCanceled   CartStatus = "cancelled"
+	PendingPayment CartStatus = "pending_payment"
 )
 
 type Cart struct {
-	ID string `json:"id"`
+	ID string `json:"id" bson:"_id"`
 
 	UserID string `bson:"user_id,omitempty"`
 
