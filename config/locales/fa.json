@@ -19,7 +19,6 @@
     "id": "global.not-found",
     "translation": "آیتمی پیدا نشد"
   },
-
   {
     "id": "media.file_too_large",
     "translation": "حجم فایل ارسالی بیش از حد مجاز است"
@@ -28,8 +27,6 @@
     "id": "media.mime_type_not_allowed",
     "translation": "نوع فایل آپلود شده مجاز نمیباشد"
   },
-
-
   {
     "id": "validation.required",
     "translation": "{{.Attribute}} الزامی است."
@@ -66,13 +63,10 @@
     "id": "validation.invalid_input",
     "translation": "ورودی نا معتبر میباشد."
   },
-
   {
     "id": "validation.invalid_ids_exist",
     "translation": "شناسه‌های زیر نامعتبر هستند: {{.InvalidIDs}}"
   },
-
-
   {
     "id": "attr.phone_number",
     "translation": "شماره تلفن"
@@ -137,8 +131,6 @@
     "id": "attr.code",
     "translation": "کد"
   },
-
-
   {
     "id": "auth.login_successful",
     "translation": "شما با موفقیت وارد شدید."
@@ -175,8 +167,6 @@
     "id": "auth.you_must_logged_in",
     "translation": "لطفا ابتدا وارد شوید"
   },
-
-
   {
     "id": "product.add_to_cart_success",
     "translation": "محصول «{{.ProductName}}» با موفقیت به سبد خرید اضافه شد."
@@ -189,8 +179,6 @@
     "id": "product.out_of_stock",
     "translation": "متاسفانه موجودی محصول «{{.ProductName}}» به اتمام رسیده است."
   },
-
-
   {
     "id": "cart.item_removed",
     "translation": "کالا از سبد خرید شما حذف شد."
@@ -206,8 +194,6 @@
       "other": "شما {{.Count}} کالا در سبد خرید دارید."
     }
   },
-
-
   {
     "id": "order.create_successful",
     "translation": "سفارش شما با شماره پیگیری {{.TrackingCode}} با موفقیت ثبت شد."
@@ -216,8 +202,6 @@
     "id": "order.status_changed",
     "translation": "وضعیت سفارش شما به «{{.Status}}» تغییر یافت."
   },
-
-
   {
     "id": "user.profile.update_successful",
     "translation": "پروفایل شما با موفقیت به‌روزرسانی شد."
@@ -226,8 +210,6 @@
     "id": "user.password.update_successful",
     "translation": "رمز عبور شما با موفقیت تغییر یافت."
   },
-
-
   {
     "id": "admin.product.create_successful",
     "translation": "محصول جدید با موفقیت ایجاد شد."
@@ -244,7 +226,6 @@
     "id": "admin.user.access_changed",
     "translation": "سطح دسترسی کاربر «{{.Username}}» تغییر یافت."
   },
-
   {
     "id": "media.unsupported_media_type",
     "translation": "نوع محتوای ارسالی پشتیبانی نمی‌شود. لطفاً از فرمت 'multipart/form-data' برای آپلود فایل استفاده کنید."
