@@ -63,7 +63,7 @@ func (d DB) FindApplicableDiscounts(ctx context.Context, code string) ([]entity.
 	now := time.Now()
 
 	codeOrClause := []bson.M{
-		{"code": ""},
+		{"code": bson.M{"$in": []interface{}{nil, ""}}},
 	}
 
 	if code != "" {

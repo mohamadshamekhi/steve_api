@@ -99,7 +99,6 @@ func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.Reg
 			WithMessageKey("order.cart_not_ready_for_checkout").
 			WithMeta(map[string]any{"summary": summary})
 	}
-	fmt.Println("summary AppliedDiscounts", summary.AppliedDiscounts)
 
 	newOrder := entity.Order{
 		UserID:           userID,
