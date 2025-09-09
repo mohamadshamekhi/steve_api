@@ -265,5 +265,9 @@
   {
     "id": "discount.not_applicable_for_user",
     "translation": "این کد تخفیف برای شما معتبر نمی‌باشد."
+  },
+  {
+    "id": "order.cart_not_ready_for_checkout",
+    "translation": "تغییراتی در سبد خرید شما ایجاد شده است. لطفاً موارد را بازبینی کرده و دوباره برای ثبت سفارش تلاش کنید."
   }
 ]

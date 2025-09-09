@@ -204,6 +204,8 @@ func (s StoreFrontService) validateCartItems(ctx context.Context, cart entity.Ca
 			itemResult.HasPriceChanged = true
 			itemResult.CurrentPrice = int64(currentVariant.Price)
 			summary.IsReady = false
+		} else {
+			itemResult.CurrentPrice = int64(currentVariant.Price)
 		}
 		summary.Items = append(summary.Items, itemResult)
 	}
