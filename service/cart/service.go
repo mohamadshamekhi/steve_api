@@ -17,6 +17,8 @@ type CartWriter interface {
 	AddToCart(ctx context.Context, userID string, item entity.CartItem) error
 	RemoveFromCart(ctx context.Context, userID string, productID string, variantID string) error
 	UpdateStatus(ctx context.Context, cartID string, status entity.CartStatus) error
+	UpdateItemPrice(ctx context.Context, userID string, variantID string, newPrice int64) error
+	DeleteItemFromCart(ctx context.Context, userID string, variantID string) error
 }
 type ListResult struct {
 	Carts      []entity.Cart
@@ -39,6 +41,7 @@ type CartBackofficeReadWriter interface {
 
 type PRepository interface {
 	FindByID(ctx context.Context, id string) (entity.Product, error)
+	GetVariantsByIDs(ctx context.Context, variantIDs []string) (map[string]entity.Variant, error)
 }
 
 type URepository interface {

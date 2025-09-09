@@ -138,3 +138,26 @@ func (s StoreFrontService) UpdateCartStatus(ctx context.Context, req cartparam.U
 	}
 	return cartparam.UpdateCartStatusResponse{}, nil
 }
+
+func (s StoreFrontService) AcceptPriceChange(ctx context.Context, req cartparam.AcceptPriceChangeRequest) (cartparam.AcceptPriceChangeResponse, error) {
+	const op = "cartservice.AcceptPriceChange"
+	variants, err := s.pRepo.GetVariantsByIDs(ctx, []string{req.VariantID})
+	if err != nil {
+		return cartparam.AcceptPriceChangeResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	if err := s.repo.UpdateItemPrice(ctx, req.UserID, req.VariantID, int64(variants[req.VariantID].Price)); err != nil {
+		return cartparam.AcceptPriceChangeResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return cartparam.AcceptPriceChangeResponse{}, nil
+}
+
+func (s StoreFrontService) DeleteItemFromCart(ctx context.Context, req cartparam.DeleteItemFromCartRequest) (cartparam.DeleteItemFromCartResponse, error) {
+	const op = "cartservice.DeleteItemFromCart"
+
+	if err := s.repo.DeleteItemFromCart(ctx, req.UserID, req.VariantID); err != nil {
+		return cartparam.DeleteItemFromCartResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return cartparam.DeleteItemFromCartResponse{}, nil
+
+}

@@ -27,6 +27,9 @@ func (h Handler) CalculateCart(c echo.Context) error {
 			WithWarpError(err)
 	}
 
+	if err := h.vld.ValidateCalcCartRequest(req); err != nil {
+		return err
+	}
 	ctx := context.WithValue(c.Request().Context(), "user_id", userID)
 	activeCart, err := h.storefrontSvc.GetMyActiveCart(ctx, cartparam.MyActiveCartRequest{UserID: userID})
 	if err != nil {
