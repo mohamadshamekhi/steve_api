@@ -9,6 +9,7 @@ import (
 	discountparam "github.com/abolfazlnorzad/steve/param/discount"
 	orderparam "github.com/abolfazlnorzad/steve/param/order"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
+	userparam "github.com/abolfazlnorzad/steve/param/user"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 )
@@ -18,6 +19,7 @@ type StoreFrontService struct {
 	discountProvider StorefrontDiscountProvider
 	productProvider  StorefrontProductProvider
 	repo             OrderReadWriter
+	userProvider     StorefrontUserProvider
 }
 
 type StorefrontCartProvider interface {
@@ -36,16 +38,21 @@ type StorefrontProductProvider interface {
 	GetProductCategoriesForCartItems(ctx context.Context, req productparam.GetProductCategoriesForCartItemsRequest) (productparam.GetProductCategoriesForCartItemsResponse, error)
 	UpdateProductVariantQuantityAfterRegisterOrder(ctx context.Context, req productparam.UpdateProductVariantQuantityAfterRegisterOrderRequest) (productparam.UpdateProductVariantQuantityAfterRegisterOrderResponse, error)
 }
+type StorefrontUserProvider interface {
+	FindAddressByID(ctx context.Context, req userparam.FindAddressByIDRequest) (userparam.FindAddressByIDResponse, error)
+}
 
 func New(cartProvider StorefrontCartProvider,
 	discountProvider StorefrontDiscountProvider,
 	productProvider StorefrontProductProvider,
-	repo OrderReadWriter) StoreFrontService {
+	repo OrderReadWriter, userProvider StorefrontUserProvider,
+) StoreFrontService {
 	return StoreFrontService{
 		cartProvider:     cartProvider,
 		discountProvider: discountProvider,
 		productProvider:  productProvider,
 		repo:             repo,
+		userProvider:     userProvider,
 	}
 }
 
@@ -96,28 +103,31 @@ func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.Reg
 			WithMeta(map[string]any{"summary": summary})
 	}
 
+	add, err := s.userProvider.FindAddressByID(ctx, userparam.FindAddressByIDRequest{UserID: userID, AddressID: req.AddressID})
+	if err != nil {
+		return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	shipping, err := s.shippingProvider.GetByID(ctx, req.ShippingID)
+	if err != nil {
+		return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(err)
+	}
 	newOrder := entity.Order{
 		UserID:           userID,
 		CartID:           cart.ID,
 		Items:            buildOrderItems(summary.Items),
+		ShippingAddress:  add.Address,
 		SubtotalAmount:   uint(summary.Subtotal),
+		ShippingAmount:   0,
 		AppliedDiscounts: summary.AppliedDiscounts,
 		FinalAmount:      uint(summary.FinalPrice),
+		Shipping:         shipping,
 		Status:           entity.OrderStatusPendingPayment,
 	}
 	newOrder.BeforeCreate()
 	if err := s.repo.Create(ctx, newOrder); err != nil {
 		return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	/*
-
-		1- update quantity of product
-
-		2- update usage of discount
-
-		3- update cart status
-	*/
-
+	
 	if _, err = s.productProvider.UpdateProductVariantQuantityAfterRegisterOrder(ctx, productparam.UpdateProductVariantQuantityAfterRegisterOrderRequest{Order: newOrder}); err != nil {
 		return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(err)
 	}

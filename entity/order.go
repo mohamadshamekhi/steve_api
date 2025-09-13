@@ -44,7 +44,7 @@ type Order struct {
 	ShippingAmount   uint              `bson:"shipping_amount"`
 	AppliedDiscounts []AppliedDiscount `bson:"applied_discounts,omitempty"`
 	FinalAmount      uint              `bson:"final_amount"`
-	Shipping         ShippingInfo      `bson:"shipping,omitempty"`
+	Shipping         Shipping          `bson:"shipping,omitempty"`
 	Status           OrderStatus       `bson:"status"`
 	CreatedAt        time.Time         `bson:"created_at"`
 	UpdatedAt        time.Time         `bson:"updated_at"`
@@ -72,12 +72,4 @@ type AppliedDiscount struct {
 	DiscountID   string `bson:"discount_id"`
 	DiscountCode string `bson:"discount_code,omitempty"`
 	Amount       int64  `bson:"amount"`
-}
-
-type ShippingInfo struct {
-	ID          string `bson:"_id"`
-	Name        string `bson:"name"`
-	Description string `bson:"description"`
-	Cost        uint64 `bson:"cost"`
-	IsActive    bool   `bson:"is_active"`
 }
