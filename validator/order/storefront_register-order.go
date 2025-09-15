@@ -14,7 +14,8 @@ func (v Validator) RegisterOrderValidator(ctx context.Context, req orderparam.Re
 	const op = "ordervalidator.RegisterOrderValidator"
 
 	if err := validation.ValidateStructWithContext(ctx, &req,
-		validation.Field(&req.DiscountCode, validation.Required.Error("validation.required"), validation.By(v.checkDiscountIsValid)),
+		validation.Field(&req.ShippingID, validation.Required.Error("validation.required")),
+		validation.Field(&req.AddressID, validation.Required.Error("validation.required")),
 	); err != nil {
 
 		var vErrs validation.Errors

@@ -19,6 +19,7 @@ import (
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	orderhandler "github.com/abolfazlnorzad/steve/delivery/http_server/order"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
+	shippinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/shipping"
 	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
 	"github.com/abolfazlnorzad/steve/internal/seeder"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
@@ -161,16 +162,18 @@ func main() {
 	cartBackofficeSvc := cartservice.NewBackofficeService(cartRepo, userRepo, productRepo)
 	orderRepo := mongodborder.New(mongoRepo)
 	orderVld := ordervalidator.New(discountbackofficeSvc)
-	orderSvc := orderservice.New(cartSvc, discountbackofficeSvc, productSvc, orderRepo, userSvc)
+	shippingRepo := mongodbshipping.New(mongoRepo)
+	shippingVld := settingvalidator.NewShippingValidator(shippingRepo)
+	shippingBakcofficeSvc := settingservice.NewBackofficeShippingService(shippingRepo)
+	orderSvc := orderservice.New(cartSvc, discountbackofficeSvc, productSvc, orderRepo, userSvc, shippingBakcofficeSvc)
 	cartHandler := carthandler.New(cartSvc, cartBackofficeSvc, orderSvc, cartVld, translator, authSvc, cfg.Auth, aclSvc)
 
 	orderBackofficeSvc := orderservice.NewBackofficeService(orderRepo, backofficeUserSvc)
 	orderHandler := orderhandler.New(orderSvc, orderBackofficeSvc, orderVld, translator, authSvc, cfg.Auth, aclSvc)
-	shippingRepo := mongodbshipping.New(mongoRepo)
-	shippingVld := settingvalidator.NewShippingValidator(shippingRepo)
-	shippingBakcofficeSvc := settingservice.NewBackofficeShippingService(shippingRepo)
+
+	shippingHandler := shippinghandler.New(shippingBakcofficeSvc, shippingVld, translator, authSvc, cfg.Auth, aclSvc)
 
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
-		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler, orderHandler)
+		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler, orderHandler, shippingHandler)
 	server.Serve()
 }

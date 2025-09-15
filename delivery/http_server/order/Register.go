@@ -24,9 +24,9 @@ func (h Handler) Register(c echo.Context) error {
 	cl := claim.GetClaimsFromEchoContext(c)
 	c.Set("user_id", cl.EntityID)
 
-	//if err := h.vld.RegisterOrderValidator(c.Request().Context(), req); err != nil {
-	//	return err
-	//}
+	if err := h.vld.RegisterOrderValidator(c.Request().Context(), req); err != nil {
+		return err
+	}
 	ctx := context.WithValue(c.Request().Context(), "user_id", cl.EntityID)
 	resp, err := h.storefrontSvc.RegisterOrder(ctx, req)
 	if err != nil {
