@@ -6,6 +6,7 @@ import (
 	"github.com/abolfazlnorzad/steve/entity"
 	cartparam "github.com/abolfazlnorzad/steve/param/cart"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	discountservice "github.com/abolfazlnorzad/steve/service/discount"
 )
 
 type StoreFrontService struct {
@@ -105,8 +106,58 @@ func (s StoreFrontService) GetMyActiveCart(ctx context.Context, req cartparam.My
 		Items:     cartItems,
 		CreatedAt: cart.CreatedAt,
 		UpdatedAt: cart.UpdatedAt,
+		Subtotal:  cart.CalculateSubtotal(),
 	}
 	return cartparam.MyActiveCartResponse{
 		Cart: c,
 	}, nil
+}
+
+func (s StoreFrontService) GetEnrichedCart(ctx context.Context, cart *entity.Cart) (discountservice.EnrichedCart, error) {
+	var pids []string
+	var cids []string
+
+	for _, item := range cart.Items {
+		pids = append(pids, item.ProductID)
+		p, _ := s.pRepo.FindByID(ctx, item.ProductID)
+		cids = append(cids, p.CategoryID)
+	}
+	res := discountservice.EnrichedCart{
+		Cart:        cart,
+		ProductIDs:  pids,
+		CategoryIDs: cids,
+		Subtotal:    int64(cart.CalculateSubtotal()),
+	}
+	return res, nil
+}
+
+func (s StoreFrontService) UpdateCartStatus(ctx context.Context, req cartparam.UpdateCartStatusRequest) (cartparam.UpdateCartStatusResponse, error) {
+	const op = "cartservice.UpdateCartStatus"
+	if err := s.repo.UpdateStatus(ctx, req.CartID, req.Status); err != nil {
+		return cartparam.UpdateCartStatusResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return cartparam.UpdateCartStatusResponse{}, nil
+}
+
+func (s StoreFrontService) AcceptPriceChange(ctx context.Context, req cartparam.AcceptPriceChangeRequest) (cartparam.AcceptPriceChangeResponse, error) {
+	const op = "cartservice.AcceptPriceChange"
+	variants, err := s.pRepo.GetVariantsByIDs(ctx, []string{req.VariantID})
+	if err != nil {
+		return cartparam.AcceptPriceChangeResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	if err := s.repo.UpdateItemPrice(ctx, req.UserID, req.VariantID, int64(variants[req.VariantID].Price)); err != nil {
+		return cartparam.AcceptPriceChangeResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return cartparam.AcceptPriceChangeResponse{}, nil
+}
+
+func (s StoreFrontService) DeleteItemFromCart(ctx context.Context, req cartparam.DeleteItemFromCartRequest) (cartparam.DeleteItemFromCartResponse, error) {
+	const op = "cartservice.DeleteItemFromCart"
+
+	if err := s.repo.DeleteItemFromCart(ctx, req.UserID, req.VariantID); err != nil {
+		return cartparam.DeleteItemFromCartResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return cartparam.DeleteItemFromCartResponse{}, nil
+
 }

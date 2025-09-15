@@ -46,7 +46,6 @@ func (d DB) FindManyByIDs(ctx context.Context, ids []string) ([]entity.BackOffic
 		return []entity.BackOffice{}, nil
 	}
 
-
 	filter := bson.M{
 		"_id":        bson.M{"$in": ids},
 		"deleted_at": bson.M{"$exists": false},

@@ -63,3 +63,14 @@ func (s BackofficeService) GetProduct(ctx context.Context, req productparam.GetP
 	}
 	return productparam.GetProductResponse{Product: productInfo}, nil
 }
+
+func (s BackofficeService) GetProductCategoriesForCartItems(ctx context.Context, req productparam.GetProductCategoriesForCartItemsRequest) (productparam.GetProductCategoriesForCartItemsResponse, error) {
+	const op = "productservice.GetProductCategoriesForCartItems"
+	res, err := s.repo.GetProductCategoriesForCartItems(ctx, req.Items)
+	if err != nil {
+		return productparam.GetProductCategoriesForCartItemsResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return productparam.GetProductCategoriesForCartItemsResponse{
+		CategoryIDs: res,
+	}, nil
+}

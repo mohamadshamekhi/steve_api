@@ -17,7 +17,9 @@ import (
 	discounthandler "github.com/abolfazlnorzad/steve/delivery/http_server/discount"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	middleware2 "github.com/abolfazlnorzad/steve/delivery/http_server/middleware"
+	orderhandler "github.com/abolfazlnorzad/steve/delivery/http_server/order"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
+	shippinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/shipping"
 	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
@@ -41,12 +43,16 @@ type Server struct {
 	commentHandler        commenthandler.Handler
 	discountHandler       discounthandler.Handler
 	cartHandler           carthandler.Handler
+	orderHandler          orderhandler.Handler
+	shippingHandler       shippinghandler.Handler
 }
 
 func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler,
 	articleHandler articlehandler.Handler, attrHandler attributehandler.Handler, attrDefHandler attributedefinitionhandler.Handler,
 	productHandler producthandler.Handler, backofficeHandler backofficehandler.Handler, userHandler userhandler.Handler,
 	commentHandler commenthandler.Handler, discountHandler discounthandler.Handler, cartHandler carthandler.Handler,
+	orderHandler orderhandler.Handler, shippingHandler shippinghandler.Handler,
+
 ) Server {
 	return Server{
 		config:                cfg,
@@ -64,6 +70,8 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 		commentHandler:        commentHandler,
 		discountHandler:       discountHandler,
 		cartHandler:           cartHandler,
+		orderHandler:          orderHandler,
+		shippingHandler:       shippingHandler,
 	}
 }
 
@@ -133,6 +141,8 @@ func (s Server) Serve() {
 	s.commentHandler.SetRoutes(s.Router)
 	s.discountHandler.SetRoutes(s.Router)
 	s.cartHandler.SetRoutes(s.Router)
+	s.orderHandler.SetRoutes(s.Router)
+	s.shippingHandler.SetRoutes(s.Router)
 	// Start server
 	address := fmt.Sprintf(":%d", s.config.HTTPServer.Port)
 	fmt.Printf("start echo server on %s\n", address)

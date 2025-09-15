@@ -26,4 +26,5 @@ type Repository interface {
 	UpdateAddress(ctx context.Context, userID string, address entity.Address) error
 	FindAddress(ctx context.Context, userID string, addressID string) (entity.Address, error)
 	GetAllUsers(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
+	GetUsersByIDs(ctx context.Context, ids []string) ([]entity.User, error)
 }

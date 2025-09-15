@@ -119,3 +119,85 @@ func (d DB) FindNonExistingIDs(ctx context.Context, ids []string) ([]string, err
 	return notFoundIDs, nil
 
 }
+
+func (d DB) GetVariantsByIDs(ctx context.Context, variantIDs []string) (map[string]entity.Variant, error) {
+	const op = "mongodbproduct.GetVariantsByIDs"
+
+	if len(variantIDs) == 0 {
+		return make(map[string]entity.Variant), nil
+	}
+
+	filter := bson.M{"variants.id": bson.M{"$in": variantIDs}}
+
+	cursor, err := d.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+	defer cursor.Close(ctx)
+
+	resultMap := make(map[string]entity.Variant)
+
+	for cursor.Next(ctx) {
+		var product entity.Product
+		if err := cursor.Decode(&product); err != nil {
+			return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+		}
+
+		for _, variant := range product.Variants {
+			for _, requestedID := range variantIDs {
+				if variant.ID == requestedID {
+					resultMap[variant.ID] = variant
+					break
+				}
+			}
+		}
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+
+	return resultMap, nil
+}
+
+func (d DB) GetProductCategoriesForCartItems(ctx context.Context, items []entity.CartItem) (map[string][]string, error) {
+	const op = "mongodbproduct.GetProductCategoriesForCartItems"
+
+	if len(items) == 0 {
+		return make(map[string][]string), nil
+	}
+
+	productIDs := make([]string, 0, len(items))
+	for _, item := range items {
+		productIDs = append(productIDs, item.ProductID)
+	}
+
+	filter := bson.M{"_id": bson.M{"$in": productIDs}}
+
+	projection := bson.M{"_id": 1, "category_id": 1}
+	opts := options.Find().SetProjection(projection)
+
+	cursor, err := d.collection.Find(ctx, filter, opts)
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+	defer cursor.Close(ctx)
+
+	resultMap := make(map[string][]string)
+	for cursor.Next(ctx) {
+		var product struct {
+			ID         string `bson:"_id"`
+			CategoryID string `bson:"category_id"`
+		}
+		if err := cursor.Decode(&product); err != nil {
+			return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+		}
+		resultMap[product.ID] = []string{product.CategoryID}
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+
+	return resultMap, nil
+}

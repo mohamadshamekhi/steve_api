@@ -26,3 +26,26 @@ func (d DB) Update(ctx context.Context, discount entity.Discount) error {
 
 	return nil
 }
+
+func (d DB) UpdateUsageCount(ctx context.Context, discountID string) error {
+	const op = "mongodbdiscount.UpdateUsageCount"
+	filter := bson.M{"_id": discountID}
+	update := bson.M{
+		"$inc": bson.M{"usage_count": 1},
+	}
+
+	result, err := d.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+
+	if result.MatchedCount == 0 {
+		return richerror.New(op).
+			WithKind(richerror.KindNotFound).
+			WithMessageKey("discount.not_found").
+			WithMeta(map[string]any{"discount_id": discountID})
+	}
+
+	return nil
+
+}

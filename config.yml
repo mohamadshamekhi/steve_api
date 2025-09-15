@@ -43,7 +43,7 @@ media:
     - "webm"
   max_upload_size: 524288000
   presigned_private_url_expiration: "30m"
-  presigned_public_url_expiration :  "168h"
+  presigned_public_url_expiration: "168h"
   allowed_mime_types:
     - "video/mp4"
     - "image/png"

@@ -24,3 +24,11 @@ type UserInfo struct {
 	CreatedAt   time.Time        `json:"created_at"`
 	Addresses   []entity.Address `json:"addresses,omitempty"`
 }
+
+type GetUsersByIDsRequest struct {
+	IDs []string `json:"ids" ,query:"ids"`
+}
+
+type GetUsersByIDsResponse struct {
+	Users []UserInfo `json:"users"`
+}

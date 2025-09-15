@@ -9,3 +9,11 @@ type GetSingleDiscountRequest struct {
 type GetSingleDiscountResponse struct {
 	Discount entity.Discount `json:"discount"`
 }
+
+type GetSingleDiscountByCodeRequest struct {
+	Code string `json:"code"`
+}
+
+type GetSingleDiscountByCodeResponse struct {
+	Discount entity.Discount `json:"discount"`
+}

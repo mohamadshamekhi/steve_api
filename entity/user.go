@@ -16,12 +16,12 @@ type User struct {
 }
 
 type Address struct {
-	ID       string `bson:"id"`
-	Title    string `bson:"title"`
-	Province string `bson:"province"`
-	City     string `bson:"city"`
-	Street   string `bson:"street"`
-	Postcode string `bson:"postcode"`
+	ID       string `bson:"id" json:"id"`
+	Title    string `bson:"title" json:"title"`
+	Province string `bson:"province" json:"province"`
+	City     string `bson:"city" json:"city"`
+	Street   string `bson:"street" json:"street"`
+	Postcode string `bson:"postcode" json:"postcode"`
 }
 
 func (u *User) BeforeCreate() {

@@ -17,7 +17,9 @@ import (
 	commenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/comment"
 	discounthandler "github.com/abolfazlnorzad/steve/delivery/http_server/discount"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
+	orderhandler "github.com/abolfazlnorzad/steve/delivery/http_server/order"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
+	shippinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/shipping"
 	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
 	"github.com/abolfazlnorzad/steve/internal/seeder"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
@@ -34,7 +36,9 @@ import (
 	mongodbcomment "github.com/abolfazlnorzad/steve/repository/mongo/comment"
 	mongodbdiscount "github.com/abolfazlnorzad/steve/repository/mongo/discount"
 	mongodbmedia "github.com/abolfazlnorzad/steve/repository/mongo/media"
+	mongodborder "github.com/abolfazlnorzad/steve/repository/mongo/order"
 	mongodbproduct "github.com/abolfazlnorzad/steve/repository/mongo/product"
+	mongodbshipping "github.com/abolfazlnorzad/steve/repository/mongo/shipping"
 	mongodbuser "github.com/abolfazlnorzad/steve/repository/mongo/user"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
 	aclservice "github.com/abolfazlnorzad/steve/service/acl"
@@ -49,7 +53,9 @@ import (
 	discountservice "github.com/abolfazlnorzad/steve/service/discount"
 	fetcherservice "github.com/abolfazlnorzad/steve/service/fetcher"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
+	orderservice "github.com/abolfazlnorzad/steve/service/order"
 	productservice "github.com/abolfazlnorzad/steve/service/product"
+	settingservice "github.com/abolfazlnorzad/steve/service/setting"
 	userservice "github.com/abolfazlnorzad/steve/service/user"
 	articlevalidator "github.com/abolfazlnorzad/steve/validator/article"
 	attributevalidator "github.com/abolfazlnorzad/steve/validator/attribute"
@@ -62,7 +68,9 @@ import (
 	commentvalidator "github.com/abolfazlnorzad/steve/validator/comment"
 	discountvalidator "github.com/abolfazlnorzad/steve/validator/discount"
 	mediavalidator "github.com/abolfazlnorzad/steve/validator/media"
+	ordervalidator "github.com/abolfazlnorzad/steve/validator/order"
 	productvalidator "github.com/abolfazlnorzad/steve/validator/product"
+	settingvalidator "github.com/abolfazlnorzad/steve/validator/setting"
 	uservalidator "github.com/abolfazlnorzad/steve/validator/user"
 )
 
@@ -145,14 +153,27 @@ func main() {
 	commentHandler := commenthandler.New(commentSvc, translator, commentVld, authSvc, cfg.Auth, aclSvc)
 	discountRepo := mongodbdiscount.New(mongoRepo)
 	discountVld := discountvalidator.New(discountRepo, categoryRepo, productRepo, userRepo)
-	discountbackofficeSvc := discountservice.NewBackofficeService(discountRepo)
-	discountHandler := discounthandler.New(discountbackofficeSvc, translator, discountVld, authSvc, cfg.Auth, aclSvc)
+
 	cartRepo := mongodbcart.New(mongoRepo)
 	cartVld := cartvalidator.New(productRepo, cartRepo)
 	cartSvc := cartservice.NewStorefrontService(cartRepo, productRepo, userRepo)
+	discountbackofficeSvc := discountservice.NewBackofficeService(discountRepo, cartSvc, productSvc)
+	discountHandler := discounthandler.New(discountbackofficeSvc, translator, discountVld, authSvc, cfg.Auth, aclSvc)
 	cartBackofficeSvc := cartservice.NewBackofficeService(cartRepo, userRepo, productRepo)
-	cartHandler := carthandler.New(cartSvc, cartBackofficeSvc, cartVld, translator, authSvc, cfg.Auth, aclSvc)
+	orderRepo := mongodborder.New(mongoRepo)
+	orderVld := ordervalidator.New(discountbackofficeSvc)
+	shippingRepo := mongodbshipping.New(mongoRepo)
+	shippingVld := settingvalidator.NewShippingValidator(shippingRepo)
+	shippingBakcofficeSvc := settingservice.NewBackofficeShippingService(shippingRepo)
+	orderSvc := orderservice.New(cartSvc, discountbackofficeSvc, productSvc, orderRepo, userSvc, shippingBakcofficeSvc)
+	cartHandler := carthandler.New(cartSvc, cartBackofficeSvc, orderSvc, cartVld, translator, authSvc, cfg.Auth, aclSvc)
+
+	orderBackofficeSvc := orderservice.NewBackofficeService(orderRepo, backofficeUserSvc)
+	orderHandler := orderhandler.New(orderSvc, orderBackofficeSvc, orderVld, translator, authSvc, cfg.Auth, aclSvc)
+
+	shippingHandler := shippinghandler.New(shippingBakcofficeSvc, shippingVld, translator, authSvc, cfg.Auth, aclSvc)
+
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
-		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler)
+		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler, orderHandler, shippingHandler)
 	server.Serve()
 }
