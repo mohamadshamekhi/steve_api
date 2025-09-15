@@ -22,14 +22,21 @@ func (h Handler) All(c echo.Context) error {
 		pageSize = commonparam.DefaultPageSize
 	}
 	isActive := c.QueryParam("is_active")
-	isActiveBool ,_:= strconv.ParseBool(isActive)
+	var isActiveBool *bool
+	if isActive != "" {
+		b, _ := strconv.ParseBool(isActive)
+		isActiveBool = &b
+
+	} else {
+		isActiveBool = nil
+	}
 	req := settingparam.GetAllShippingRequest{
 		Pagination: commonparam.PaginationRequest{
 			PageSize:   uint(pageSize),
 			PageNumber: uint(pageNumber),
 		},
 		Filter: settingparam.FilterShipping{
-			IsActive: &isActiveBool,
+			IsActive: isActiveBool,
 		},
 	}
 

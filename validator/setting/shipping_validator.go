@@ -58,8 +58,6 @@ func (v ShippingValidator) ValidateUpdateShippingRequest(req settingparam.Update
 			validation.When(req.Name != nil, validation.Required.Error("validation.required"))),
 		validation.Field(&req.Cost,
 			validation.When(req.Cost != nil, validation.Required.Error("validation.required"))),
-		validation.Field(&req.IsActive,
-			validation.When(req.IsActive != nil, validation.Required.Error("validation.required"))),
 		validation.Field(&req.ShippingID,
 			validation.Required.Error("validation.required"), validation.By(v.checkShippingIsExist)),
 	); err != nil {

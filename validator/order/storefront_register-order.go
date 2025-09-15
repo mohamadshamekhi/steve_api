@@ -12,7 +12,7 @@ import (
 
 func (v Validator) RegisterOrderValidator(ctx context.Context, req orderparam.RegisterOrderRequest) error {
 	const op = "ordervalidator.RegisterOrderValidator"
-
+	// todo - validate addressID & shippingID
 	if err := validation.ValidateStructWithContext(ctx, &req,
 		validation.Field(&req.ShippingID, validation.Required.Error("validation.required")),
 		validation.Field(&req.AddressID, validation.Required.Error("validation.required")),
