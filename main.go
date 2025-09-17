@@ -19,6 +19,7 @@ import (
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	orderhandler "github.com/abolfazlnorzad/steve/delivery/http_server/order"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
+	repairhandler "github.com/abolfazlnorzad/steve/delivery/http_server/repair"
 	shippinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/shipping"
 	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
 	"github.com/abolfazlnorzad/steve/internal/seeder"
@@ -38,6 +39,7 @@ import (
 	mongodbmedia "github.com/abolfazlnorzad/steve/repository/mongo/media"
 	mongodborder "github.com/abolfazlnorzad/steve/repository/mongo/order"
 	mongodbproduct "github.com/abolfazlnorzad/steve/repository/mongo/product"
+	mongodbrepair "github.com/abolfazlnorzad/steve/repository/mongo/repair"
 	mongodbshipping "github.com/abolfazlnorzad/steve/repository/mongo/shipping"
 	mongodbuser "github.com/abolfazlnorzad/steve/repository/mongo/user"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
@@ -55,6 +57,7 @@ import (
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 	orderservice "github.com/abolfazlnorzad/steve/service/order"
 	productservice "github.com/abolfazlnorzad/steve/service/product"
+	repairservice "github.com/abolfazlnorzad/steve/service/repair"
 	settingservice "github.com/abolfazlnorzad/steve/service/setting"
 	userservice "github.com/abolfazlnorzad/steve/service/user"
 	articlevalidator "github.com/abolfazlnorzad/steve/validator/article"
@@ -70,6 +73,7 @@ import (
 	mediavalidator "github.com/abolfazlnorzad/steve/validator/media"
 	ordervalidator "github.com/abolfazlnorzad/steve/validator/order"
 	productvalidator "github.com/abolfazlnorzad/steve/validator/product"
+	repairvalidator "github.com/abolfazlnorzad/steve/validator/repair"
 	settingvalidator "github.com/abolfazlnorzad/steve/validator/setting"
 	uservalidator "github.com/abolfazlnorzad/steve/validator/user"
 )
@@ -173,7 +177,13 @@ func main() {
 
 	shippingHandler := shippinghandler.New(shippingBakcofficeSvc, shippingVld, translator, authSvc, cfg.Auth, aclSvc)
 
+	repairRepo := mongodbrepair.New(mongoRepo)
+	repairVld := repairvalidator.New()
+	repairStorfrontSvc := repairservice.NewStorefrontService(repairRepo, backofficeUserSvc, backofficebrandsvc, productSvc)
+	reapirHandler := repairhandler.New(repairStorfrontSvc, translator, repairVld, authSvc, cfg.Auth, aclSvc)
+
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
-		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler, orderHandler, shippingHandler)
+		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
+		orderHandler, shippingHandler, reapirHandler)
 	server.Serve()
 }

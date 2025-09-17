@@ -19,6 +19,7 @@ import (
 	middleware2 "github.com/abolfazlnorzad/steve/delivery/http_server/middleware"
 	orderhandler "github.com/abolfazlnorzad/steve/delivery/http_server/order"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
+	repairhandler "github.com/abolfazlnorzad/steve/delivery/http_server/repair"
 	shippinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/shipping"
 	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
@@ -45,13 +46,14 @@ type Server struct {
 	cartHandler           carthandler.Handler
 	orderHandler          orderhandler.Handler
 	shippingHandler       shippinghandler.Handler
+	repairHandler         repairhandler.Handler
 }
 
 func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler,
 	articleHandler articlehandler.Handler, attrHandler attributehandler.Handler, attrDefHandler attributedefinitionhandler.Handler,
 	productHandler producthandler.Handler, backofficeHandler backofficehandler.Handler, userHandler userhandler.Handler,
 	commentHandler commenthandler.Handler, discountHandler discounthandler.Handler, cartHandler carthandler.Handler,
-	orderHandler orderhandler.Handler, shippingHandler shippinghandler.Handler,
+	orderHandler orderhandler.Handler, shippingHandler shippinghandler.Handler, repairHandler repairhandler.Handler,
 
 ) Server {
 	return Server{
@@ -72,6 +74,7 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 		cartHandler:           cartHandler,
 		orderHandler:          orderHandler,
 		shippingHandler:       shippingHandler,
+		repairHandler:         repairHandler,
 	}
 }
 
@@ -143,6 +146,7 @@ func (s Server) Serve() {
 	s.cartHandler.SetRoutes(s.Router)
 	s.orderHandler.SetRoutes(s.Router)
 	s.shippingHandler.SetRoutes(s.Router)
+	s.repairHandler.SetRoutes(s.Router)
 	// Start server
 	address := fmt.Sprintf(":%d", s.config.HTTPServer.Port)
 	fmt.Printf("start echo server on %s\n", address)

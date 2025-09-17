@@ -7,7 +7,7 @@ type AddRepairRequest struct {
 	BrandID     string                 `json:"brand_id"`
 	ProductID   string                 `json:"product_id"`
 	Description string                 `json:"description"`
-	Galleries   []entity.RepairGallery `bson:"galleries"`
+	Galleries   []entity.RepairGallery `json:"galleries"`
 }
 
 type AddRepairResponse struct {

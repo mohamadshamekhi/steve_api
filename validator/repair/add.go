@@ -13,6 +13,7 @@ func (v Validator) ValidateAddRepairRequest(req repairparam.AddRepairRequest) er
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.UserID,
 			validation.Required.Error("validation.required")),
+		// todo -check brand and product and media is exist ?
 		validation.Field(&req.BrandID,
 			validation.Required.Error("validation.required")),
 		validation.Field(&req.ProductID,
