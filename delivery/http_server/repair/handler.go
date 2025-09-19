@@ -11,6 +11,7 @@ import (
 )
 
 type Handler struct {
+	backofficeSvc repairservice.BackofficeService
 	storefrontSvc repairservice.StorefrontService
 	translator    *i18n.Translator
 	validator     repairvalidator.Validator
@@ -19,13 +20,15 @@ type Handler struct {
 	aclSvc        aclservice.Service
 }
 
-func New(storefrontSvc repairservice.StorefrontService,
+func New(backofficeSvc repairservice.BackofficeService,
+	storefrontSvc repairservice.StorefrontService,
 	translator *i18n.Translator,
 	validator repairvalidator.Validator,
 	authSvc authservice.Service,
 	authCfg authservice.Config,
 	aclSvc aclservice.Service) Handler {
 	return Handler{
+		backofficeSvc: backofficeSvc,
 		storefrontSvc: storefrontSvc,
 		translator:    translator,
 		validator:     validator,

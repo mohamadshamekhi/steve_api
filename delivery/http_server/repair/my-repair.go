@@ -11,8 +11,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (h Handler) All(c echo.Context) error {
-	const op = "repairhandler.All"
+func (h Handler) MyRepair(c echo.Context) error {
+	const op = "repairhandler.MyRepair"
 	pageNumber, nErr := strconv.ParseUint(c.QueryParam("page_number"), 10, 64)
 	if nErr != nil {
 		pageNumber = commonparam.DefaultPageNumber

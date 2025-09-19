@@ -180,7 +180,8 @@ func main() {
 	repairRepo := mongodbrepair.New(mongoRepo)
 	repairVld := repairvalidator.New()
 	repairStorfrontSvc := repairservice.NewStorefrontService(repairRepo, backofficeUserSvc, backofficebrandsvc, productSvc)
-	reapirHandler := repairhandler.New(repairStorfrontSvc, translator, repairVld, authSvc, cfg.Auth, aclSvc)
+	repairBackofficeSvc := repairservice.NewBackofficeService(repairRepo, backofficeUserSvc, backofficebrandsvc, productSvc)
+	reapirHandler := repairhandler.New(repairBackofficeSvc, repairStorfrontSvc, translator, repairVld, authSvc, cfg.Auth, aclSvc)
 
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,

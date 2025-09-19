@@ -18,11 +18,11 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 	}
 	for _, f := range f.Filter {
 		for key, value := range f {
-			if key == "name" {
-				filter[key] = bson.M{"$regex": value, "$options": "i"}
-			} else {
+
+			if value != "" {
 				filter[key] = value
 			}
+
 		}
 	}
 	totalCount, err := d.collection.CountDocuments(ctx, filter)

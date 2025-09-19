@@ -4,31 +4,24 @@ import (
 	"context"
 
 	"github.com/abolfazlnorzad/steve/entity"
-	cartparam "github.com/abolfazlnorzad/steve/param/cart"
-	commonparam "github.com/abolfazlnorzad/steve/param/common"
+	brandparam "github.com/abolfazlnorzad/steve/param/brand"
+	productparam "github.com/abolfazlnorzad/steve/param/product"
+	userparam "github.com/abolfazlnorzad/steve/param/user"
 )
-
-type RepairReader interface {
-	FindByID(ctx context.Context, id string) (entity.Repair, error)
-	GetAll(ctx context.Context, filter cartparam.BackofficeFilterCart, pagination commonparam.PaginationRequest) (ListResult, error)
-}
-
-type AddRepair interface {
-	Add(ctx context.Context, repair entity.Repair) error
-}
-
-type RepairWriter interface {
-	Update(ctx context.Context, repair entity.Repair) error
-	Delete(ctx context.Context, id string) error
-	AddRepair
-}
-
-type RepairReadWriter interface {
-	RepairReader
-	RepairWriter
-}
 
 type ListResult struct {
 	Repairs    []entity.Repair
 	TotalCount int64
+}
+
+type UserProvider interface {
+	GetUsersByIDs(ctx context.Context, req userparam.GetUsersByIDsRequest) (userparam.GetUsersByIDsResponse, error)
+}
+
+type BrandProvider interface {
+	GetBrandsByIDs(ctx context.Context, req brandparam.GetBrandsByIDsRequest) (brandparam.GetBrandsByIDsResponse, error)
+}
+
+type ProductProvider interface {
+	GetProductsByIDs(ctx context.Context, req productparam.GetProductsByIDsRequest) (productparam.GetProductsByIDsResponse, error)
 }

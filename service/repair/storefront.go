@@ -20,18 +20,6 @@ type StorefrontService struct {
 	pProvider ProductProvider
 }
 
-type UserProvider interface {
-	GetUsersByIDs(ctx context.Context, req userparam.GetUsersByIDsRequest) (userparam.GetUsersByIDsResponse, error)
-}
-
-type BrandProvider interface {
-	GetBrandsByIDs(ctx context.Context, req brandparam.GetBrandsByIDsRequest) (brandparam.GetBrandsByIDsResponse, error)
-}
-
-type ProductProvider interface {
-	GetProductsByIDs(ctx context.Context, req productparam.GetProductsByIDsRequest) (productparam.GetProductsByIDsResponse, error)
-}
-
 type StorefrontRepo interface {
 	Add(ctx context.Context, repair entity.Repair) error
 	All(ctx context.Context, filter commonparam.FilterRequest, pagination commonparam.PaginationRequest) (ListResult, error)
