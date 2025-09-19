@@ -13,7 +13,7 @@ type GetAllMySellParamRequest struct {
 }
 type GetAllMySellParamResponse struct {
 	Pagination commonparam.PaginationResponse `json:"pagination"`
-	Repairs    []SellInfo                     `json:"sells"`
+	Sells      []SellInfo                     `json:"sells"`
 }
 
 type SellInfo struct {
