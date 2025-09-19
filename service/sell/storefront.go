@@ -39,11 +39,15 @@ func NewStorefrontService(r StorefrontRepo, uProvider UserProvider,
 func (s StorefrontService) Create(ctx context.Context, req sellparam.AddSellRequest) (sellparam.AddSellResponse, error) {
 	const op = "sellservice.Create"
 	sell := entity.Sell{
-		UserID:      req.UserID,
-		BrandID:     req.BrandID,
-		ProductID:   req.ProductID,
-		Description: req.Description,
-		Status:      entity.SellStatusNew,
+		UserID:            req.UserID,
+		BrandID:           req.BrandID,
+		ProductID:         req.ProductID,
+		Color:             req.Color,
+		BatteryHealth:     req.BatteryHealth,
+		RegisterStatus:    req.RegisterStatus,
+		PhysicalCondition: req.PhysicalCondition,
+		Description:       req.Description,
+		Status:            entity.SellStatusNew,
 	}
 	sell.BeforeCreate()
 	err := s.Repo.Add(ctx, sell)

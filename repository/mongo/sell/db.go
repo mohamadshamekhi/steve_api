@@ -21,15 +21,15 @@ func New(c *mongodb.DB) *DB {
 	indexes := []mongo.IndexModel{
 		{
 			Keys:    bson.D{{Key: "user_id", Value: 1}},
-			Options: options.Index().SetUnique(true),
+			Options: options.Index().SetUnique(false),
 		},
 		{
 			Keys:    bson.D{{Key: "brand_id", Value: 1}},
-			Options: options.Index().SetUnique(true),
+			Options: options.Index().SetUnique(false),
 		},
 		{
 			Keys:    bson.D{{Key: "product_id", Value: 1}},
-			Options: options.Index().SetUnique(true),
+			Options: options.Index().SetUnique(false),
 		},
 	}
 
