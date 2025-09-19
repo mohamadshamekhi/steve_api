@@ -107,25 +107,27 @@ func (s Server) Serve() {
 		LogError:         true,
 		LogProtocol:      true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			errMsg := ""
-			if v.Error != nil {
-				errMsg = v.Error.Error()
+			if v.Error == nil {
+				errMsg := ""
+				if v.Error != nil {
+					errMsg = v.Error.Error()
+				}
+				logger.L().Info("request",
+					"request_id", v.RequestID,
+					"host", v.Host,
+					"content_length", v.ContentLength,
+					"protocol", v.Protocol,
+					"method", v.Method,
+					"latency", v.Latency,
+					"error", v.Error,
+					"remote_ip", v.RemoteIP,
+					"response_size", v.ResponseSize,
+					"uri", v.URI,
+					"status", v.Status,
+					"error_msg", errMsg,
+				)
 			}
-			logger.L().Info("request",
-				"request_id", v.RequestID,
-				"host", v.Host,
-				"content_length", v.ContentLength,
-				"protocol", v.Protocol,
-				"method", v.Method,
-				"latency", v.Latency,
-				"error", v.Error,
-				"remote_ip", v.RemoteIP,
-				"response_size", v.ResponseSize,
-				"uri", v.URI,
-				"status", v.Status,
-				"error", errMsg,
-			)
-
+			
 			return nil
 		},
 	}))
