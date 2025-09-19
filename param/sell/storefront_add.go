@@ -1,6 +1,7 @@
 package sellparam
 
 type AddSellRequest struct {
+	UserID            string `json:"user_id"`
 	BrandID           string `json:"brand_id"`
 	ProductID         string `json:"product_id"`
 	Color             string `json:"color"`
