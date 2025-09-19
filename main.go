@@ -20,6 +20,7 @@ import (
 	orderhandler "github.com/abolfazlnorzad/steve/delivery/http_server/order"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
 	repairhandler "github.com/abolfazlnorzad/steve/delivery/http_server/repair"
+	sellhandler "github.com/abolfazlnorzad/steve/delivery/http_server/sell"
 	shippinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/shipping"
 	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
 	"github.com/abolfazlnorzad/steve/internal/seeder"
@@ -40,6 +41,7 @@ import (
 	mongodborder "github.com/abolfazlnorzad/steve/repository/mongo/order"
 	mongodbproduct "github.com/abolfazlnorzad/steve/repository/mongo/product"
 	mongodbrepair "github.com/abolfazlnorzad/steve/repository/mongo/repair"
+	mongodbsell "github.com/abolfazlnorzad/steve/repository/mongo/sell"
 	mongodbshipping "github.com/abolfazlnorzad/steve/repository/mongo/shipping"
 	mongodbuser "github.com/abolfazlnorzad/steve/repository/mongo/user"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
@@ -58,6 +60,7 @@ import (
 	orderservice "github.com/abolfazlnorzad/steve/service/order"
 	productservice "github.com/abolfazlnorzad/steve/service/product"
 	repairservice "github.com/abolfazlnorzad/steve/service/repair"
+	sellservice "github.com/abolfazlnorzad/steve/service/sell"
 	settingservice "github.com/abolfazlnorzad/steve/service/setting"
 	userservice "github.com/abolfazlnorzad/steve/service/user"
 	articlevalidator "github.com/abolfazlnorzad/steve/validator/article"
@@ -74,6 +77,7 @@ import (
 	ordervalidator "github.com/abolfazlnorzad/steve/validator/order"
 	productvalidator "github.com/abolfazlnorzad/steve/validator/product"
 	repairvalidator "github.com/abolfazlnorzad/steve/validator/repair"
+	sellvalidator "github.com/abolfazlnorzad/steve/validator/sell"
 	settingvalidator "github.com/abolfazlnorzad/steve/validator/setting"
 	uservalidator "github.com/abolfazlnorzad/steve/validator/user"
 )
@@ -183,8 +187,14 @@ func main() {
 	repairBackofficeSvc := repairservice.NewBackofficeService(repairRepo, backofficeUserSvc, backofficebrandsvc, productSvc)
 	reapirHandler := repairhandler.New(repairBackofficeSvc, repairStorfrontSvc, translator, repairVld, authSvc, cfg.Auth, aclSvc)
 
+	sellRepo := mongodbsell.New(mongoRepo)
+	sellVld := sellvalidator.New()
+	sellStorefrontSvc := sellservice.NewStorefrontService(sellRepo, backofficeUserSvc, backofficebrandsvc, productSvc)
+	sellBackofficeSvc := sellservice.NewBackofficeService(sellRepo, backofficeUserSvc, backofficebrandsvc, productSvc)
+	sellHandler := sellhandler.New(sellBackofficeSvc, sellStorefrontSvc, translator, sellVld, authSvc, cfg.Auth, aclSvc)
+
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
-		orderHandler, shippingHandler, reapirHandler)
+		orderHandler, shippingHandler, reapirHandler, sellHandler)
 	server.Serve()
 }
