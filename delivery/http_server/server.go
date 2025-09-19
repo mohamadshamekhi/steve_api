@@ -20,6 +20,7 @@ import (
 	orderhandler "github.com/abolfazlnorzad/steve/delivery/http_server/order"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
 	repairhandler "github.com/abolfazlnorzad/steve/delivery/http_server/repair"
+	sellhandler "github.com/abolfazlnorzad/steve/delivery/http_server/sell"
 	shippinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/shipping"
 	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
@@ -47,13 +48,14 @@ type Server struct {
 	orderHandler          orderhandler.Handler
 	shippingHandler       shippinghandler.Handler
 	repairHandler         repairhandler.Handler
+	sellHandler           sellhandler.Handler
 }
 
 func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler,
 	articleHandler articlehandler.Handler, attrHandler attributehandler.Handler, attrDefHandler attributedefinitionhandler.Handler,
 	productHandler producthandler.Handler, backofficeHandler backofficehandler.Handler, userHandler userhandler.Handler,
 	commentHandler commenthandler.Handler, discountHandler discounthandler.Handler, cartHandler carthandler.Handler,
-	orderHandler orderhandler.Handler, shippingHandler shippinghandler.Handler, repairHandler repairhandler.Handler,
+	orderHandler orderhandler.Handler, shippingHandler shippinghandler.Handler, repairHandler repairhandler.Handler, sellHandler sellhandler.Handler,
 
 ) Server {
 	return Server{
@@ -75,6 +77,7 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 		orderHandler:          orderHandler,
 		shippingHandler:       shippingHandler,
 		repairHandler:         repairHandler,
+		sellHandler:           sellHandler,
 	}
 }
 
@@ -147,6 +150,7 @@ func (s Server) Serve() {
 	s.orderHandler.SetRoutes(s.Router)
 	s.shippingHandler.SetRoutes(s.Router)
 	s.repairHandler.SetRoutes(s.Router)
+	s.sellHandler.SetRoutes(s.Router)
 	// Start server
 	address := fmt.Sprintf(":%d", s.config.HTTPServer.Port)
 	fmt.Printf("start echo server on %s\n", address)
