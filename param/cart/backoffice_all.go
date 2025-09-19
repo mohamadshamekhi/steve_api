@@ -25,5 +25,5 @@ type BackofficeCartList struct {
 
 type GetAllCartsResponse struct {
 	Pagination commonparam.PaginationResponse `json:"pagination"`
-	Carts      []BackofficeCartList
+	Carts      []BackofficeCartList           `json:"carts"`
 }

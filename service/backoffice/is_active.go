@@ -12,6 +12,6 @@ func (s Service) CheckBackOfficeUserIsActive(context context.Context, id string)
 	if gErr != nil {
 		return false, richerror.New(op).WithWarpError(gErr)
 	}
-	
+
 	return bu.IsActive, nil
 }

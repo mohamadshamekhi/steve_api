@@ -34,3 +34,11 @@ type ProductInfo struct {
 	UpdatedAt time.Time `json:"updated_at"`
 	DeletedAt time.Time `json:"deleted_at,omitempty"`
 }
+
+type GetProductsByIDsRequest struct {
+	IDs []string `json:"ids"`
+}
+
+type GetProductsByIDsResponse struct {
+	Products map[string]ProductList `json:"products"`
+}

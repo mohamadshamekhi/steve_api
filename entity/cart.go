@@ -9,14 +9,15 @@ import (
 type CartStatus string
 
 const (
-	CartActive   CartStatus = "active"
-	CartInactive CartStatus = "inactive"
-	CartPaid     CartStatus = "paid"
-	CartCanceled CartStatus = "cancelled"
+	CartActive     CartStatus = "active"
+	CartInactive   CartStatus = "inactive"
+	CartPaid       CartStatus = "paid"
+	CartCanceled   CartStatus = "cancelled"
+	PendingPayment CartStatus = "pending_payment"
 )
 
 type Cart struct {
-	ID string `json:"id"`
+	ID string `json:"id" bson:"_id"`
 
 	UserID string `bson:"user_id,omitempty"`
 
@@ -53,4 +54,29 @@ func (c *Cart) BeforeCreate() {
 	if c.Items == nil {
 		c.Items = make([]CartItem, 0)
 	}
+}
+
+func (c *Cart) CalculateSubtotal() uint {
+	var total uint = 0
+	for _, item := range c.Items {
+		total += uint(item.PriceAtTime) * uint(item.Quantity)
+	}
+	return total
+}
+
+type CheckoutItemResult struct {
+	CartItem
+	HasStockIssue   bool
+	HasPriceChanged bool
+	CurrentPrice    int64
+	DiscountAmount  uint
+}
+
+type CheckoutSummary struct {
+	Items              []CheckoutItemResult
+	Subtotal           int64
+	AppliedDiscounts   []AppliedDiscount
+	FinalPrice         int64
+	IsReady            bool
+	DiscountedSubtotal uint
 }

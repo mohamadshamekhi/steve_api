@@ -125,3 +125,12 @@ func (s StoreFrontService) UpdateAddress(ctx context.Context, req userparam.Stor
 	}
 	return userparam.StoreFrontUpdateAddressResponse{}, nil
 }
+
+func (s StoreFrontService) FindAddressByID(ctx context.Context, req userparam.FindAddressByIDRequest) (userparam.FindAddressByIDResponse, error) {
+	const op = "userservice.FindAddressByID"
+	address, err := s.repo.FindAddress(ctx, req.UserID, req.AddressID)
+	if err != nil {
+		return userparam.FindAddressByIDResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return userparam.FindAddressByIDResponse{Address: address}, nil
+}

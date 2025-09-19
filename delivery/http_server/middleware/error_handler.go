@@ -33,9 +33,12 @@ func parseError(err error, translator *i18n.Translator, lang string) (response.A
 		code := mapKindToHTTPStatusCode(richErr.Kind())
 		mainMessage := translator.Translate(lang, richErr.MessageKey(), richErr.TemplateData())
 
+		if summary, ok := richErr.GetMeta()["summary"]; ok {
+			return response.NewErrorResponse(mainMessage, summary), code
+		}
+
 		if vErrs, ok := richErr.GetMeta()["fields"].(validation.Errors); ok {
 			translatedFieldErrors := make(map[string]string)
-
 			for field, fieldErr := range vErrs {
 				var innerRichErr *richerror.RichError
 
@@ -43,7 +46,6 @@ func parseError(err error, translator *i18n.Translator, lang string) (response.A
 				if errors.As(fieldErr, &innerRichErr) {
 					// پیام را با استفاده از کلید و داده‌های داینامیک خود آن ترجمه می‌کنیم.
 					templateData := innerRichErr.GetMeta()
-
 					if ids, dataOK := templateData["InvalidIDs"].([]string); dataOK {
 						templateData["InvalidIDs"] = strings.Join(ids, ", ")
 					}

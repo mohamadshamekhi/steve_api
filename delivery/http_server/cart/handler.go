@@ -7,12 +7,14 @@ import (
 	aclservice "github.com/abolfazlnorzad/steve/service/acl"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	cartservice "github.com/abolfazlnorzad/steve/service/cart"
+	orderservice "github.com/abolfazlnorzad/steve/service/order"
 	cartvalidator "github.com/abolfazlnorzad/steve/validator/cart"
 )
 
 type Handler struct {
 	storefrontSvc cartservice.StoreFrontService
 	backofficeSvc cartservice.BackofficeService
+	orderSvc      orderservice.StoreFrontService
 	vld           cartvalidator.Validator
 	translator    *i18n.Translator
 	authSvc       authservice.Service
@@ -22,6 +24,7 @@ type Handler struct {
 
 func New(storefrontSvc cartservice.StoreFrontService,
 	backofficeSvc cartservice.BackofficeService,
+	orderSvc orderservice.StoreFrontService,
 	vld cartvalidator.Validator,
 	translator *i18n.Translator,
 	authSvc authservice.Service,
@@ -32,6 +35,7 @@ func New(storefrontSvc cartservice.StoreFrontService,
 		storefrontSvc: storefrontSvc,
 		backofficeSvc: backofficeSvc,
 		vld:           vld,
+		orderSvc:      orderSvc,
 		translator:    translator,
 		authSvc:       authSvc,
 		authCfg:       authCfg,

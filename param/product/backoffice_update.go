@@ -15,3 +15,10 @@ type UpdateProductRequest struct {
 type UpdateProductResponse struct {
 	Product entity.Product `json:"product"`
 }
+
+type UpdateProductVariantQuantityAfterRegisterOrderRequest struct {
+	Order entity.Order
+}
+
+type UpdateProductVariantQuantityAfterRegisterOrderResponse struct {
+}
