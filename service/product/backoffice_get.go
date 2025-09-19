@@ -74,3 +74,27 @@ func (s BackofficeService) GetProductCategoriesForCartItems(ctx context.Context,
 		CategoryIDs: res,
 	}, nil
 }
+
+func (s BackofficeService) GetProductsByIDs(ctx context.Context, req productparam.GetProductsByIDsRequest) (productparam.GetProductsByIDsResponse, error) {
+	const op = "productservice.GetProductsByIDs"
+	products, err := s.repo.GetProductsByIDs(ctx, req.IDs)
+	if err != nil {
+		return productparam.GetProductsByIDsResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	res := make(map[string]productparam.ProductList, len(products))
+
+	for _, p := range products {
+		res[p.ID] = productparam.ProductList{
+			ID:           p.ID,
+			Name:         p.Name,
+			EnTitle:      p.ENTitle,
+			Brand:        p.BrandID,
+			Category:     p.CategoryID,
+			IsPublished:  p.IsPublished,
+			IsSecondHand: p.IsSecondHand,
+			Slug:         p.Slug,
+			ThumbnailURL: "",
+		}
+	}
+	return productparam.GetProductsByIDsResponse{Products: res}, nil
+}

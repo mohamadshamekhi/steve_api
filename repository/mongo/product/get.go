@@ -201,3 +201,35 @@ func (d DB) GetProductCategoriesForCartItems(ctx context.Context, items []entity
 
 	return resultMap, nil
 }
+
+func (d DB) GetProductsByIDs(ctx context.Context, ids []string) ([]entity.Product, error) {
+	const op = "mongodbproduct.GetProductsByIDs"
+	if len(ids) == 0 {
+		return []entity.Product{}, nil
+	}
+
+	filter := bson.M{"_id": bson.M{"$in": ids}}
+	cursor, err := d.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err)
+	}
+	defer cursor.Close(ctx)
+
+	var products []entity.Product
+
+	for cursor.Next(ctx) {
+		var product entity.Product
+
+		if err := cursor.Decode(&product); err != nil {
+			return nil, richerror.New(op).WithWarpError(err)
+		}
+
+		products = append(products, product)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, richerror.New(op).WithWarpError(err)
+	}
+
+	return products, nil
+}

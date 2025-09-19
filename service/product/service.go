@@ -22,6 +22,7 @@ type ProductReader interface {
 	All(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
 	GetProductCategoriesForCartItems(ctx context.Context, items []entity.CartItem) (map[string][]string, error)
 	GetVariantsByIDs(ctx context.Context, variantIDs []string) (map[string]entity.Variant, error)
+	GetProductsByIDs(ctx context.Context, ids []string) ([]entity.Product, error)
 }
 
 type ProductWriter interface {
