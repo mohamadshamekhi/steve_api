@@ -16,7 +16,7 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.POST("/delete-item", h.DeleteItem, middleware.Auth(h.authSvc, h.authCfg))
 	g.POST("/accept-price-changing", h.AcceptPriceChanging, middleware.Auth(h.authSvc, h.authCfg))
 
-	g.GET("/backoffice/all", h.GetAll, middleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ListCarts))
-	g.GET("/backoffice/cart/:id", h.GetSingle, middleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ViewCartDetails))
+	g.GET("/backoffice/all", h.GetAll, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ListCarts))
+	g.GET("/backoffice/cart/:id", h.GetSingle, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ViewCartDetails))
 
 }

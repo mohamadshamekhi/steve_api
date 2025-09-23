@@ -19,6 +19,9 @@ func Auth(service authservice.Service, cfg authservice.Config) echo.MiddlewareFu
 		SigningMethod: "HS256",
 		ParseTokenFunc: func(c echo.Context, auth string) (interface{}, error) {
 			claims, err := service.ParseToken(auth)
+			if claims.Kind != "user" {
+				return nil, richerror.New("backofficemiddleware.BackofficeAuth").WithMessageKey("auth.you_must_logged_in").WithKind(richerror.KindForbidden)
+			}
 			if err != nil {
 				return nil, err
 			}
