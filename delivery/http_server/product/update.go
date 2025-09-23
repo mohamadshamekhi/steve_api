@@ -34,3 +34,49 @@ func (h Handler) Update(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
+
+func (h Handler) Publish(c echo.Context) error {
+	const op = "producthandler.Publish"
+
+	var req productparam.PublishProductRequest
+	if bErr := c.Bind(&req); bErr != nil {
+		return richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("validation.invalid_input").
+			WithWarpError(bErr)
+	}
+	req.ProductID = c.Param("id")
+
+	resp, err := h.backofficeProductSvc.PublishProduct(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}
+
+func (h Handler) UnPublish(c echo.Context) error {
+	const op = "producthandler.UnPublish"
+
+	var req productparam.UnPublishProductRequest
+	if bErr := c.Bind(&req); bErr != nil {
+		return richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("validation.invalid_input").
+			WithWarpError(bErr)
+	}
+	req.ProductID = c.Param("id")
+
+	resp, err := h.backofficeProductSvc.UnPublishProduct(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}
