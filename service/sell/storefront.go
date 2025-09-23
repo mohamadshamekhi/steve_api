@@ -2,6 +2,7 @@ package sellservice
 
 import (
 	"context"
+	"sync"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
@@ -64,38 +65,85 @@ func (s StorefrontService) GetMySell(ctx context.Context, req sellparam.GetAllMy
 	if err != nil {
 		return sellparam.GetAllMySellParamResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	var userIDs []string
+
+	var (
+		userIDs    []string
+		brandIDs   []string
+		productIDs []string
+	)
 	for _, sell := range resp.Sells {
 		userIDs = append(userIDs, sell.UserID)
+		brandIDs = append(brandIDs, sell.BrandID)
+		productIDs = append(productIDs, sell.ProductID)
 	}
-	uResp, err := s.uProvider.GetUsersByIDs(ctx, userparam.GetUsersByIDsRequest{IDs: userIDs})
-	if err != nil {
-		return sellparam.GetAllMySellParamResponse{}, err
-	}
-	var brandIDs []string
-	for _, repair := range resp.Sells {
-		brandIDs = append(brandIDs, repair.BrandID)
-	}
-	bResp, err := s.bProvider.GetBrandsByIDs(ctx, brandparam.GetBrandsByIDsRequest{IDs: brandIDs})
-	if err != nil {
-		logger.L().Error("can't find brand- err :", err)
-	}
-	var productIDs []string
-	for _, repair := range resp.Sells {
-		productIDs = append(productIDs, repair.ProductID)
-	}
-	pResp, err := s.pProvider.GetProductsByIDs(ctx, productparam.GetProductsByIDsRequest{IDs: productIDs})
-	if err != nil {
-		logger.L().Error("can't find product- err :", err)
-	}
-	var sellInfos []sellparam.SellInfo
-	for _, r := range resp.Sells {
-		var user userparam.UserInfo
-		for _, u := range uResp.Users {
-			if u.ID == r.UserID {
-				user = u
-			}
+
+	var (
+		uResp userparam.GetUsersByIDsResponse
+		bResp brandparam.GetBrandsByIDsResponse
+		pResp productparam.GetProductsByIDsResponse
+	)
+
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	// Users
+	go func() {
+		defer wg.Done()
+		res, err := s.uProvider.GetUsersByIDs(ctx, userparam.GetUsersByIDsRequest{IDs: userIDs})
+		if err != nil {
+			logger.L().Error("can't fetch users - err:", err)
+			return
 		}
+		uResp = res
+	}()
+
+	// Brands
+	go func() {
+		defer wg.Done()
+		res, err := s.bProvider.GetBrandsByIDs(ctx, brandparam.GetBrandsByIDsRequest{IDs: brandIDs})
+		if err != nil {
+			logger.L().Error("can't fetch brands - err:", err)
+			return
+		}
+		bResp = res
+	}()
+
+	// Products
+	go func() {
+		defer wg.Done()
+		res, err := s.pProvider.GetProductsByIDs(ctx, productparam.GetProductsByIDsRequest{IDs: productIDs})
+		if err != nil {
+			logger.L().Error("can't fetch products - err:", err)
+			return
+		}
+		pResp = res
+	}()
+
+	wg.Wait()
+
+	// ساخت Map برای دسترسی سریع
+	userMap := make(map[string]userparam.UserInfo, len(uResp.Users))
+	for _, u := range uResp.Users {
+		userMap[u.ID] = u
+	}
+
+	brandMap := make(map[string]entity.Brand, len(bResp.Brands))
+	for id, b := range bResp.Brands {
+		brandMap[id] = b
+	}
+
+	productMap := make(map[string]productparam.ProductList, len(pResp.Products))
+	for id, p := range pResp.Products {
+		productMap[id] = p
+	}
+
+	// ساختن خروجی Sells
+	sellInfos := make([]sellparam.SellInfo, 0, len(resp.Sells))
+	for _, r := range resp.Sells {
+		user := userMap[r.UserID]
+		brand := brandMap[r.BrandID]
+		product := productMap[r.ProductID]
+
 		sellInfos = append(sellInfos, sellparam.SellInfo{
 			ID: r.ID,
 			User: struct {
@@ -105,8 +153,8 @@ func (s StorefrontService) GetMySell(ctx context.Context, req sellparam.GetAllMy
 				Name:        user.Name,
 				PhoneNumber: user.PhoneNumber,
 			},
-			BrandName:         bResp.Brands[r.BrandID].Name,
-			ProductName:       pResp.Products[r.ProductID].Name,
+			BrandName:         brand.Name,
+			ProductName:       product.Name,
 			Color:             r.Color,
 			BatteryHealth:     r.BatteryHealth,
 			RegisterStatus:    r.RegisterStatus,
