@@ -15,3 +15,16 @@ type UploadMediaResponse struct {
 	ID  string `json:"id"`
 	URL string `json:"url"`
 }
+
+type StorefrontUploadMediaRequest struct {
+	Domain       string `json:"domain"`
+	UploaderID   string `json:"uploader_id"`
+	UploaderType string
+	File         multipart.File        `json:"file"`
+	Header       *multipart.FileHeader `json:"header"`
+}
+
+type StorefrontUploadMediaResponse struct {
+	ID  string `json:"id"`
+	URL string `json:"url"`
+}

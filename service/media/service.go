@@ -10,12 +10,18 @@ import (
 )
 
 type Config struct {
-	PublicBaseURL                 string        `koanf:"public_base_url"`
-	AllowedExtensions             []string      `koanf:"allowed_extensions"`
-	AllowedMimeTypes              []string      `koanf:"allowed_mime_types"`
-	MaxUploadSizeBytes            int64         `koanf:"max_upload_size"`
-	PresignedPrivateURLExpiration time.Duration `koanf:"presigned_private_url_expiration"`
-	PresignedPublicURLExpiration  time.Duration `koanf:"presigned_public_url_expiration"`
+	PublicBaseURL                 string                 `koanf:"public_base_url"`
+	AllowedExtensions             []string               `koanf:"allowed_extensions"`
+	AllowedMimeTypes              []string               `koanf:"allowed_mime_types"`
+	MaxUploadSizeBytes            int64                  `koanf:"max_upload_size"`
+	PresignedPrivateURLExpiration time.Duration          `koanf:"presigned_private_url_expiration"`
+	PresignedPublicURLExpiration  time.Duration          `koanf:"presigned_public_url_expiration"`
+	Policies                      map[string]MediaPolicy `koanf:"policies"`
+}
+
+type MediaPolicy struct {
+	MaxUploadSizeBytes int64    `koanf:"max_upload_size"`
+	AllowedMimeTypes   []string `koanf:"allowed_mime_types"`
 }
 
 type UploadResult struct {
@@ -24,7 +30,7 @@ type UploadResult struct {
 	MimeType   string
 }
 type StorageProvider interface {
-	Upload(ctx context.Context, domain string, isPublic bool, file multipart.File, header *multipart.FileHeader) (UploadResult, error)
+	Upload(ctx context.Context, domain string, role string, isPublic bool, file multipart.File, header *multipart.FileHeader) (UploadResult, error)
 	GetURL(ctx context.Context, media *entity.Media) (string, error)
 	Delete(ctx context.Context, media *entity.Media) error
 }
@@ -44,4 +50,15 @@ type Service struct {
 
 func New(provider StorageProvider, r Repository, cfg Config, cache cache.Provider) Service {
 	return Service{provider: provider, repository: r, config: cfg, cache: cache}
+}
+
+func (c *Config) GetPolicy(role string) MediaPolicy {
+	if p, ok := c.Policies[role]; ok {
+		return p
+	}
+
+	return MediaPolicy{
+		MaxUploadSizeBytes: c.MaxUploadSizeBytes,
+		AllowedMimeTypes:   c.AllowedMimeTypes,
+	}
 }

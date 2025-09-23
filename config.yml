@@ -41,7 +41,7 @@ media:
     - "webp"
     - "avi"
     - "webm"
-  max_upload_size: 524288000
+  max_upload_size: 5242880 # 5 MB
   presigned_private_url_expiration: "30m"
   presigned_public_url_expiration: "168h"
   allowed_mime_types:
@@ -49,3 +49,19 @@ media:
     - "image/png"
     - "image/jpeg"
     - "image/webp"
+
+
+  policies:
+    backoffice:
+      max_upload_size: 524288000   # 500MB
+      allowed_mime_types:
+        - "video/mp4"
+        - "image/png"
+        - "image/jpeg"
+        - "image/webp"
+    user:
+      max_upload_size: 5242880     # 5MB
+      allowed_mime_types:
+        - "image/png"
+        - "image/jpeg"
+        - "image/webp"

@@ -8,5 +8,6 @@ import (
 func (h Handler) SetRoutes(e *echo.Echo) {
 	g := e.Group("/media")
 	g.POST("/upload", h.UploadFile, backofficemiddleware.Auth(h.authSvc, h.authCfg))
+	g.POST("/storefront/upload", h.StorefrontUploadFile, backofficemiddleware.Auth(h.authSvc, h.authCfg))
 	g.GET("/get-url/:id", h.GetURL)
 }
