@@ -28,7 +28,7 @@ func (v ShippingValidator) ValidateAddShippingRequest(req settingparam.AddShippi
 		validation.Field(&req.Name,
 			validation.Required.Error("validation.required")),
 		validation.Field(&req.IsActive,
-			validation.Required.Error("validation.required")),
+			validation.NotNil.Error("validation.required")),
 		validation.Field(&req.Cost,
 			validation.Required.Error("validation.required"),
 		)); err != nil {
