@@ -152,7 +152,7 @@ func main() {
 	backofficeHandler := backofficehandler.New(backOfficeSvc, backofficeValidation, translator, authSvc, cfg.Auth, aclSvc)
 	userRepo := mongodbuser.New(mongoRepo)
 	userVld := uservalidator.New(userRepo)
-	userSvc := userservice.NewStoreFrontService(cfg.User, userRepo, authSvc)
+	userSvc := userservice.NewStoreFrontService(cfg.User, userRepo, authSvc, redisotp)
 	backofficeUserSvc := userservice.NewBackofficeService(userRepo)
 	userHandler := userhandler.New(backofficeUserSvc, userSvc, userVld, translator, authSvc, cfg.Auth, aclSvc)
 	commentRepo := mongodbcomment.New(mongoRepo)
