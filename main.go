@@ -6,6 +6,7 @@ import (
 	liarastorage "github.com/abolfazlnorzad/steve/adapter/storage/liara"
 	"github.com/abolfazlnorzad/steve/config"
 	httpserver "github.com/abolfazlnorzad/steve/delivery/http_server"
+	aclhandler "github.com/abolfazlnorzad/steve/delivery/http_server/acl/handler"
 	articlehandler "github.com/abolfazlnorzad/steve/delivery/http_server/article"
 	attributehandler "github.com/abolfazlnorzad/steve/delivery/http_server/attribute"
 	attributedefinitionhandler "github.com/abolfazlnorzad/steve/delivery/http_server/attributedefinition"
@@ -46,6 +47,8 @@ import (
 	mongodbuser "github.com/abolfazlnorzad/steve/repository/mongo/user"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
 	aclservice "github.com/abolfazlnorzad/steve/service/acl"
+	permissionservice "github.com/abolfazlnorzad/steve/service/acl/permission"
+	roleservice "github.com/abolfazlnorzad/steve/service/acl/role"
 	articleservice "github.com/abolfazlnorzad/steve/service/article"
 	attributeservice "github.com/abolfazlnorzad/steve/service/attribute"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
@@ -193,8 +196,12 @@ func main() {
 	sellBackofficeSvc := sellservice.NewBackofficeService(sellRepo, backofficeUserSvc, backofficebrandsvc, productSvc)
 	sellHandler := sellhandler.New(sellBackofficeSvc, sellStorefrontSvc, translator, sellVld, authSvc, cfg.Auth, aclSvc)
 
+	permissionSvc := permissionservice.New(permissionRepo)
+	roleSvc := roleservice.New(roleRepo, permissionSvc)
+	aclHandler := aclhandler.New(permissionSvc, roleSvc, translator, authSvc, cfg.Auth, aclSvc)
+
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
-		orderHandler, shippingHandler, reapirHandler, sellHandler)
+		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler)
 	server.Serve()
 }

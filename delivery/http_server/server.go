@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/abolfazlnorzad/steve/config"
+	aclhandler "github.com/abolfazlnorzad/steve/delivery/http_server/acl/handler"
 	articlehandler "github.com/abolfazlnorzad/steve/delivery/http_server/article"
 	attributehandler "github.com/abolfazlnorzad/steve/delivery/http_server/attribute"
 	attributedefinitionhandler "github.com/abolfazlnorzad/steve/delivery/http_server/attributedefinition"
@@ -49,6 +50,7 @@ type Server struct {
 	shippingHandler       shippinghandler.Handler
 	repairHandler         repairhandler.Handler
 	sellHandler           sellhandler.Handler
+	aclHandler            aclhandler.Handler
 }
 
 func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler,
@@ -56,6 +58,7 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 	productHandler producthandler.Handler, backofficeHandler backofficehandler.Handler, userHandler userhandler.Handler,
 	commentHandler commenthandler.Handler, discountHandler discounthandler.Handler, cartHandler carthandler.Handler,
 	orderHandler orderhandler.Handler, shippingHandler shippinghandler.Handler, repairHandler repairhandler.Handler, sellHandler sellhandler.Handler,
+	aclHandler aclhandler.Handler,
 
 ) Server {
 	return Server{
@@ -78,6 +81,7 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 		shippingHandler:       shippingHandler,
 		repairHandler:         repairHandler,
 		sellHandler:           sellHandler,
+		aclHandler:            aclHandler,
 	}
 }
 
@@ -127,7 +131,7 @@ func (s Server) Serve() {
 					"error_msg", errMsg,
 				)
 			}
-			
+
 			return nil
 		},
 	}))
@@ -153,6 +157,7 @@ func (s Server) Serve() {
 	s.shippingHandler.SetRoutes(s.Router)
 	s.repairHandler.SetRoutes(s.Router)
 	s.sellHandler.SetRoutes(s.Router)
+	s.aclHandler.SetRoutes(s.Router)
 	// Start server
 	address := fmt.Sprintf(":%d", s.config.HTTPServer.Port)
 	fmt.Printf("start echo server on %s\n", address)

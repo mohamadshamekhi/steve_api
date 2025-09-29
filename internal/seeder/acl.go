@@ -72,6 +72,10 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.UpdateSettings, Description: "ویرایش تنظیمات کلی سایت"},
 	{Name: key.UpdateComment, Description: "ویرایش کامنت"},
 	{Name: key.ListComment, Description: "لیست کامنت"},
+	{Name: key.ListPermissions, Description: "لیست دسترسی ها"},
+	{Name: key.ListRole, Description: "لیست نقش های کاربری"},
+	{Name: key.CreateRole, Description: "ایجاد نقش کاربری"},
+	{Name: key.UpdateRole, Description: "ویرایش نقش کاربری"},
 }
 
 func Run(permissionRepo *mongodbpermission.DB, roleRepo *mongodbrole.DB, backooficeRepo *mongodbbackoffice.DB) error {

@@ -26,6 +26,10 @@ const (
 	UpdateBackofficeUser  = "backoffice_user:update"
 	DeleteBackofficeUser  = "backoffice_user:delete"
 	AssignBackofficeRoles = "backoffice_user:assign_roles"
+	ListPermissions       = "permission:list"
+	ListRole              = "role:list"
+	CreateRole            = "role:create"
+	UpdateRole            = "role:update"
 
 	// --- مدیریت مشتریان (Users) ---
 	ListUsers       = "user:list"

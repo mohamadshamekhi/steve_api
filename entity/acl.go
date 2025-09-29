@@ -3,9 +3,9 @@ package entity
 import "github.com/oklog/ulid/v2"
 
 type Permission struct {
-	ID          string `bson:"_id"`
-	Name        string `bson:"name"`
-	Description string `bson:"description"`
+	ID          string `bson:"_id" json:"id"`
+	Name        string `bson:"name" json:"name"`
+	Description string `bson:"description" json:"description"`
 }
 
 func (p *Permission) BeforeCreate() {
@@ -14,10 +14,10 @@ func (p *Permission) BeforeCreate() {
 }
 
 type Role struct {
-	ID             string   `bson:"_id"`
-	Name           string   `bson:"name"`
-	Description    string   `bson:"description"`
-	PermissionKeys []string `bson:"permission_keys"` // بهترین روش برای این کار
+	ID             string   `bson:"_id" json:"id"`
+	Name           string   `bson:"name" json:"name"`
+	Description    string   `bson:"description" json:"description"`
+	PermissionKeys []string `bson:"permission_keys" json:"permission_keys"`
 }
 
 func (r *Role) BeforeCreate() {
