@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/abolfazlnorzad/steve/config"
+	aclhandler "github.com/abolfazlnorzad/steve/delivery/http_server/acl/handler"
 	articlehandler "github.com/abolfazlnorzad/steve/delivery/http_server/article"
 	attributehandler "github.com/abolfazlnorzad/steve/delivery/http_server/attribute"
 	attributedefinitionhandler "github.com/abolfazlnorzad/steve/delivery/http_server/attributedefinition"
@@ -20,6 +21,7 @@ import (
 	orderhandler "github.com/abolfazlnorzad/steve/delivery/http_server/order"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
 	repairhandler "github.com/abolfazlnorzad/steve/delivery/http_server/repair"
+	sellhandler "github.com/abolfazlnorzad/steve/delivery/http_server/sell"
 	shippinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/shipping"
 	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
@@ -47,13 +49,16 @@ type Server struct {
 	orderHandler          orderhandler.Handler
 	shippingHandler       shippinghandler.Handler
 	repairHandler         repairhandler.Handler
+	sellHandler           sellhandler.Handler
+	aclHandler            aclhandler.Handler
 }
 
 func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler,
 	articleHandler articlehandler.Handler, attrHandler attributehandler.Handler, attrDefHandler attributedefinitionhandler.Handler,
 	productHandler producthandler.Handler, backofficeHandler backofficehandler.Handler, userHandler userhandler.Handler,
 	commentHandler commenthandler.Handler, discountHandler discounthandler.Handler, cartHandler carthandler.Handler,
-	orderHandler orderhandler.Handler, shippingHandler shippinghandler.Handler, repairHandler repairhandler.Handler,
+	orderHandler orderhandler.Handler, shippingHandler shippinghandler.Handler, repairHandler repairhandler.Handler, sellHandler sellhandler.Handler,
+	aclHandler aclhandler.Handler,
 
 ) Server {
 	return Server{
@@ -75,6 +80,8 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 		orderHandler:          orderHandler,
 		shippingHandler:       shippingHandler,
 		repairHandler:         repairHandler,
+		sellHandler:           sellHandler,
+		aclHandler:            aclHandler,
 	}
 }
 
@@ -104,24 +111,26 @@ func (s Server) Serve() {
 		LogError:         true,
 		LogProtocol:      true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			errMsg := ""
-			if v.Error != nil {
-				errMsg = v.Error.Error()
+			if v.Error == nil {
+				errMsg := ""
+				if v.Error != nil {
+					errMsg = v.Error.Error()
+				}
+				logger.L().Info("request",
+					"request_id", v.RequestID,
+					"host", v.Host,
+					"content_length", v.ContentLength,
+					"protocol", v.Protocol,
+					"method", v.Method,
+					"latency", v.Latency,
+					"error", v.Error,
+					"remote_ip", v.RemoteIP,
+					"response_size", v.ResponseSize,
+					"uri", v.URI,
+					"status", v.Status,
+					"error_msg", errMsg,
+				)
 			}
-			logger.L().Info("request",
-				"request_id", v.RequestID,
-				"host", v.Host,
-				"content_length", v.ContentLength,
-				"protocol", v.Protocol,
-				"method", v.Method,
-				"latency", v.Latency,
-				"error", v.Error,
-				"remote_ip", v.RemoteIP,
-				"response_size", v.ResponseSize,
-				"uri", v.URI,
-				"status", v.Status,
-				"error", errMsg,
-			)
 
 			return nil
 		},
@@ -147,6 +156,8 @@ func (s Server) Serve() {
 	s.orderHandler.SetRoutes(s.Router)
 	s.shippingHandler.SetRoutes(s.Router)
 	s.repairHandler.SetRoutes(s.Router)
+	s.sellHandler.SetRoutes(s.Router)
+	s.aclHandler.SetRoutes(s.Router)
 	// Start server
 	address := fmt.Sprintf(":%d", s.config.HTTPServer.Port)
 	fmt.Printf("start echo server on %s\n", address)

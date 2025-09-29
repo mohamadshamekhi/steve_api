@@ -12,7 +12,7 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.POST("/storefront/add", h.Create, middleware.Auth(h.authSvc, h.authCfg))
 	g.GET("/storefront/my-repair", h.MyRepair, middleware.Auth(h.authSvc, h.authCfg))
 
-	g.GET("/backoffice/:id", h.Get, middleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
-	g.PATCH("/backoffice/:id", h.Update, middleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
-	g.GET("/backoffice", h.All, middleware.Auth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ListProducts))
+	g.GET("/backoffice/:id", h.Get, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
+	g.PATCH("/backoffice/:id", h.Update, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
+	g.GET("/backoffice", h.All, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ListProducts))
 }

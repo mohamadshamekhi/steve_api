@@ -2,6 +2,7 @@ package repairservice
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
@@ -46,36 +47,77 @@ func (s BackofficeService) GetRepair(ctx context.Context, req repairparam.GetRep
 	if err != nil {
 		return repairparam.GetRepairResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	bResp, bErr := s.bProvider.GetBrandsByIDs(ctx, brandparam.GetBrandsByIDsRequest{IDs: []string{r.BrandID}})
-	if bErr != nil {
-		logger.L().Error("Failed to get repair brand info", bErr)
-	}
-	pResp, pErr := s.pProvider.GetProductsByIDs(ctx, productparam.GetProductsByIDsRequest{IDs: []string{r.ProductID}})
-	if pErr != nil {
-		logger.L().Error("Failed to get repair products", pErr)
-	}
-	uResp, uErr := s.uProvider.GetUsersByIDs(ctx, userparam.GetUsersByIDsRequest{IDs: []string{r.UserID}})
-	var u userparam.UserInfo
-	for _, user := range uResp.Users {
-		u = user
-	}
-	if uErr != nil {
-		logger.L().Error("Failed to get repair users", uErr)
-	}
+	wg := sync.WaitGroup{}
+	var mu sync.Mutex
+
+	wg.Add(3)
+	user := userparam.UserInfo{}
+	product := productparam.ProductList{}
+	brand := entity.Brand{}
+
+	go func() {
+		defer wg.Done()
+
+		bResp, uErr := s.bProvider.GetBrandsByIDs(ctx, brandparam.GetBrandsByIDsRequest{IDs: []string{r.BrandID}})
+		if uErr != nil {
+			logger.L().Error("Failed to get repair brand info", uErr)
+			return
+		}
+		if b, ok := bResp.Brands[r.BrandID]; ok {
+			mu.Lock()
+			brand = b
+			mu.Unlock()
+		}
+
+	}()
+	go func() {
+		defer wg.Done()
+
+		pResp, pErr := s.pProvider.GetProductsByIDs(ctx, productparam.GetProductsByIDsRequest{IDs: []string{r.ProductID}})
+		if pErr != nil {
+			logger.L().Error("Failed to get repair products", pErr)
+			return
+		}
+		if p, ok := pResp.Products[r.ProductID]; ok {
+			mu.Lock()
+			product = p
+			mu.Unlock()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		uResp, uErr := s.uProvider.GetUsersByIDs(ctx, userparam.GetUsersByIDsRequest{IDs: []string{r.UserID}})
+		if uErr != nil {
+			logger.L().Error("Failed to get repair users", uErr)
+			return
+		}
+		for _, u := range uResp.Users {
+			if u.ID == r.UserID {
+				mu.Lock()
+				user = u
+				mu.Unlock()
+			}
+		}
+	}()
+
+	wg.Wait()
+
 	return repairparam.GetRepairResponse{RepairInfo: repairparam.RepairInfo{
 		ID: r.ID,
 		User: struct {
 			Name        string `json:"name"`
 			PhoneNumber string `json:"phone_number"`
 		}{
-			Name:        u.Name,
-			PhoneNumber: u.PhoneNumber,
+			Name:        user.Name,
+			PhoneNumber: user.PhoneNumber,
 		},
-		BrandName:   bResp.Brands[r.BrandID].Name,
-		ProductName: pResp.Products[r.ProductID].Name,
+		BrandName:   brand.Name,
+		ProductName: product.Name,
+		Galleries:   r.Galleries,
 		Description: r.Description,
 		Status:      r.Status,
-		Galleries:   r.Galleries,
 		CreatedAt:   r.CreatedAt,
 		UpdatedAt:   r.UpdatedAt,
 	}}, nil
@@ -87,39 +129,85 @@ func (s BackofficeService) GetAll(ctx context.Context, req repairparam.GetAllRep
 	if err != nil {
 		return repairparam.GetAllRepairParamResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	var userIDs []string
-	for _, repair := range resp.Repairs {
-		userIDs = append(userIDs, repair.UserID)
+
+	var (
+		userIDs    []string
+		brandIDs   []string
+		productIDs []string
+	)
+	for _, sell := range resp.Repairs {
+		userIDs = append(userIDs, sell.UserID)
+		brandIDs = append(brandIDs, sell.BrandID)
+		productIDs = append(productIDs, sell.ProductID)
 	}
-	uResp, err := s.uProvider.GetUsersByIDs(ctx, userparam.GetUsersByIDsRequest{IDs: userIDs})
-	if err != nil {
-		return repairparam.GetAllRepairParamResponse{}, err
-	}
-	var brandIDs []string
-	for _, repair := range resp.Repairs {
-		brandIDs = append(brandIDs, repair.BrandID)
-	}
-	bResp, err := s.bProvider.GetBrandsByIDs(ctx, brandparam.GetBrandsByIDsRequest{IDs: brandIDs})
-	if err != nil {
-		logger.L().Error("can't find brand- err :", err)
-	}
-	var productIDs []string
-	for _, repair := range resp.Repairs {
-		productIDs = append(productIDs, repair.ProductID)
-	}
-	pResp, err := s.pProvider.GetProductsByIDs(ctx, productparam.GetProductsByIDsRequest{IDs: productIDs})
-	if err != nil {
-		logger.L().Error("can't find product- err :", err)
-	}
-	var repairInfos []repairparam.RepairInfo
-	for _, r := range resp.Repairs {
-		var user userparam.UserInfo
-		for _, u := range uResp.Users {
-			if u.ID == r.UserID {
-				user = u
-			}
+
+	var (
+		uResp userparam.GetUsersByIDsResponse
+		bResp brandparam.GetBrandsByIDsResponse
+		pResp productparam.GetProductsByIDsResponse
+	)
+
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	// Users
+	go func() {
+		defer wg.Done()
+		res, err := s.uProvider.GetUsersByIDs(ctx, userparam.GetUsersByIDsRequest{IDs: userIDs})
+		if err != nil {
+			logger.L().Error("can't fetch users - err:", err)
+			return
 		}
-		repairInfos = append(repairInfos, repairparam.RepairInfo{
+		uResp = res
+	}()
+
+	// Brands
+	go func() {
+		defer wg.Done()
+		res, err := s.bProvider.GetBrandsByIDs(ctx, brandparam.GetBrandsByIDsRequest{IDs: brandIDs})
+		if err != nil {
+			logger.L().Error("can't fetch brands - err:", err)
+			return
+		}
+		bResp = res
+	}()
+
+	// Products
+	go func() {
+		defer wg.Done()
+		res, err := s.pProvider.GetProductsByIDs(ctx, productparam.GetProductsByIDsRequest{IDs: productIDs})
+		if err != nil {
+			logger.L().Error("can't fetch products - err:", err)
+			return
+		}
+		pResp = res
+	}()
+
+	wg.Wait()
+
+	// ساخت Map برای دسترسی سریع
+	userMap := make(map[string]userparam.UserInfo, len(uResp.Users))
+	for _, u := range uResp.Users {
+		userMap[u.ID] = u
+	}
+
+	brandMap := make(map[string]entity.Brand, len(bResp.Brands))
+	for id, b := range bResp.Brands {
+		brandMap[id] = b
+	}
+
+	productMap := make(map[string]productparam.ProductList, len(pResp.Products))
+	for id, p := range pResp.Products {
+		productMap[id] = p
+	}
+
+	repairInfo := make([]repairparam.RepairInfo, 0, len(resp.Repairs))
+	for _, r := range resp.Repairs {
+		user := userMap[r.UserID]
+		brand := brandMap[r.BrandID]
+		product := productMap[r.ProductID]
+
+		repairInfo = append(repairInfo, repairparam.RepairInfo{
 			ID: r.ID,
 			User: struct {
 				Name        string `json:"name"`
@@ -128,8 +216,8 @@ func (s BackofficeService) GetAll(ctx context.Context, req repairparam.GetAllRep
 				Name:        user.Name,
 				PhoneNumber: user.PhoneNumber,
 			},
-			BrandName:   bResp.Brands[r.BrandID].Name,
-			ProductName: pResp.Products[r.ProductID].Name,
+			BrandName:   brand.Name,
+			ProductName: product.Name,
 			Description: r.Description,
 			Status:      r.Status,
 			Galleries:   r.Galleries,
@@ -144,7 +232,7 @@ func (s BackofficeService) GetAll(ctx context.Context, req repairparam.GetAllRep
 			PageNumber: req.Pagination.GetPageNumber(),
 			Total:      uint(resp.TotalCount),
 		},
-		Repairs: repairInfos,
+		Repairs: repairInfo,
 	}, nil
 }
 

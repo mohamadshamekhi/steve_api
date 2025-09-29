@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -21,9 +20,28 @@ func NewCentralErrorHandler(translator *i18n.Translator) echo.HTTPErrorHandler {
 		}
 		lang := getLanguageFromHeader(c.Request().Header)
 		apiResponse, code := parseError(err, translator, lang)
-		logger.L().Error(fmt.Sprintf("request field : %v", err))
+
+		var richErr *richerror.RichError
+		// ابتدا چک می‌کنیم آیا خطا از نوع ساختاریافته ماست؟
+		if errors.As(err, &richErr) {
+			logFields := []any{
+				"error", err,
+				"status", code,
+				"request_id", c.Response().Header().Get(echo.HeaderXRequestID),
+				"uri", c.Request().RequestURI,
+				"method", c.Request().Method,
+			}
+
+			logger.L().Error("request failed with rich error",
+				logFields...,
+			)
+		} else {
+			// اگر نه، آن را به صورت یک خطای ساده لاگ می‌کنیم.
+			logger.L().Error("request failed with simple error", "error", err)
+		}
+
 		if err := c.JSON(code, apiResponse); err != nil {
-			logger.L().Error("failed to send json error response, error: %v\n", err)
+			logger.L().Error("failed to send json error response", "error", err)
 		}
 	}
 }

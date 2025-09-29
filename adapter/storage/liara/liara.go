@@ -60,68 +60,6 @@ func New(credential Config, mcfg mediaservice.Config) *Disk {
 	}
 }
 
-func (d *Disk) Upload(ctx context.Context, domain string, isPublic bool, file multipart.File, header *multipart.FileHeader) (mediaservice.UploadResult, error) {
-	const op = "liarastorage.Upload"
-
-	if header.Size > d.MediaCfg.MaxUploadSizeBytes {
-		return mediaservice.UploadResult{}, richerror.New(op).
-			WithKind(richerror.KindInvalid).
-			WithMessageKey("media.file_too_large").
-			WithMeta(map[string]any{"max_size_mb": d.MediaCfg.MaxUploadSizeBytes, "actual_size_bytes": header.Size})
-	}
-
-	buffer := make([]byte, 512)
-	_, err := file.Read(buffer)
-	if err != nil && err != io.EOF {
-		return mediaservice.UploadResult{}, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
-	}
-	if _, seekErr := file.Seek(0, 0); seekErr != nil {
-		return mediaservice.UploadResult{}, richerror.New(op).WithWarpError(seekErr).WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
-	}
-	mimeType := http.DetectContentType(buffer)
-	isValidMimeType := false
-	for _, allowedType := range d.MediaCfg.AllowedMimeTypes {
-		if mimeType == allowedType {
-			isValidMimeType = true
-			break
-		}
-	}
-	if !isValidMimeType {
-		return mediaservice.UploadResult{}, richerror.New(op).
-			WithKind(richerror.KindInvalid).
-			WithMessageKey("media.mime_type_not_allowed").
-			WithMeta(map[string]any{"mime_type": mimeType})
-	}
-
-	fileType := getFileTypeFromMime(mimeType)
-
-	datePath := time.Now().Format("2006/01/02")
-
-	ext := filepath.Ext(header.Filename)
-	uniqueFileName := fmt.Sprintf("%s%s", ulid.Make().String(), ext)
-
-	filePath := fmt.Sprintf("%s/%s/%s/%s", domain, fileType, datePath, uniqueFileName)
-	targetBucket := d.config.PrivateBucketName
-	if isPublic {
-		targetBucket = d.config.PublicBucketName
-	}
-	_, err = d.client.PutObject(&s3.PutObjectInput{
-		Bucket:      aws.String(targetBucket),
-		Key:         aws.String(filePath),
-		Body:        file,
-		ContentType: aws.String(mimeType),
-	})
-	if err != nil {
-		return mediaservice.UploadResult{}, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
-	}
-
-	return mediaservice.UploadResult{
-		Path:       filePath,
-		BucketName: targetBucket,
-		MimeType:   mimeType,
-	}, nil
-}
-
 func (d *Disk) GetURL(ctx context.Context, media *entity.Media) (string, error) {
 	targetBucket := d.config.PrivateBucketName
 	if media.IsPublic {
@@ -159,4 +97,91 @@ func getFileTypeFromMime(mimeType string) string {
 		return "audios"
 	}
 	return "documents"
+}
+
+func (d *Disk) Upload(
+	ctx context.Context,
+	domain string,
+	role string,
+	isPublic bool,
+	file multipart.File,
+	header *multipart.FileHeader,
+) (mediaservice.UploadResult, error) {
+	const op = "liarastorage.Upload"
+
+	policy := d.MediaCfg.GetPolicy(role)
+
+	if header.Size > policy.MaxUploadSizeBytes {
+		return mediaservice.UploadResult{}, richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("media.file_too_large").
+			WithMeta(map[string]any{
+				"max_size_bytes":    policy.MaxUploadSizeBytes,
+				"actual_size_bytes": header.Size,
+			})
+	}
+
+	buffer := make([]byte, 512)
+	_, err := file.Read(buffer)
+	if err != nil && err != io.EOF {
+		return mediaservice.UploadResult{}, richerror.New(op).
+			WithWarpError(err).
+			WithKind(richerror.KindUnexpected).
+			WithMessageKey("global.something_wrong")
+	}
+
+	_, seekErr := file.Seek(0, 0)
+	if seekErr != nil {
+		return mediaservice.UploadResult{}, richerror.New(op).
+			WithWarpError(seekErr).
+			WithKind(richerror.KindUnexpected).
+			WithMessageKey("global.something_wrong")
+	}
+
+	mimeType := http.DetectContentType(buffer)
+
+	isValidMimeType := false
+	for _, allowedType := range policy.AllowedMimeTypes {
+		if mimeType == allowedType {
+			isValidMimeType = true
+			break
+		}
+	}
+	if !isValidMimeType {
+		return mediaservice.UploadResult{}, richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("media.mime_type_not_allowed").
+			WithMeta(map[string]any{"mime_type": mimeType})
+	}
+
+	fileType := getFileTypeFromMime(mimeType)
+
+	datePath := time.Now().Format("2006/01/02")
+	ext := filepath.Ext(header.Filename)
+	uniqueFileName := fmt.Sprintf("%s%s", ulid.Make().String(), ext)
+
+	filePath := fmt.Sprintf("%s/%s/%s/%s", domain, fileType, datePath, uniqueFileName)
+
+	targetBucket := d.config.PrivateBucketName
+	if isPublic {
+		targetBucket = d.config.PublicBucketName
+	}
+
+	_, err = d.client.PutObject(&s3.PutObjectInput{
+		Bucket:      aws.String(targetBucket),
+		Key:         aws.String(filePath),
+		Body:        file,
+		ContentType: aws.String(mimeType),
+	})
+	if err != nil {
+		return mediaservice.UploadResult{}, richerror.New(op).
+			WithWarpError(err).
+			WithKind(richerror.KindUnexpected)
+	}
+
+	return mediaservice.UploadResult{
+		Path:       filePath,
+		BucketName: targetBucket,
+		MimeType:   mimeType,
+	}, nil
 }

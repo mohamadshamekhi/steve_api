@@ -269,5 +269,41 @@
   {
     "id": "order.cart_not_ready_for_checkout",
     "translation": "تغییراتی در سبد خرید شما ایجاد شده است. لطفاً موارد را بازبینی کرده و دوباره برای ثبت سفارش تلاش کنید."
+  },
+  {
+    "id": "product.publish.already_published",
+    "translation": "این محصول از قبل منتشر شده است."
+  },
+  {
+    "id": "product.publish.already_unpublished",
+    "translation": "این محصول از قبل منتشر نشده است."
+  },
+  {
+    "id": "product.publish.no_variants",
+    "translation": "امکان انتشار وجود ندارد. محصول باید حداقل یک تنوع (رنگ، اندازه و...) با قیمت و موجودی مشخص داشته باشد."
+  },
+  {
+    "id": "product.publish.no_gallery_images",
+    "translation": "امکان انتشار وجود ندارد. محصول باید حداقل یک تصویر در گالری خود داشته باشد."
+  },
+  {
+    "id": "product.publish.no_primary_image",
+    "translation": "امکان انتشار وجود ندارد. لطفاً یک تصویر را به عنوان تصویر شاخص محصول انتخاب کنید."
+  },
+  {
+    "id": "product.publish.no_category_assigned",
+    "translation": "امکان انتشار وجود ندارد. لطفاً ابتدا یک دسته‌بندی برای این محصول انتخاب کنید."
+  },
+  {
+    "id": "product.publish.category_not_found",
+    "translation": "دسته‌بندی انتخاب شده برای این محصول معتبر نیست."
+  },
+  {
+    "id": "product.publish.attribute_set_not_found",
+    "translation": "قالب مشخصات فنی مربوط به این دسته‌بندی پیدا نشد."
+  },
+  {
+    "id": "product.publish.missing_specifications",
+    "translation": "امکان انتشار وجود ندارد. لطفاً مقادیر مشخصات فنی زیر را تکمیل کنید: {{.MissingSpecs}}"
   }
 ]

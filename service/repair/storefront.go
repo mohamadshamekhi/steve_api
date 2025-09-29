@@ -2,6 +2,7 @@ package repairservice
 
 import (
 	"context"
+	"sync"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
@@ -61,39 +62,85 @@ func (s StorefrontService) GetAllRepair(ctx context.Context, req repairparam.Get
 	if err != nil {
 		return repairparam.GetAllMyRepairParamResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	var userIDs []string
-	for _, repair := range resp.Repairs {
-		userIDs = append(userIDs, repair.UserID)
+
+	var (
+		userIDs    []string
+		brandIDs   []string
+		productIDs []string
+	)
+	for _, sell := range resp.Repairs {
+		userIDs = append(userIDs, sell.UserID)
+		brandIDs = append(brandIDs, sell.BrandID)
+		productIDs = append(productIDs, sell.ProductID)
 	}
-	uResp, err := s.uProvider.GetUsersByIDs(ctx, userparam.GetUsersByIDsRequest{IDs: userIDs})
-	if err != nil {
-		return repairparam.GetAllMyRepairParamResponse{}, err
-	}
-	var brandIDs []string
-	for _, repair := range resp.Repairs {
-		brandIDs = append(brandIDs, repair.BrandID)
-	}
-	bResp, err := s.bProvider.GetBrandsByIDs(ctx, brandparam.GetBrandsByIDsRequest{IDs: brandIDs})
-	if err != nil {
-		logger.L().Error("can't find brand- err :", err)
-	}
-	var productIDs []string
-	for _, repair := range resp.Repairs {
-		productIDs = append(productIDs, repair.ProductID)
-	}
-	pResp, err := s.pProvider.GetProductsByIDs(ctx, productparam.GetProductsByIDsRequest{IDs: productIDs})
-	if err != nil {
-		logger.L().Error("can't find product- err :", err)
-	}
-	var repairInfos []repairparam.RepairInfo
-	for _, r := range resp.Repairs {
-		var user userparam.UserInfo
-		for _, u := range uResp.Users {
-			if u.ID == r.UserID {
-				user = u
-			}
+
+	var (
+		uResp userparam.GetUsersByIDsResponse
+		bResp brandparam.GetBrandsByIDsResponse
+		pResp productparam.GetProductsByIDsResponse
+	)
+
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	// Users
+	go func() {
+		defer wg.Done()
+		res, err := s.uProvider.GetUsersByIDs(ctx, userparam.GetUsersByIDsRequest{IDs: userIDs})
+		if err != nil {
+			logger.L().Error("can't fetch users - err:", err)
+			return
 		}
-		repairInfos = append(repairInfos, repairparam.RepairInfo{
+		uResp = res
+	}()
+
+	// Brands
+	go func() {
+		defer wg.Done()
+		res, err := s.bProvider.GetBrandsByIDs(ctx, brandparam.GetBrandsByIDsRequest{IDs: brandIDs})
+		if err != nil {
+			logger.L().Error("can't fetch brands - err:", err)
+			return
+		}
+		bResp = res
+	}()
+
+	// Products
+	go func() {
+		defer wg.Done()
+		res, err := s.pProvider.GetProductsByIDs(ctx, productparam.GetProductsByIDsRequest{IDs: productIDs})
+		if err != nil {
+			logger.L().Error("can't fetch products - err:", err)
+			return
+		}
+		pResp = res
+	}()
+
+	wg.Wait()
+
+	// ساخت Map برای دسترسی سریع
+	userMap := make(map[string]userparam.UserInfo, len(uResp.Users))
+	for _, u := range uResp.Users {
+		userMap[u.ID] = u
+	}
+
+	brandMap := make(map[string]entity.Brand, len(bResp.Brands))
+	for id, b := range bResp.Brands {
+		brandMap[id] = b
+	}
+
+	productMap := make(map[string]productparam.ProductList, len(pResp.Products))
+	for id, p := range pResp.Products {
+		productMap[id] = p
+	}
+
+	repairInfo := make([]repairparam.RepairInfo, 0, len(resp.Repairs))
+	for _, r := range resp.Repairs {
+		user := userMap[r.UserID]
+		brand := brandMap[r.BrandID]
+		product := productMap[r.ProductID]
+
+		repairInfo = append(repairInfo, repairparam.RepairInfo{
 			ID: r.ID,
 			User: struct {
 				Name        string `json:"name"`
@@ -102,12 +149,12 @@ func (s StorefrontService) GetAllRepair(ctx context.Context, req repairparam.Get
 				Name:        user.Name,
 				PhoneNumber: user.PhoneNumber,
 			},
-			BrandName:   bResp.Brands[r.BrandID].Name,
-			ProductName: pResp.Products[r.ProductID].Name,
+			BrandName:   brand.Name,
+			ProductName: product.Name,
 			Description: r.Description,
 			Status:      r.Status,
-			Galleries:   r.Galleries,
 			CreatedAt:   r.CreatedAt,
+			Galleries:   r.Galleries,
 			UpdatedAt:   r.UpdatedAt,
 		})
 	}
@@ -118,6 +165,6 @@ func (s StorefrontService) GetAllRepair(ctx context.Context, req repairparam.Get
 			PageNumber: req.Pagination.GetPageNumber(),
 			Total:      uint(resp.TotalCount),
 		},
-		Repairs: repairInfos,
+		Repairs: repairInfo,
 	}, nil
 }
