@@ -126,3 +126,34 @@ func (v Validator) checkProductIsExist(value any) error {
 	}
 	return nil
 }
+
+func (v Validator) storefrontCheckProductIsExist(value any) error {
+	var id string
+	switch v := value.(type) {
+	case string:
+		id = v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		id = *v
+	default:
+		return richerror.New("brandvalidator.BrandIsUnique.type_assertion").
+			WithKind(richerror.KindUnexpected).
+			WithWarpError(errors.New("unexpected type for brand name"))
+	}
+	p, err := v.repo.FindByID(context.Background(), id)
+	if err != nil {
+		var rErr *richerror.RichError
+		if errors.As(err, &rErr) {
+			if rErr.Kind() == richerror.KindNotFound {
+				return errors.New(rErr.MessageKey())
+			}
+		}
+		return err
+	}
+	if !p.IsPublished {
+		return richerror.New("productvalidator.storefrontCheckProductIsExist").WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
+	}
+	return nil
+}

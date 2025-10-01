@@ -25,6 +25,13 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 			}
 		}
 	}
+	var sortValue any
+	if filter["sort"] == "desc" {
+		sortValue = -1
+	} else {
+		sortValue = 1
+	}
+	delete(filter, "sort")
 	totalCount, err := d.collection.CountDocuments(ctx, filter)
 	if err != nil {
 		return articleservice.ListResult{}, richerror.New(op).WithWarpError(err).
@@ -33,10 +40,11 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 
 	offset := p.GetOffset()
 	limit := p.GetPageSize()
+
 	findOptions := options.Find().
 		SetSkip(int64(offset)).
 		SetLimit(int64(limit)).
-		SetSort(bson.D{{Key: "created_at", Value: -1}})
+		SetSort(bson.D{{Key: "created_at", Value: sortValue}})
 
 	cursor, err := d.collection.Find(ctx, filter, findOptions)
 	if err != nil {

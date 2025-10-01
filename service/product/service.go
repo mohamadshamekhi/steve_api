@@ -80,3 +80,24 @@ type MediaService interface {
 	DeleteMedia(ctx context.Context, req mediaparam.DeleteMediaRequest) (mediaparam.DeleteMediaResponse, error)
 	FindMediaByID(ctx context.Context, req mediaparam.GetMediaByIDRequest) (mediaparam.GetMediaByIDResponse, error)
 }
+
+type StorefrontService struct {
+	repo             ProductReader
+	mediaSvc         MediaService
+	categoryProvider CategoryProvider
+	brandProvider    BrandProvider
+}
+
+func NewStorefrontService(
+	repo ProductReader,
+	mediaSvc MediaService,
+	categoryProvider CategoryProvider,
+	brandProvider BrandProvider,
+) StorefrontService {
+	return StorefrontService{
+		repo:             repo,
+		mediaSvc:         mediaSvc,
+		categoryProvider: categoryProvider,
+		brandProvider:    brandProvider,
+	}
+}
