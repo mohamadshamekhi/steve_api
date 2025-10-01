@@ -146,8 +146,9 @@ func main() {
 	productRepo := mongodbproduct.New(mongoRepo)
 	productVld := productvalidator.New(categorySvc, backofficebrandsvc, productRepo, mediaSvc)
 	productSvc := productservice.NewBackofficeService(productRepo, mediaSvc, categorySvc, backofficebrandsvc)
+	productStorefrontSvc := productservice.NewStorefrontService(productRepo, mediaSvc, categorySvc, backofficebrandsvc)
 
-	productHandler := producthandler.NewHandler(translator, authSvc, cfg.Auth, aclSvc, productSvc, productVld)
+	productHandler := producthandler.NewHandler(translator, authSvc, cfg.Auth, aclSvc, productSvc, productStorefrontSvc, productVld)
 	backofficeValidation := backofficevalidator.New(backOfficeMongoRepo)
 	backofficeHandler := backofficehandler.New(backOfficeSvc, backofficeValidation, translator, authSvc, cfg.Auth, aclSvc)
 	userRepo := mongodbuser.New(mongoRepo)

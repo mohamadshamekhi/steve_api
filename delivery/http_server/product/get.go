@@ -29,3 +29,25 @@ func (h Handler) Get(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
+
+func (h Handler) StorefrontGetProduct(c echo.Context) error {
+	const op = "producthandler.StorefrontGetProduct"
+	id := c.Param("id")
+	req := productparam.StorefrontGetProductRequest{
+		ID: id,
+	}
+
+	if err := h.vld.ValidateStorefrontGetProductRequest(req); err != nil {
+		return err
+	}
+
+	resp, err := h.storefrontProductSvc.GetProduct(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}
