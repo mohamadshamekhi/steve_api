@@ -13,4 +13,6 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.POST("/update/:id", h.UpdateComment, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateComment))
 
 	g.GET("", h.GetAllComments, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ListComment))
+
+	g.GET("/storefront/:commentabletype/:commentableid", h.GetComments)
 }

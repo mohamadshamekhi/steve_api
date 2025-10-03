@@ -162,7 +162,8 @@ func main() {
 	commentableFetecher := fetcherservice.NewCommentableFetcher(*productRepo, *articleRepo)
 	commenterFetecher := fetcherservice.NewCommenterFetcher(*userRepo, *backOfficeMongoRepo)
 	commentSvc := commentservice.New(commentRepo, commenterFetecher, commentableFetecher)
-	commentHandler := commenthandler.New(commentSvc, translator, commentVld, authSvc, cfg.Auth, aclSvc)
+	storefrontCommentSvc := commentservice.NewStorefrontService(commentRepo, commentableFetecher, commenterFetecher)
+	commentHandler := commenthandler.New(commentSvc, translator, commentVld, authSvc, cfg.Auth, aclSvc, storefrontCommentSvc)
 	discountRepo := mongodbdiscount.New(mongoRepo)
 	discountVld := discountvalidator.New(discountRepo, categoryRepo, productRepo, userRepo)
 

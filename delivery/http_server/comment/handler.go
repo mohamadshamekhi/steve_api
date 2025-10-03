@@ -11,12 +11,13 @@ import (
 )
 
 type Handler struct {
-	svc        commentservice.Service
-	translator *i18n.Translator
-	validator  commentvalidator.Validator
-	authSvc    authservice.Service
-	authCfg    authservice.Config
-	aclSvc     aclservice.Service
+	svc           commentservice.Service
+	translator    *i18n.Translator
+	validator     commentvalidator.Validator
+	authSvc       authservice.Service
+	authCfg       authservice.Config
+	aclSvc        aclservice.Service
+	storefrontSvc commentservice.StorefrontService
 }
 
 func getLanguageFromHeader(header http.Header) string {
@@ -32,13 +33,14 @@ func New(svc commentservice.Service,
 	validator commentvalidator.Validator,
 	authSvc authservice.Service,
 	authCfg authservice.Config,
-	aclSvc aclservice.Service) Handler {
+	aclSvc aclservice.Service, storefrontSvc commentservice.StorefrontService) Handler {
 	return Handler{
-		svc:        svc,
-		translator: translator,
-		validator:  validator,
-		authSvc:    authSvc,
-		authCfg:    authCfg,
-		aclSvc:     aclSvc,
+		svc:           svc,
+		translator:    translator,
+		validator:     validator,
+		authSvc:       authSvc,
+		authCfg:       authCfg,
+		aclSvc:        aclSvc,
+		storefrontSvc: storefrontSvc,
 	}
 }
