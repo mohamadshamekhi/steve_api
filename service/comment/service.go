@@ -15,6 +15,10 @@ type ListResult struct {
 	Comments   []entity.Comment
 	TotalCount uint
 }
+type StorefrontListResult struct {
+	Comments   []commentparam.CommentWithChildren
+	TotalCount uint
+}
 
 type Repository interface {
 	FindByID(ctx context.Context, id string) (entity.Comment, error)
@@ -23,6 +27,7 @@ type Repository interface {
 
 	List(ctx context.Context, filter commonparam.FilterRequest, pagination commonparam.PaginationRequest) (ListResult, error)
 	FindManyByIDs(ctx context.Context, ids []string) (map[string]entity.Comment, error)
+	GetApprovedCommentsWithChildren(ctx context.Context, commentableType string, commentableID string, pagination commonparam.PaginationRequest) (StorefrontListResult, error)
 }
 type Service struct {
 	repo               Repository
