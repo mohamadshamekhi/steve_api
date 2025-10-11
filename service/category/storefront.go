@@ -101,8 +101,6 @@ func (s StorefrontService) GetFilterForCategory(ctx context.Context, req categor
 		}
 	}
 
-	fmt.Println("definitionsMap", definitionsMap)
-	fmt.Println("aggregatedOptions.AggregatedFilterOption", aggregatedOptions.AggregatedFilterOption)
 	finalFilters := make([]categoryparam.FilterOption, 0, len(aggregatedOptions.AggregatedFilterOption))
 	for _, option := range aggregatedOptions.AggregatedFilterOption {
 		if def, ok := definitionsMap[option.Key]; ok {

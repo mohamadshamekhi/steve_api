@@ -26,6 +26,7 @@ type ProductReader interface {
 	GetProductsByIDs(ctx context.Context, ids []string) ([]entity.Product, error)
 	FindProductsIDsByCategory(ctx context.Context, categoryID string) (string, error)
 	GetFilterableAttributes(ctx context.Context, categoryID string) ([]productparam.AggregatedFilterOption, error)
+	GetFilteredProducts(ctx context.Context, filter *productparam.StorefrontFilterProduct, p commonparam.PaginationRequest) (ListResult, error)
 }
 
 type ProductWriter interface {
