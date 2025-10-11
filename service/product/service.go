@@ -25,6 +25,7 @@ type ProductReader interface {
 	GetVariantsByIDs(ctx context.Context, variantIDs []string) (map[string]entity.Variant, error)
 	GetProductsByIDs(ctx context.Context, ids []string) ([]entity.Product, error)
 	FindProductsIDsByCategory(ctx context.Context, categoryID string) (string, error)
+	GetFilterableAttributes(ctx context.Context, categoryID string) ([]productparam.AggregatedFilterOption, error)
 }
 
 type ProductWriter interface {
