@@ -2,6 +2,7 @@ package userservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	userparam "github.com/abolfazlnorzad/steve/param/user"
@@ -12,16 +13,21 @@ import (
 )
 
 type StoreFrontService struct {
-	authSvc authservice.Service
-	config  Config
-	repo    Repository
+	authSvc       authservice.Service
+	config        Config
+	repo          Repository
+	cacheProvider CacheProvider
+}
+type CacheProvider interface {
+	AddToBlocklist(ctx context.Context, kind string, JWTID string, ExpireAt time.Time) error
 }
 
-func NewStoreFrontService(config Config, repo Repository, authSvc authservice.Service) StoreFrontService {
+func NewStoreFrontService(config Config, repo Repository, authSvc authservice.Service, cacheProvider CacheProvider) StoreFrontService {
 	return StoreFrontService{
-		config:  config,
-		repo:    repo,
-		authSvc: authSvc,
+		config:        config,
+		repo:          repo,
+		authSvc:       authSvc,
+		cacheProvider: cacheProvider,
 	}
 }
 
@@ -133,4 +139,13 @@ func (s StoreFrontService) FindAddressByID(ctx context.Context, req userparam.Fi
 		return userparam.FindAddressByIDResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	return userparam.FindAddressByIDResponse{Address: address}, nil
+}
+
+func (s StoreFrontService) Logout(ctx context.Context, req userparam.LogoutRequest) (userparam.LogoutResponse, error) {
+	const op = "userservice.Logout"
+	if err := s.cacheProvider.AddToBlocklist(ctx, req.Kind, req.JWTID, req.ExpireAt); err != nil {
+		return userparam.LogoutResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	return userparam.LogoutResponse{}, nil
 }

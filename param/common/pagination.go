@@ -29,7 +29,7 @@ func (p *PaginationRequest) GetOffset() uint {
 }
 
 func (p *PaginationRequest) GetPageSize() uint {
-	validPageSizes := []uint{1, 10, 15, 25, 50}
+	validPageSizes := []uint{1, 10, 15, 25, 50, 100, 150, 200}
 	for _, size := range validPageSizes {
 		if p.PageSize == size {
 			return size

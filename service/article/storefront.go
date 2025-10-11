@@ -28,7 +28,7 @@ func (s StorefrontService) GetSingleStorefrontArticle(ctx context.Context, req a
 	if err != nil {
 		return articleparam.GetStorefrontArticleResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	if !article.DeletedAt.IsZero() {
+	if !article.DeletedAt.IsZero() || !article.IsPublished {
 		return articleparam.GetStorefrontArticleResponse{}, richerror.New(op).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
 	}
 	res, err := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: article.MediaID})
