@@ -49,3 +49,16 @@ func (h Handler) All(c echo.Context) error {
 	return c.JSON(http.StatusOK, apiResponse)
 
 }
+
+func (h Handler) StorefrontGetProductsWithAutoDiscount(c echo.Context) error {
+	const op = "productservice.StorefrontGetProductsWithAutoDiscount"
+	resp, err := h.storefrontProductSvc.GetProductsWithAutoDiscount(c.Request().Context(), productparam.GetProductsWithAutoDiscountsRequest{})
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}

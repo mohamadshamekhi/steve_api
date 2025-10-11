@@ -18,6 +18,7 @@ type DiscountReader interface {
 	FindByCode(ctx context.Context, code string) (entity.Discount, error)
 	All(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
 	FindApplicableDiscounts(ctx context.Context, code string) ([]entity.Discount, error)
+	GetActiveAutoDiscount(ctx context.Context) ([]entity.Discount, error)
 }
 
 type DiscountWriter interface {

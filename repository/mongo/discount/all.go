@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
+	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	discountparam "github.com/abolfazlnorzad/steve/param/discount"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -94,4 +96,31 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 		Discounts:  discounts,
 		TotalCount: totalCount,
 	}, nil
+}
+
+func (d DB) GetActiveAutoDiscount(ctx context.Context) ([]entity.Discount, error) {
+	const op = "mongodbdiscount.GetActiveAutoDiscount"
+	now := time.Now()
+	codeOrClause := []bson.M{
+		{"code": bson.M{"$in": []interface{}{nil, ""}}},
+	}
+	filter := bson.M{
+		"is_active":  true,
+		"starts_at":  bson.M{"$lte": now},
+		"expires_at": bson.M{"$gte": now},
+		"$or":        codeOrClause,
+	}
+	cursor, err := d.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+	defer cursor.Close(ctx)
+
+	var discounts []entity.Discount
+	if err := cursor.All(ctx, &discounts); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+
+	return discounts, nil
+
 }

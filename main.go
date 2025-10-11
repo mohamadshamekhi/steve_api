@@ -146,9 +146,7 @@ func main() {
 	productRepo := mongodbproduct.New(mongoRepo)
 	productVld := productvalidator.New(categorySvc, backofficebrandsvc, productRepo, mediaSvc)
 	productSvc := productservice.NewBackofficeService(productRepo, mediaSvc, categorySvc, backofficebrandsvc)
-	productStorefrontSvc := productservice.NewStorefrontService(productRepo, mediaSvc, categorySvc, backofficebrandsvc)
 
-	productHandler := producthandler.NewHandler(translator, authSvc, cfg.Auth, aclSvc, productSvc, productStorefrontSvc, productVld)
 	backofficeValidation := backofficevalidator.New(backOfficeMongoRepo)
 	backofficeHandler := backofficehandler.New(backOfficeSvc, backofficeValidation, translator, authSvc, cfg.Auth, aclSvc)
 	userRepo := mongodbuser.New(mongoRepo)
@@ -171,6 +169,9 @@ func main() {
 	cartVld := cartvalidator.New(productRepo, cartRepo)
 	cartSvc := cartservice.NewStorefrontService(cartRepo, productRepo, userRepo)
 	discountbackofficeSvc := discountservice.NewBackofficeService(discountRepo, cartSvc, productSvc)
+	productStorefrontSvc := productservice.NewStorefrontService(productRepo, mediaSvc, categorySvc, backofficebrandsvc, discountbackofficeSvc)
+	productHandler := producthandler.NewHandler(translator, authSvc, cfg.Auth, aclSvc, productSvc, productStorefrontSvc, productVld)
+
 	discountHandler := discounthandler.New(discountbackofficeSvc, translator, discountVld, authSvc, cfg.Auth, aclSvc)
 	cartBackofficeSvc := cartservice.NewBackofficeService(cartRepo, userRepo, productRepo)
 	orderRepo := mongodborder.New(mongoRepo)

@@ -7,6 +7,7 @@ import (
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
 	categoryparam "github.com/abolfazlnorzad/steve/param/category"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
+	discountparam "github.com/abolfazlnorzad/steve/param/discount"
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
 )
@@ -23,6 +24,7 @@ type ProductReader interface {
 	GetProductCategoriesForCartItems(ctx context.Context, items []entity.CartItem) (map[string][]string, error)
 	GetVariantsByIDs(ctx context.Context, variantIDs []string) (map[string]entity.Variant, error)
 	GetProductsByIDs(ctx context.Context, ids []string) ([]entity.Product, error)
+	FindProductsIDsByCategory(ctx context.Context, categoryID string) (string, error)
 }
 
 type ProductWriter interface {
@@ -81,11 +83,16 @@ type MediaService interface {
 	FindMediaByID(ctx context.Context, req mediaparam.GetMediaByIDRequest) (mediaparam.GetMediaByIDResponse, error)
 }
 
+type DiscountProvider interface {
+	GetProductIDsThatHaveActiveAutoDiscount(ctx context.Context, _ discountparam.GetProductIDsThatHaveActiveAutoDiscountRequest) (discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse, error)
+}
+
 type StorefrontService struct {
 	repo             ProductReader
 	mediaSvc         MediaService
 	categoryProvider CategoryProvider
 	brandProvider    BrandProvider
+	discountProvider DiscountProvider
 }
 
 func NewStorefrontService(
@@ -93,11 +100,13 @@ func NewStorefrontService(
 	mediaSvc MediaService,
 	categoryProvider CategoryProvider,
 	brandProvider BrandProvider,
+	discountProvider DiscountProvider,
 ) StorefrontService {
 	return StorefrontService{
 		repo:             repo,
 		mediaSvc:         mediaSvc,
 		categoryProvider: categoryProvider,
 		brandProvider:    brandProvider,
+		discountProvider: discountProvider,
 	}
 }

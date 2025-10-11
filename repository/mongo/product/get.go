@@ -3,6 +3,7 @@ package mongodbproduct
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/errmsg"
@@ -232,4 +233,26 @@ func (d DB) GetProductsByIDs(ctx context.Context, ids []string) ([]entity.Produc
 	}
 
 	return products, nil
+}
+
+func (d DB) FindProductsIDsByCategory(ctx context.Context, categoryID string) (string, error) {
+	const op = "mongodbproduct.FindProductsIDsByCategory"
+	filter := bson.M{
+		"$or": []bson.M{
+			{"category_id": categoryID},
+		},
+		"deleted_at": bson.M{"$exists": false},
+	}
+
+	var p entity.Product
+	if err := d.collection.FindOne(ctx, filter).Decode(&p); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return p.ID, richerror.New(op).WithWarpError(err).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
+		}
+		fmt.Println("err ", err)
+		return p.ID, richerror.New(op).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected).
+			WithMeta(map[string]any{"category_id": categoryID})
+	}
+
+	return p.ID, nil
 }
