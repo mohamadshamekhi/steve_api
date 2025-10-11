@@ -98,3 +98,15 @@ func (s BackofficeService) GetProductsByIDs(ctx context.Context, req productpara
 	}
 	return productparam.GetProductsByIDsResponse{Products: res}, nil
 }
+
+func (s BackofficeService) FindProductWithSpecialCategory(ctx context.Context, req productparam.GetProductWithSpecialCategoryRequest) (productparam.GetProductWithSpecialCategoryResponse, error) {
+	const op = "productservice.FindProductWithSpecialCategory"
+
+	pid, err := s.repo.FindProductsIDsByCategory(ctx, req.CategoryID)
+	if err != nil {
+		return productparam.GetProductWithSpecialCategoryResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return productparam.GetProductWithSpecialCategoryResponse{
+		ProductID: pid,
+	}, nil
+}

@@ -3,8 +3,10 @@ package mongodbproduct
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/abolfazlnorzad/steve/entity"
+	productparam "github.com/abolfazlnorzad/steve/param/product"
 	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	"go.mongodb.org/mongo-driver/bson"
@@ -232,4 +234,67 @@ func (d DB) GetProductsByIDs(ctx context.Context, ids []string) ([]entity.Produc
 	}
 
 	return products, nil
+}
+
+func (d DB) FindProductsIDsByCategory(ctx context.Context, categoryID string) (string, error) {
+	const op = "mongodbproduct.FindProductsIDsByCategory"
+	filter := bson.M{
+		"$or": []bson.M{
+			{"category_id": categoryID},
+		},
+		"deleted_at": bson.M{"$exists": false},
+	}
+
+	var p entity.Product
+	if err := d.collection.FindOne(ctx, filter).Decode(&p); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return p.ID, richerror.New(op).WithWarpError(err).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
+		}
+		fmt.Println("err ", err)
+		return p.ID, richerror.New(op).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected).
+			WithMeta(map[string]any{"category_id": categoryID})
+	}
+
+	return p.ID, nil
+}
+
+func (d DB) GetFilterableAttributes(ctx context.Context, categoryID string) ([]productparam.AggregatedFilterOption, error) {
+	const op = "product.repo.GetFilterableAttributes"
+
+	pipeline := mongo.Pipeline{
+
+		bson.D{
+			{"$match", bson.M{
+				"$or": []bson.M{
+					{"category_id": categoryID},
+					{"ancestors._id": categoryID},
+				},
+				"is_published": true,
+				"deleted_at":   bson.M{"$exists": false},
+			}},
+		},
+		bson.D{
+			{"$unwind", "$specifications"},
+		},
+
+		bson.D{
+			{"$group", bson.M{
+				"_id":    "$specifications.key",
+				"values": bson.M{"$addToSet": "$specifications.value"},
+			}},
+		},
+	}
+
+	cursor, err := d.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+	defer cursor.Close(ctx)
+
+	var results []productparam.AggregatedFilterOption
+	if err := cursor.All(ctx, &results); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+
+	return results, nil
 }

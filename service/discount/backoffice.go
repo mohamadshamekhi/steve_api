@@ -22,6 +22,7 @@ type CartInfoProvider interface {
 }
 type ProductInfoProvider interface {
 	GetProductCategoriesForCartItems(ctx context.Context, req productparam.GetProductCategoriesForCartItemsRequest) (productparam.GetProductCategoriesForCartItemsResponse, error)
+	FindProductWithSpecialCategory(ctx context.Context, req productparam.GetProductWithSpecialCategoryRequest) (productparam.GetProductWithSpecialCategoryResponse, error)
 }
 
 type EnrichedCart struct {
@@ -291,4 +292,34 @@ func (s BackofficeService) UpdateDiscountUsageAfterRegisterOrder(ctx context.Con
 		}
 	}
 	return discountparam.UpdateDiscountUsageAfterRegisterOrderResponse{}, nil
+}
+
+func (s BackofficeService) GetProductIDsThatHaveActiveAutoDiscount(ctx context.Context, _ discountparam.GetProductIDsThatHaveActiveAutoDiscountRequest) (discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse, error) {
+	const op = "discountservice.GetProductIDsThatHaveActiveAutoDiscount"
+
+	autoDiscounts, err := s.repo.GetActiveAutoDiscount(ctx)
+	if err != nil {
+		return discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	discountMap := make(map[string]entity.Discount)
+
+	for _, d := range autoDiscounts {
+		for _, pid := range d.ApplicableProductIDs {
+			discountMap[pid] = d
+		}
+
+		for _, cid := range d.ApplicableCategoryIDs {
+			res, err := s.productInfoProvider.FindProductWithSpecialCategory(ctx, productparam.GetProductWithSpecialCategoryRequest{CategoryID: cid})
+			if err != nil {
+				return discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse{}, err
+			}
+			discountMap[res.ProductID] = d
+		}
+	}
+
+	return discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse{
+		DiscountMap: discountMap,
+	}, err
+
 }

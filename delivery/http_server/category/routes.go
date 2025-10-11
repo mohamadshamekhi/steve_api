@@ -14,4 +14,5 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.PATCH("/:id", h.Update, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateCategory))
 	g.DELETE("/:id", h.Delete, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.DeleteCategory))
 	g.GET("/storefront", h.GetAllStorefront)
+	g.GET("/storefront/get-filter/:category-id", h.GetFilter)
 }
