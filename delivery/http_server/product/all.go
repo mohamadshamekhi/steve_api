@@ -111,6 +111,18 @@ func (h Handler) StorefrontGetFilterableProduct(c echo.Context) error {
 			return err
 		}
 	}
+	pageNumber, nErr := strconv.ParseUint(c.QueryParam("page_number"), 10, 64)
+	if nErr != nil {
+		pageNumber = commonparam.DefaultPageNumber
+	}
+
+	pageSize, sErr := strconv.ParseUint(c.QueryParam("page_size"), 10, 64)
+	if sErr != nil {
+		pageSize = commonparam.DefaultPageSize
+	}
+
+	req.Pagination.PageSize = uint(pageSize)
+	req.Pagination.PageNumber = uint(pageNumber)
 
 	resp, err := h.storefrontProductSvc.GetFilteredProduct(c.Request().Context(), req)
 	if err != nil {

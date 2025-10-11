@@ -33,7 +33,11 @@ func (s StorefrontService) GetFilteredProduct(ctx context.Context, req productpa
 	}
 
 	return productparam.StorefrontGetAllProductResponse{
-		Pagination: commonparam.PaginationResponse{},
-		Products:   list,
+		Pagination: commonparam.PaginationResponse{
+			PageSize:   req.Pagination.GetPageSize(),
+			PageNumber: req.Pagination.GetPageNumber(),
+			Total:      uint(resp.TotalCount),
+		},
+		Products: list,
 	}, nil
 }
