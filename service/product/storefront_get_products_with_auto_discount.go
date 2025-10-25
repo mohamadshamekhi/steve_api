@@ -30,6 +30,7 @@ func (s StorefrontService) GetProductsWithAutoDiscount(ctx context.Context, req 
 			IsPublished:  prod.IsPublished,
 			IsSecondHand: prod.IsSecondHand,
 			Discount:     d,
+			Variant:      prod.Variants,
 		})
 
 	}
