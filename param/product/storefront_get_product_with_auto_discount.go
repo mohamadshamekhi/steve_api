@@ -20,7 +20,8 @@ type StorefrontProductList struct {
 	Gallery      []entity.ProductGallery `json:"gallery"`
 	IsPublished  bool                    `json:"is_published"`
 	IsSecondHand bool                    `json:"is_second_hand"`
-	Discount     entity.Discount         `json:"discount"`
+	Discount     entity.Discount         `json:"discount"` // پوینتر برای پشتیبانی از null
+	Variant      []entity.Variant        `json:"variant" bson:"variant"`
 }
 
 type GetProductWithSpecialCategoryRequest struct {

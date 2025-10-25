@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
@@ -87,40 +88,73 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 func (d DB) GetFilteredProducts(ctx context.Context, filter *productparam.StorefrontFilterProduct, p commonparam.PaginationRequest) (productservice.ListResult, error) {
 	const op = "mongodbproduct.GetFilteredProducts"
 
+	// ۱. گرفتن پایپ‌لاین پایه (که حالا خروجی‌اش درست است)
 	basePipeline, err := d.buildBasePipeline(*filter)
 	if err != nil {
 		return productservice.ListResult{}, err
 	}
 
-	offset := p.GetOffset()
-	limit := p.GetPageSize()
-	facetPipeline := []bson.D{
-		bson.D{ // این wrapper خطای کامپایلر را رفع می‌کند.
-			{"$facet", bson.M{ // از bson.M برای آرگومان‌های داخلی $facet استفاده شده است
-				// Pipeline برای شمارش کل نتایج
-				"count": bson.A{
-					bson.D{{"$count", "total_count"}},
-				},
-				// Pipeline برای داده‌های صفحه‌بندی شده
-				"data": bson.A{
-					bson.D{{"$skip", offset}},
-					bson.D{{"$limit", limit}},
-					// جایگزینی ریشه با داکیومنت اصلی محصول
-					bson.D{{"$replaceRoot", bson.D{{"newRoot", "$doc"}}}},
-				},
-			}},
-		},
+	fullPipeline := basePipeline
+
+	// ۲. اضافه کردن مرحله مرتب‌سازی **قبل** از صفحه‌بندی
+	sortStage := bson.D{}
+	if filter.OrderBy != nil {
+		switch *filter.OrderBy {
+		case "newest":
+			sortStage = bson.D{{"doc.created_at", -1}} // ارجاع به داخل doc
+		case "oldest":
+			sortStage = bson.D{{"doc.created_at", 1}} // ارجاع به داخل doc
+		case "most_expensive":
+			sortStage = bson.D{{"min_price_variant", -1}}
+		case "least_expensive":
+			sortStage = bson.D{{"min_price_variant", 1}}
+		default:
+			sortStage = bson.D{{"doc.created_at", -1}}
+		}
+	} else {
+		sortStage = bson.D{{"doc.created_at", -1}}
+	}
+	if len(sortStage) > 0 {
+		fullPipeline = append(fullPipeline, bson.D{{"$sort", sortStage}})
 	}
 
-	fullPipeline := append(basePipeline, facetPipeline...)
+	// ۳. ساختن و اضافه کردن پایپ‌لاین $facet
+	offset := p.GetOffset()
+	limit := p.GetPageSize()
+	facetPipeline := bson.D{
+		{"$facet", bson.M{
+			"count": bson.A{
+				bson.D{{"$count", "total_count"}},
+			},
+			"data": bson.A{
+				bson.D{{"$skip", offset}},
+				bson.D{{"$limit", limit}},
+				// **این بخش کلیدی و اصلاح شده است**
+				// ما سند نهایی را با ادغام doc، _id و ورینت‌های فیلتر شده می‌سازیم
+				bson.D{{"$replaceRoot", bson.D{
+					{"newRoot", bson.D{
+						{"$mergeObjects", bson.A{
+							"$doc", // تمام فیلدهای اصلی محصول
+							bson.M{
+								"_id":      "$_id",               // _id را اضافه می‌کنیم
+								"variants": "$filtered_variants", // فیلد variants را با ورینت‌های فیلتر شده بازنویسی می‌کنیم
+							},
+						}},
+					}},
+				}}},
+			},
+		}},
+	}
+	fullPipeline = append(fullPipeline, facetPipeline)
 
+	// ۴. اجرای پایپ‌لاین
 	cursor, err := d.collection.Aggregate(ctx, fullPipeline)
 	if err != nil {
 		return productservice.ListResult{}, richerror.New(op).WithWarpError(err)
 	}
 	defer cursor.Close(ctx)
 
-	// ۴. دیکد کردن نتایج $facet
+	// ۵. دیکد کردن نتایج (بدون تغییر)
 	var facetResults []struct {
 		Count []struct {
 			TotalCount int64 `bson:"total_count"`
@@ -132,10 +166,14 @@ func (d DB) GetFilteredProducts(ctx context.Context, filter *productparam.Storef
 		return productservice.ListResult{}, richerror.New(op).WithWarpError(err)
 	}
 
+	// ممکن است هیچ نتیجه‌ای وجود نداشته باشد
+	if len(facetResults) == 0 {
+		return productservice.ListResult{Products: []entity.Product{}, TotalCount: 0}, nil
+	}
+
 	response := productservice.ListResult{
 		Products: facetResults[0].Data,
 	}
-
 	if len(facetResults[0].Count) > 0 {
 		response.TotalCount = facetResults[0].Count[0].TotalCount
 	}
@@ -146,24 +184,20 @@ func (d DB) GetFilteredProducts(ctx context.Context, filter *productparam.Storef
 func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bson.D, error) {
 	pipeline := []bson.D{}
 
-	// ۱. Match اولیه (فیلدهای سطح بالا)
+	// ========== مرحله ۱: Match اولیه (فیلدهای سطح بالای محصول) ==========
 	initialMatch := bson.D{{"is_published", true}}
-
 	if filter.BrandID != nil && *filter.BrandID != "" {
 		initialMatch = append(initialMatch, bson.E{"brand_id", *filter.BrandID})
 	}
 	if filter.CategoryID != nil && *filter.CategoryID != "" {
 		initialMatch = append(initialMatch, bson.E{"category_id", *filter.CategoryID})
 	}
-
 	pipeline = append(pipeline, bson.D{{"$match", initialMatch}})
 
-	// ۲. فاز Variants (Unwind و Match)
+	// ========== مرحله ۲: فیلتر کردن بر اساس Variants ==========
 	pipeline = append(pipeline, bson.D{{"$unwind", "$variants"}})
 
 	variantMatch := bson.D{}
-
-	// فیلتر قیمت
 	priceMatch := bson.A{}
 	if filter.MinPrice != nil {
 		priceMatch = append(priceMatch, bson.D{{"variants.price", bson.D{{"$gte", *filter.MinPrice}}}})
@@ -174,8 +208,6 @@ func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bs
 	if len(priceMatch) > 0 {
 		variantMatch = append(variantMatch, bson.E{"$and", priceMatch})
 	}
-
-	// فیلتر موجودی
 	if filter.IsExist != nil {
 		if *filter.IsExist {
 			variantMatch = append(variantMatch, bson.E{"variants.quantity", bson.D{{"$gt", 0}}})
@@ -183,52 +215,34 @@ func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bs
 			variantMatch = append(variantMatch, bson.E{"variants.quantity", 0})
 		}
 	}
-
-	// --- FIX: فیلتر رنگ در variant_attribute ---
 	if filter.Color != nil && *filter.Color != "" {
-		// از $elemMatch استفاده می‌کنیم تا درون آرایه variants.variant_attribute به دنبال مقدار رنگ بگردیم.
 		variantMatch = append(variantMatch, bson.E{"variants.variant_attribute", bson.D{
-			{"$elemMatch", bson.D{
-				// فرض می‌کنیم مقدار رنگ مستقیماً در فیلد "value" درون یکی از المنت‌های variant_attribute قرار دارد.
-				// (مثلاً {key: "color", value: "red"} یا {key: "128gig", value: "red"})
-				{"value", *filter.Color},
-			}},
+			{"$elemMatch", bson.D{{"value", *filter.Color}}},
 		}})
 	}
-	// --- END FIX ---
-
 	if len(variantMatch) > 0 {
 		pipeline = append(pipeline, bson.D{{"$match", variantMatch}})
 	}
 
-	// ۳. فاز فیلترینگ داینامیک Specifications
+	// ========== مرحله ۳: فیلتر کردن بر اساس Specifications ==========
 	if len(filter.Filter) > 0 {
 		specMatches := bson.A{}
 		for key, val := range filter.Filter {
 			specMatches = append(specMatches, bson.D{
 				{"specifications", bson.D{
-					{"$elemMatch", bson.D{
-						{"key", key},
-						{"value", val},
-					}},
+					{"$elemMatch", bson.D{{"key", key}, {"value", val}}},
 				}},
 			})
 		}
-
-		if len(specMatches) > 0 {
-			pipeline = append(pipeline, bson.D{{"$match", bson.D{{"$and", specMatches}}}})
-		}
+		pipeline = append(pipeline, bson.D{{"$match", bson.D{{"$and", specMatches}}}})
 	}
 
-	// --- ۴. فاز Group (اصلاح شده) ---
-	// مشکل دیکدینگ را با بازسازی دستی داکیومنت در اینجا حل می‌کنیم تا فیلد variants خراب شده وارد "doc" نشود.
+	// ========== مرحله ۴: Group (جمع‌آوری مجدد محصول) ==========
 	pipeline = append(pipeline, bson.D{{"$group", bson.D{
 		{"_id", "$_id"},
-		// محاسبه کمترین قیمت ورینت‌های فیلترشده (برای مرتب‌سازی)
+		{"filtered_variants", bson.D{{"$push", "$variants"}}},
 		{"min_price_variant", bson.D{{"$min", "$variants.price"}}},
-		// نگه‌داشتن فیلدهای مورد نیاز محصول به صورت مجزا به جای استفاده از $$ROOT
 		{"doc", bson.D{{"$first", bson.M{
-			"_id":            "$_id",
 			"name":           "$name",
 			"en_title":       "$en_title",
 			"slug":           "$slug",
@@ -242,32 +256,47 @@ func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bs
 			"created_at":     "$created_at",
 			"updated_at":     "$updated_at",
 			"deleted_at":     "$deleted_at",
-			// مهم: فیلد "variants" را عمداً از اینجا حذف می‌کنیم
-		}}},
-		}}}})
+		}}}},
+	}}})
 
-	// --- ۵. فاز Sort (مرتب‌سازی نهایی) ---
-	sortStage := bson.D{}
-	if filter.OrderBy != nil {
-		if filter.OrderBy != nil {
-			switch *filter.OrderBy {
-			case "newest":
-				sortStage = bson.D{{"doc.created_at", -1}}
-			case "oldest":
-				sortStage = bson.D{{"doc.created_at", 1}}
-			case "most_expensive":
-				sortStage = bson.D{{"min_price_variant", -1}} // گران‌ترین
-			case "least_expensive":
-				sortStage = bson.D{{"min_price_variant", 1}} // ارزان‌ترین
-			default:
-				sortStage = bson.D{{"doc.created_at", -1}}
-			}
-		} else {
-			sortStage = bson.D{{"doc.created_at", -1}}
-		}
-		pipeline = append(pipeline, bson.D{{"$sort", sortStage}})
+	// ========== مرحله ۵: Lookup برای پیدا کردن تخفیف‌های مرتبط ==========
+	now := time.Now()
+	pipeline = append(pipeline, bson.D{
+		{"$lookup", bson.M{
+			"from": "discounts", // نام کالکشن تخفیف‌های شما
+			"let": bson.M{
+				"product_id":  "$_id",
+				"category_id": "$doc.category_id",
+			},
+			"pipeline": bson.A{
+				bson.M{"$match": bson.M{
+					"$expr": bson.M{
+						"$and": bson.A{
+							// شرط ۱: تخفیف فعال، در بازه زمانی معتبر و دارای ظرفیت استفاده باشد
+							bson.M{"$eq": bson.A{"$is_active", true}},
+							bson.M{"$lte": bson.A{"$starts_at", now}},
+							bson.M{"$gte": bson.A{"$expires_at", now}},
+							bson.M{"$gt": bson.A{"$total_usage_limit", "$usage_count"}},
 
-		return pipeline, nil
-	}
+							// شرط ۲: تخفیف قابل اعمال بر روی این محصول باشد (عمومی یا خاص)
+							bson.M{"$or": bson.A{
+								// حالت الف: تخفیف عمومی است (به هیچ محصول یا دسته‌بندی خاصی محدود نشده)
+								bson.M{"$and": bson.A{
+									bson.M{"$eq": bson.A{bson.M{"$ifNull": bson.A{"$applicable_product_ids", bson.A{}}}, bson.A{}}},
+									bson.M{"$eq": bson.A{bson.M{"$ifNull": bson.A{"$applicable_category_ids", bson.A{}}}, bson.A{}}},
+								}},
+								// حالت ب: ID محصول در لیست محصولات مجاز تخفیف قرار دارد
+								bson.M{"$in": bson.A{"$$product_id", bson.M{"$ifNull": bson.A{"$applicable_product_ids", bson.A{}}}}},
+								// حالت ج: ID دسته‌بندی محصول در لیست دسته‌بندی‌های مجاز تخفیف قرار دارد
+								bson.M{"$in": bson.A{"$$category_id", bson.M{"$ifNull": bson.A{"$applicable_category_ids", bson.A{}}}}},
+							}},
+						},
+					},
+				}},
+			},
+			"as": "discounts", // نتیجه در فیلد 'discounts' ذخیره می‌شود
+		}},
+	})
+
 	return pipeline, nil
 }
