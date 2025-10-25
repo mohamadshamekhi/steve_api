@@ -1,6 +1,7 @@
 package producthandler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -52,6 +53,7 @@ func (h Handler) All(c echo.Context) error {
 
 func (h Handler) StorefrontGetProductsWithAutoDiscount(c echo.Context) error {
 	const op = "productservice.StorefrontGetProductsWithAutoDiscount"
+	fmt.Println("op", op)
 	resp, err := h.storefrontProductSvc.GetProductsWithAutoDiscount(c.Request().Context(), productparam.GetProductsWithAutoDiscountsRequest{})
 	if err != nil {
 		return err
