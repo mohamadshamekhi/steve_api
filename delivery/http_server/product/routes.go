@@ -29,6 +29,7 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 
 	g.GET("/storefront/with-auto-discount", h.StorefrontGetProductsWithAutoDiscount)
 	g.GET("/storefront", h.StorefrontGetFilterableProduct)
+	g.GET("/storefront/get-mobile-list-wth-main-info", h.GetMobileList)
 	g.GET("/storefront/:id", h.StorefrontGetProduct)
 
 }
