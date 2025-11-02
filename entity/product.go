@@ -20,10 +20,10 @@ type Product struct {
 
 	Variants       []Variant       `bson:"variants"`
 	Specifications []Specification `bson:"specifications,omitempty"`
-
-	CreatedAt time.Time `bson:"created_at"`
-	UpdatedAt time.Time `bson:"updated_at"`
-	DeletedAt time.Time `bson:"deleted_at,omitempty"`
+	SalesCount     uint            `bson:"sales_count"`
+	CreatedAt      time.Time       `bson:"created_at"`
+	UpdatedAt      time.Time       `bson:"updated_at"`
+	DeletedAt      time.Time       `bson:"deleted_at,omitempty"`
 }
 type ProductGallery struct {
 	MediaID   string `bson:"media_id" json:"media_id"`
