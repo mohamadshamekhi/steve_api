@@ -28,6 +28,7 @@ type ProductReader interface {
 	GetFilterableAttributes(ctx context.Context, categoryID string) ([]productparam.AggregatedFilterOption, error)
 	GetFilteredProducts(ctx context.Context, filter *productparam.StorefrontFilterProduct, p commonparam.PaginationRequest) (ListResult, error)
 	GetFilterMobileListWithMainInfo(ctx context.Context, name *string, brandID *string) ([]entity.Product, error)
+	GetMinAdnMaxPriceOfProductWithSpecialCategory(ctx context.Context, categoryID string) (uint64, uint64, error)
 }
 
 type ProductWriter interface {

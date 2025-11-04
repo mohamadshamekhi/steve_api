@@ -16,6 +16,7 @@ import (
 	carthandler "github.com/abolfazlnorzad/steve/delivery/http_server/cart"
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
 	commenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/comment"
+	contactushandler "github.com/abolfazlnorzad/steve/delivery/http_server/contactus"
 	discounthandler "github.com/abolfazlnorzad/steve/delivery/http_server/discount"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	orderhandler "github.com/abolfazlnorzad/steve/delivery/http_server/order"
@@ -37,6 +38,7 @@ import (
 	mongodbcart "github.com/abolfazlnorzad/steve/repository/mongo/cart"
 	mongodbcategory "github.com/abolfazlnorzad/steve/repository/mongo/category"
 	mongodbcomment "github.com/abolfazlnorzad/steve/repository/mongo/comment"
+	mongodbcontactus "github.com/abolfazlnorzad/steve/repository/mongo/contactus"
 	mongodbdiscount "github.com/abolfazlnorzad/steve/repository/mongo/discount"
 	mongodbmedia "github.com/abolfazlnorzad/steve/repository/mongo/media"
 	mongodborder "github.com/abolfazlnorzad/steve/repository/mongo/order"
@@ -57,6 +59,7 @@ import (
 	cartservice "github.com/abolfazlnorzad/steve/service/cart"
 	categoryservice "github.com/abolfazlnorzad/steve/service/category"
 	commentservice "github.com/abolfazlnorzad/steve/service/comment"
+	contactusservice "github.com/abolfazlnorzad/steve/service/contactus"
 	discountservice "github.com/abolfazlnorzad/steve/service/discount"
 	fetcherservice "github.com/abolfazlnorzad/steve/service/fetcher"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
@@ -75,6 +78,7 @@ import (
 	cartvalidator "github.com/abolfazlnorzad/steve/validator/cart"
 	categoryvalidator "github.com/abolfazlnorzad/steve/validator/category"
 	commentvalidator "github.com/abolfazlnorzad/steve/validator/comment"
+	contactusvalidator "github.com/abolfazlnorzad/steve/validator/contactus"
 	discountvalidator "github.com/abolfazlnorzad/steve/validator/discount"
 	mediavalidator "github.com/abolfazlnorzad/steve/validator/media"
 	ordervalidator "github.com/abolfazlnorzad/steve/validator/order"
@@ -203,8 +207,13 @@ func main() {
 	roleSvc := roleservice.New(roleRepo, permissionSvc)
 	aclHandler := aclhandler.New(permissionSvc, roleSvc, translator, authSvc, cfg.Auth, aclSvc)
 
+	contactRepo := mongodbcontactus.New(mongoRepo)
+	contactVld := contactusvalidator.New()
+	storefrontContactUsSvc := contactusservice.NewStorefrontService(contactRepo)
+	contactHandler := contactushandler.New(storefrontContactUsSvc, translator, contactVld, authSvc, cfg.Auth, aclSvc)
+
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
-		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler)
+		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler)
 	server.Serve()
 }
