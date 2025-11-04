@@ -210,7 +210,8 @@ func main() {
 	contactRepo := mongodbcontactus.New(mongoRepo)
 	contactVld := contactusvalidator.New()
 	storefrontContactUsSvc := contactusservice.NewStorefrontService(contactRepo)
-	contactHandler := contactushandler.New(storefrontContactUsSvc, translator, contactVld, authSvc, cfg.Auth, aclSvc)
+	backofficeContactUsSvc := contactusservice.NewBackofficeService(contactRepo)
+	contactHandler := contactushandler.New(storefrontContactUsSvc, translator, contactVld, authSvc, cfg.Auth, aclSvc, backofficeContactUsSvc)
 
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,

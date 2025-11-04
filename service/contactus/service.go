@@ -4,15 +4,16 @@ import (
 	"context"
 
 	"github.com/abolfazlnorzad/steve/entity"
+	commonparam "github.com/abolfazlnorzad/steve/param/common"
 )
 
 type ListResult struct {
-	Orders     []entity.Order
+	Contacts   []entity.ContactUs
 	TotalCount int64
 }
 
 type ContactUsReader interface {
-	//GetAll(ctx context.Context, f orderparam.BackofficeFilterOrder, p commonparam.PaginationRequest) (ListResult, error)
+	All(ctx context.Context, p commonparam.PaginationRequest) (ListResult, error)
 }
 
 type ContactUsWriter interface {
