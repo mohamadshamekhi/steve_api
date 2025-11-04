@@ -337,3 +337,42 @@ func (d DB) GetFilterMobileListWithMainInfo(ctx context.Context, name *string, b
 
 	return products, nil
 }
+
+func (d DB) GetMinAdnMaxPriceOfProductWithSpecialCategory(ctx context.Context, categoryID string) (uint64, uint64, error) {
+	const op = "productrepo.GetMinAdnMaxPriceOfProductWithSpecialCategory"
+
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{
+			"category_id":  categoryID,
+			"deleted_at":   bson.M{"$exists": false},
+			"is_published": true,
+			"variants":     bson.M{"$exists": true, "$ne": bson.A{}},
+		}}},
+		{{Key: "$unwind", Value: "$variants"}},
+		{{Key: "$group", Value: bson.M{
+			"_id": nil,
+			"min": bson.M{"$min": "$variants.price"},
+			"max": bson.M{"$max": "$variants.price"},
+		}}},
+	}
+
+	cur, err := d.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0, 0, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
+	}
+	defer cur.Close(ctx)
+
+	if !cur.Next(ctx) {
+		return 0, 0, nil
+	}
+
+	var res struct {
+		Min int64 `bson:"min"`
+		Max int64 `bson:"max"`
+	}
+	if err := cur.Decode(&res); err != nil {
+		return 0, 0, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
+	}
+
+	return uint64(res.Min), uint64(res.Max), nil
+}

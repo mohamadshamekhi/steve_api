@@ -22,6 +22,7 @@ type StorefrontService struct {
 
 type ProductProvider interface {
 	GetFilterableAttributes(ctx context.Context, req productparam.GetFilterForCategoryRequest) (productparam.GetFilterForCategoryResponse, error)
+	GetMinAdnMaxPriceOfProductWithSpecialCategory(ctx context.Context, req productparam.GetMinAdnMaxPriceOfProductWithSpecialCategoryRequest) (productparam.GetMinAdnMaxPriceOfProductWithSpecialCategoryResponse, error)
 }
 
 func NewStorefrontService(repo CategoryReader, mediaSvc MediaService, AttrProvider AttrProvider, productProvider ProductProvider) StorefrontService {
@@ -112,8 +113,14 @@ func (s StorefrontService) GetFilterForCategory(ctx context.Context, req categor
 			})
 		}
 	}
+	minMaxRes, err := s.productProvider.GetMinAdnMaxPriceOfProductWithSpecialCategory(ctx, productparam.GetMinAdnMaxPriceOfProductWithSpecialCategoryRequest{CategoryID: category.ID})
+	if err != nil {
+		return categoryparam.GetFilterForCategoryResponse{}, richerror.New(op).WithWarpError(err)
+	}
 
 	return categoryparam.GetFilterForCategoryResponse{
 		FilterOption: finalFilters,
+		MaxPrice:     minMaxRes.MaxPrice,
+		MinPrice:     minMaxRes.MinPrice,
 	}, nil
 }
