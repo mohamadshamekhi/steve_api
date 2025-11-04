@@ -7,23 +7,23 @@ import (
 )
 
 type Product struct {
-	ID           string           `bson:"_id"`
-	Name         string           `bson:"name"`
-	ENTitle      string           `bson:"en_title"`
-	Slug         string           `bson:"slug"`
-	BrandID      string           `bson:"brand_id"`
-	CategoryID   string           `bson:"category_id"`
-	Gallery      []ProductGallery `bson:"gallery"`
-	IsPublished  bool             `bson:"is_published"`
-	IsSecondHand bool             `bson:"is_second_hand"`
-	Description  string           `bson:"description"`
-
-	Variants       []Variant       `bson:"variants"`
-	Specifications []Specification `bson:"specifications,omitempty"`
-	SalesCount     uint            `bson:"sales_count"`
-	CreatedAt      time.Time       `bson:"created_at"`
-	UpdatedAt      time.Time       `bson:"updated_at"`
-	DeletedAt      time.Time       `bson:"deleted_at,omitempty"`
+	ID             string           `bson:"_id"`
+	Name           string           `bson:"name"`
+	ENTitle        string           `bson:"en_title"`
+	Slug           string           `bson:"slug"`
+	BrandID        string           `bson:"brand_id"`
+	CategoryID     string           `bson:"category_id"`
+	Gallery        []ProductGallery `bson:"gallery"`
+	IsPublished    bool             `bson:"is_published"`
+	IsSecondHand   bool             `bson:"is_second_hand"`
+	Description    string           `bson:"description"`
+	Rating         float64          `bson:"rating"`
+	Variants       []Variant        `bson:"variants"`
+	Specifications []Specification  `bson:"specifications,omitempty"`
+	SalesCount     uint             `bson:"sales_count"`
+	CreatedAt      time.Time        `bson:"created_at"`
+	UpdatedAt      time.Time        `bson:"updated_at"`
+	DeletedAt      time.Time        `bson:"deleted_at,omitempty"`
 }
 type ProductGallery struct {
 	MediaID   string `bson:"media_id" json:"media_id"`
