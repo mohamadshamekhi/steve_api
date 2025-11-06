@@ -7,4 +7,5 @@ type UpsertRatingRequest struct {
 }
 
 type UpsertRatingResponse struct {
+	AverageRating float64 `json:"average_rating"`
 }

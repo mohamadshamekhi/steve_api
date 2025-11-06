@@ -66,3 +66,29 @@ func (d DB) UpdateQuantity(ctx context.Context, productID string, variant entity
 
 	return nil
 }
+
+func (d DB) UpdateProductAvrRating(ctx context.Context, ProductID string, AverageRating float64) error {
+	const op = "mongodbproduct.UpdateProductAvrRating"
+	filter := bson.M{
+		"_id": ProductID,
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"rating": AverageRating,
+		},
+	}
+
+	_, err := d.collection.UpdateOne(
+		ctx,
+		filter,
+		update,
+		options.Update().SetUpsert(false),
+	)
+
+	if err != nil {
+		return richerror.New(op).WithWarpError(err)
+	}
+
+	return nil
+}

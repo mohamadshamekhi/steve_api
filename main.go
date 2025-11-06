@@ -218,7 +218,7 @@ func main() {
 	contactHandler := contactushandler.New(storefrontContactUsSvc, translator, contactVld, authSvc, cfg.Auth, aclSvc, backofficeContactUsSvc)
 	ratingRepo := mongodbrating.New(mongoRepo)
 	ratingVld := ratingvalidator.New()
-	ratingSvc := ratingservice.New(ratingRepo)
+	ratingSvc := ratingservice.New(ratingRepo, productStorefrontSvc)
 	ratingHandler := ratinghandler.New(ratingSvc, translator, ratingVld, authSvc, cfg.Auth, aclSvc)
 
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
