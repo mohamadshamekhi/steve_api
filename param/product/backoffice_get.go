@@ -26,6 +26,7 @@ type ProductInfo struct {
 	IsPublished  bool                       `json:"is_published"`
 	IsSecondHand bool                       `json:"is_second_hand"`
 	Description  string                     `json:"description"`
+	Rating       float64                    `json:"rating"`
 
 	Variants       []entity.Variant       `json:"variants"`
 	Specifications []entity.Specification `json:"specifications,omitempty"`

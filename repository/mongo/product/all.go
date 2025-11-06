@@ -252,6 +252,7 @@ func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bs
 			"is_second_hand": "$is_second_hand",
 			"description":    "$description",
 			"specifications": "$specifications",
+			"rating":         "$rating",
 			"sales_count":    "$sales_count",
 			"created_at":     "$created_at",
 			"updated_at":     "$updated_at",
