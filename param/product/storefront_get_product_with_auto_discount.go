@@ -18,6 +18,7 @@ type StorefrontProductList struct {
 	ENTitle      string                  `json:"en_title"`
 	Slug         string                  `json:"slug"`
 	Gallery      []entity.ProductGallery `json:"gallery"`
+	Rating       float64                 `json:"rating"`
 	IsPublished  bool                    `json:"is_published"`
 	IsSecondHand bool                    `json:"is_second_hand"`
 	Discount     entity.Discount         `json:"discount"` // پوینتر برای پشتیبانی از null

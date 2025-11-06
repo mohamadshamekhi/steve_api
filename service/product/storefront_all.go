@@ -30,6 +30,7 @@ func (s StorefrontService) GetFilteredProduct(ctx context.Context, req productpa
 			IsSecondHand: product.IsSecondHand,
 			Discount:     entity.Discount{},
 			Variant:      product.Variants,
+			Rating:       product.Rating,
 		})
 	}
 

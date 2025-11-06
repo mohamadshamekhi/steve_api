@@ -21,6 +21,7 @@ import (
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	orderhandler "github.com/abolfazlnorzad/steve/delivery/http_server/order"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
+	ratinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/rating"
 	repairhandler "github.com/abolfazlnorzad/steve/delivery/http_server/repair"
 	sellhandler "github.com/abolfazlnorzad/steve/delivery/http_server/sell"
 	shippinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/shipping"
@@ -43,6 +44,7 @@ import (
 	mongodbmedia "github.com/abolfazlnorzad/steve/repository/mongo/media"
 	mongodborder "github.com/abolfazlnorzad/steve/repository/mongo/order"
 	mongodbproduct "github.com/abolfazlnorzad/steve/repository/mongo/product"
+	mongodbrating "github.com/abolfazlnorzad/steve/repository/mongo/rating"
 	mongodbrepair "github.com/abolfazlnorzad/steve/repository/mongo/repair"
 	mongodbsell "github.com/abolfazlnorzad/steve/repository/mongo/sell"
 	mongodbshipping "github.com/abolfazlnorzad/steve/repository/mongo/shipping"
@@ -65,6 +67,7 @@ import (
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 	orderservice "github.com/abolfazlnorzad/steve/service/order"
 	productservice "github.com/abolfazlnorzad/steve/service/product"
+	ratingservice "github.com/abolfazlnorzad/steve/service/rating"
 	repairservice "github.com/abolfazlnorzad/steve/service/repair"
 	sellservice "github.com/abolfazlnorzad/steve/service/sell"
 	settingservice "github.com/abolfazlnorzad/steve/service/setting"
@@ -83,6 +86,7 @@ import (
 	mediavalidator "github.com/abolfazlnorzad/steve/validator/media"
 	ordervalidator "github.com/abolfazlnorzad/steve/validator/order"
 	productvalidator "github.com/abolfazlnorzad/steve/validator/product"
+	ratingvalidator "github.com/abolfazlnorzad/steve/validator/rating"
 	repairvalidator "github.com/abolfazlnorzad/steve/validator/repair"
 	sellvalidator "github.com/abolfazlnorzad/steve/validator/sell"
 	settingvalidator "github.com/abolfazlnorzad/steve/validator/setting"
@@ -212,9 +216,13 @@ func main() {
 	storefrontContactUsSvc := contactusservice.NewStorefrontService(contactRepo)
 	backofficeContactUsSvc := contactusservice.NewBackofficeService(contactRepo)
 	contactHandler := contactushandler.New(storefrontContactUsSvc, translator, contactVld, authSvc, cfg.Auth, aclSvc, backofficeContactUsSvc)
+	ratingRepo := mongodbrating.New(mongoRepo)
+	ratingVld := ratingvalidator.New()
+	ratingSvc := ratingservice.New(ratingRepo, productStorefrontSvc)
+	ratingHandler := ratinghandler.New(ratingSvc, translator, ratingVld, authSvc, cfg.Auth, aclSvc)
 
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
-		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler)
+		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler)
 	server.Serve()
 }
