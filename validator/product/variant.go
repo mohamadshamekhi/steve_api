@@ -17,7 +17,7 @@ func (v Validator) ValidateAddVariantRequest(req productparam.AddVariantRequest)
 		validation.Field(&req.Value, validation.Required.Error("validation.required")),
 		validation.Field(&req.Label, validation.Required.Error("validation.required")),
 		validation.Field(&req.Warranty, validation.Required.Error("validation.required")),
-		validation.Field(&req.Quantity, validation.Required.Error("validation.required")),
+		validation.Field(&req.Quantity, validation.NotNil.Error("validation.required")),
 		validation.Field(&req.ProductID, validation.Required.Error("validation.required"), validation.By(v.checkProductIsExist)),
 	); err != nil {
 		var vErrs validation.Errors
@@ -43,7 +43,7 @@ func (v Validator) ValidateUpdateVariantRequest(req productparam.UpdateVariantRe
 		validation.Field(&req.Value, validation.When(req.Value != nil, validation.Required.Error("validation.required"))),
 		validation.Field(&req.Label, validation.When(req.Label != nil, validation.Required.Error("validation.required"))),
 		validation.Field(&req.Warranty, validation.When(req.Warranty != nil, validation.Required.Error("validation.required"))),
-		validation.Field(&req.Quantity, validation.When(req.Quantity != nil, validation.Required.Error("validation.required"))),
+		validation.Field(&req.Quantity, validation.When(req.Quantity != nil, validation.NotNil.Error("validation.required"))),
 		validation.Field(&req.ProductID, validation.Required.Error("validation.required"), validation.By(v.checkProductIsExist)),
 		validation.Field(&req.VariantID, validation.Required.Error("validation.required")),
 	); err != nil {
