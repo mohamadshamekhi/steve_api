@@ -70,6 +70,7 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 		"type":              1,
 		"value":             1,
 		"starts_at":         1,
+		"is_active":         1,
 		"expires_at":        1,
 		"total_usage_limit": 1,
 		"usage_count":       1,
