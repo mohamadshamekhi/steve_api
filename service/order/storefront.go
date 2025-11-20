@@ -309,7 +309,7 @@ func (s *StoreFrontService) calculateFinalPrice(ctx context.Context, cart *entit
 		var bestAutoDiscount *entity.Discount = nil
 		for _, autoDiscount := range autoDiscounts {
 			if s.isDiscountApplicableToItem(autoDiscount, item.CartItem, productCategories.CategoryIDs[item.ProductID], cart.UserID) {
-				currentDiscountAmount := autoDiscount.CalculateAmount(uint(itemBasePrice))
+				currentDiscountAmount := autoDiscount.CalculateAmount(uint(itemBasePrice), item.VariantID)
 				if currentDiscountAmount > uint(bestAutoDiscountAmount) {
 					bestAutoDiscountAmount = int64(currentDiscountAmount)
 					bestAutoDiscount = &autoDiscount
@@ -328,7 +328,7 @@ func (s *StoreFrontService) calculateFinalPrice(ctx context.Context, cart *entit
 		if coupon != nil {
 			if s.isDiscountApplicableToItem(*coupon, item.CartItem, productCategories.CategoryIDs[item.ProductID], cart.UserID) {
 				priceForItemCoupon := itemBasePrice - itemTotalDiscount
-				couponAmountOnItem := coupon.CalculateAmount(uint(priceForItemCoupon))
+				couponAmountOnItem := coupon.CalculateAmount(uint(priceForItemCoupon), item.VariantID)
 
 				itemTotalDiscount += int64(couponAmountOnItem)
 				ad := appliedDiscountsMap[coupon.ID]
@@ -357,7 +357,13 @@ func (s *StoreFrontService) calculateFinalPrice(ctx context.Context, cart *entit
 	return nil
 }
 
-func (s *StoreFrontService) isDiscountApplicableToItem(d entity.Discount, item entity.CartItem, categoryIDs []string, userID string) bool {
+func (s *StoreFrontService) isDiscountApplicableToItem(
+	d entity.Discount,
+	item entity.CartItem,
+	itemCategoryIDs []string,
+	userID string,
+) bool {
+	// 1) فیلتر بر اساس یوزر (اگر محدود شده باشد)
 	if len(d.ApplicableUserIDs) > 0 {
 		userIsAllowed := false
 		for _, allowedUserID := range d.ApplicableUserIDs {
@@ -371,29 +377,56 @@ func (s *StoreFrontService) isDiscountApplicableToItem(d entity.Discount, item e
 		}
 	}
 
-	productIsApplicable := len(d.ApplicableProductIDs) == 0
-	if !productIsApplicable {
-		for _, applicableID := range d.ApplicableProductIDs {
-			if item.ProductID == applicableID {
-				productIsApplicable = true
-				break
+	// 2) تصمیم‌گیری بر اساس ApplicableTo
+	switch d.ApplicableTo {
+
+	case entity.ApplicableToProducts:
+		// باید با SpecialDiscountItems چک کنیم
+		if len(d.ApplicableProductIDs) == 0 {
+			return false
+		}
+
+		for _, sdi := range d.ApplicableProductIDs {
+			if sdi.ProductID != item.ProductID {
+				continue
+			}
+
+			// اگر VariantID در تخفیف مشخص نشده باشد، یعنی برای همه ورینت‌های این محصول معتبر است
+			if sdi.VariantID == nil {
+				return true
+			}
+
+			// اگر VariantID مشخص شده، باید دقیقاً با Variant آیتم برابر باشد
+			if *sdi.VariantID == item.VariantID {
+				return true
 			}
 		}
-	}
 
-	categoryIsApplicable := len(d.ApplicableCategoryIDs) == 0
-	if !categoryIsApplicable {
+		return false
+
+	case entity.ApplicableToCategories:
+		// اگر دسته‌ای تنظیم نشده، در این مود عملاً تخفیف قابل اعمال نیست
+		if len(d.ApplicableCategoryIDs) == 0 {
+			return false
+		}
+
 		allowedCategorySet := make(map[string]struct{}, len(d.ApplicableCategoryIDs))
 		for _, catID := range d.ApplicableCategoryIDs {
 			allowedCategorySet[catID] = struct{}{}
 		}
-		for _, itemCatID := range categoryIDs {
-			if _, ok := allowedCategorySet[itemCatID]; ok {
-				categoryIsApplicable = true
-				break
+
+		for _, catID := range itemCategoryIDs {
+			if _, ok := allowedCategorySet[catID]; ok {
+				return true
 			}
 		}
-	}
 
-	return productIsApplicable && categoryIsApplicable
+		return false
+
+	case entity.ApplicableToUsers:
+		return true
+
+	default:
+		return false
+	}
 }

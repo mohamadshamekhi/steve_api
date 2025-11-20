@@ -2,6 +2,7 @@ package mongodbdiscount
 
 import (
 	"context"
+	"time"
 
 	mongodb "github.com/abolfazlnorzad/steve/repository/mongo"
 	"go.mongodb.org/mongo-driver/bson"
@@ -13,6 +14,28 @@ const collectionName = "discounts"
 
 type DB struct {
 	collection *mongo.Collection
+}
+
+func (d DB) ExistSpecialDiscount(ctx context.Context, startsAt, expiresAt time.Time) (bool, error) {
+	filter := bson.M{
+		"is_special_discount": true,
+		"is_active":           true,
+
+		// چک هم‌پوشانی بازه‌ها:
+		// existing.StartsAt < expiresAt
+		// existing.ExpiresAt > startsAt
+		"$and": []bson.M{
+			{"starts_at": bson.M{"$lt": expiresAt}},
+			{"expires_at": bson.M{"$gt": startsAt}},
+		},
+	}
+
+	count, err := d.collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }
 
 func New(c *mongodb.DB) *DB {

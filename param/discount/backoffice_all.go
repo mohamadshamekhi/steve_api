@@ -21,6 +21,8 @@ type DiscountsList struct {
 	Type            string    `json:"type"`
 	Value           uint      `json:"value"`
 	IsActive        bool      `json:"is_active"`
+	IsSpecial       bool      `json:"is_special"`
+	ApplicableTo    string    `json:"applicable_to"`
 	StartsAt        time.Time `json:"starts_at" bson:"starts_at"`
 	ExpiresAt       time.Time `json:"expires_at" bson:"expires_at"`
 	TotalUsageLimit int       `json:"total_usage_limit,omitempty"`

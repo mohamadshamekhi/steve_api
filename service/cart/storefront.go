@@ -113,21 +113,60 @@ func (s StoreFrontService) GetMyActiveCart(ctx context.Context, req cartparam.My
 	}, nil
 }
 
-func (s StoreFrontService) GetEnrichedCart(ctx context.Context, cart *entity.Cart) (discountservice.EnrichedCart, error) {
-	var pids []string
-	var cids []string
+func (s StoreFrontService) GetEnrichedCart(
+	ctx context.Context,
+	cart *entity.Cart,
+) (discountservice.EnrichedCart, error) {
+
+	// productID -> []variantID
+	productIDVariantIDs := make(map[string][]string)
+
+	// برای اینکه دسته‌ها تکراری نشوند
+	categoryIDSet := make(map[string]struct{})
 
 	for _, item := range cart.Items {
-		pids = append(pids, item.ProductID)
-		p, _ := s.pRepo.FindByID(ctx, item.ProductID)
-		cids = append(cids, p.CategoryID)
+		// جمع کردن ورینت‌های هر محصول در map
+		if item.ProductID != "" {
+			variants := productIDVariantIDs[item.ProductID]
+
+			// جلوگیری از تکرار VariantID داخل slice
+			if item.VariantID != "" {
+				already := false
+				for _, v := range variants {
+					if v == item.VariantID {
+						already = true
+						break
+					}
+				}
+				if !already {
+					productIDVariantIDs[item.ProductID] = append(variants, item.VariantID)
+				}
+			}
+		}
+
+		// گرفتن دسته‌ی محصول
+		p, err := s.pRepo.FindByID(ctx, item.ProductID)
+		if err != nil {
+			return discountservice.EnrichedCart{}, err
+		}
+		if p.CategoryID != "" {
+			categoryIDSet[p.CategoryID] = struct{}{}
+		}
 	}
+
+	// تبدیل set دسته‌ها به slice
+	cids := make([]string, 0, len(categoryIDSet))
+	for cid := range categoryIDSet {
+		cids = append(cids, cid)
+	}
+
 	res := discountservice.EnrichedCart{
 		Cart:        cart,
-		ProductIDs:  pids,
+		ProductIDs:  productIDVariantIDs, // map[productID][]variantID
 		CategoryIDs: cids,
 		Subtotal:    int64(cart.CalculateSubtotal()),
 	}
+
 	return res, nil
 }
 

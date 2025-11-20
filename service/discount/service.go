@@ -2,6 +2,7 @@ package discountservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
@@ -19,8 +20,8 @@ type DiscountReader interface {
 	All(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
 	FindApplicableDiscounts(ctx context.Context, code string) ([]entity.Discount, error)
 	GetActiveAutoDiscount(ctx context.Context) ([]entity.Discount, error)
+	ExistSpecialDiscount(ctx context.Context, startAt, expiresAt time.Time) (bool, error)
 }
-
 type DiscountWriter interface {
 	Create(ctx context.Context, discount entity.Discount) error
 	Update(ctx context.Context, discount entity.Discount) error

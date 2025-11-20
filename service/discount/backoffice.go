@@ -23,11 +23,13 @@ type CartInfoProvider interface {
 type ProductInfoProvider interface {
 	GetProductCategoriesForCartItems(ctx context.Context, req productparam.GetProductCategoriesForCartItemsRequest) (productparam.GetProductCategoriesForCartItemsResponse, error)
 	FindProductWithSpecialCategory(ctx context.Context, req productparam.GetProductWithSpecialCategoryRequest) (productparam.GetProductWithSpecialCategoryResponse, error)
+	GetPricesOfProducts(ctx context.Context, req productparam.GetPriceOfProductsRequest) (productparam.GetPriceOfProductsResponse, error)
+	GetProductIDsByCategories(ctx context.Context, req productparam.GetProductIDsByCategoriesRequest) (productparam.GetProductIDsByCategoriesResponse, error)
 }
 
 type EnrichedCart struct {
 	*entity.Cart
-	ProductIDs  []string
+	ProductIDs  map[string][]string
 	CategoryIDs []string
 	Subtotal    int64
 }
@@ -48,6 +50,8 @@ func (s BackofficeService) Create(ctx context.Context, req discountparam.AddDisc
 		StartsAt:              req.StartsAt,
 		ExpiresAt:             req.ExpiresAt,
 		TotalUsageLimit:       req.TotalUsageLimit,
+		IsSpecial:             req.IsSpecial,
+		ApplicableTo:          entity.ApplicableTo(req.ApplicableTo),
 		ApplicableProductIDs:  req.ApplicableProductIDs,
 		ApplicableCategoryIDs: req.ApplicableCategoryIDs,
 		ApplicableUserIDs:     req.ApplicableUserIDs,
@@ -55,8 +59,50 @@ func (s BackofficeService) Create(ctx context.Context, req discountparam.AddDisc
 	}
 	d.BeforeCreate()
 
+	// check for applicable_to
+	if _, err := s.validateApplicableTo(d, req); err != nil {
+		return discountparam.AddDiscountResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	// check for special discount
+	if req.IsSpecial {
+		r, e := s.repo.ExistSpecialDiscount(ctx, req.StartsAt, req.ExpiresAt)
+		if e != nil {
+			return discountparam.AddDiscountResponse{}, richerror.New(op).WithWarpError(e)
+		}
+		if r {
+			return discountparam.AddDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.special_discount_is_exist_in_this_time")
+		}
+	}
+
 	if err := s.repo.Create(ctx, d); err != nil {
 		return discountparam.AddDiscountResponse{}, err
+	}
+	return discountparam.AddDiscountResponse{}, nil
+}
+
+func (s BackofficeService) validateApplicableTo(d entity.Discount, req discountparam.AddDiscountRequest) (discountparam.AddDiscountResponse, error) {
+	const op = "backoffice.validateApplicableTo"
+	switch d.ApplicableTo {
+	case entity.ApplicableToCategories:
+		if req.ApplicableCategoryIDs == nil {
+			return discountparam.AddDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_category_required")
+		} else {
+			// todo - check category is exist
+		}
+	case entity.ApplicableToUsers:
+		if req.ApplicableUserIDs == nil {
+			return discountparam.AddDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_user_required")
+		} else {
+			// todo - check user is exist
+		}
+	case entity.ApplicableToProducts:
+		if req.ApplicableProductIDs == nil {
+			return discountparam.AddDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_product_required")
+		} else {
+			// todo - check product & variant is exist
+		}
+
 	}
 	return discountparam.AddDiscountResponse{}, nil
 }
@@ -83,14 +129,50 @@ func (s BackofficeService) Update(ctx context.Context, req discountparam.UpdateD
 	if req.UsageLimitPerUser != nil {
 		discount.UsageLimitPerUser = *req.UsageLimitPerUser
 	}
-	if req.ApplicableProductIDs != nil {
-		discount.ApplicableProductIDs = *req.ApplicableProductIDs
+	if req.IsSpecial != nil {
+		if *req.IsSpecial {
+			var ex time.Time
+			if req.ExpiresAt != nil {
+				ex = *req.ExpiresAt
+			} else {
+				ex = discount.ExpiresAt
+			}
+			r, e := s.repo.ExistSpecialDiscount(ctx, discount.StartsAt, ex)
+			if e != nil {
+				return discountparam.UpdateDiscountResponse{}, richerror.New(op).WithWarpError(e)
+			}
+			if r {
+				return discountparam.UpdateDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.special_discount_is_exist_in_this_time")
+			}
+		}
+		discount.IsSpecial = *req.IsSpecial
 	}
-	if req.ApplicableCategoryIDs != nil {
-		discount.ApplicableCategoryIDs = *req.ApplicableCategoryIDs
-	}
-	if req.ApplicableUserIDs != nil {
-		discount.ApplicableUserIDs = *req.ApplicableUserIDs
+	if req.ApplicableTo != nil {
+		discount.ApplicableTo = entity.ApplicableTo(*req.ApplicableTo)
+		switch *req.ApplicableTo {
+		case string(entity.ApplicableToCategories):
+			if req.ApplicableCategoryIDs == nil {
+				return discountparam.UpdateDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_category_required")
+			} else {
+				discount.ApplicableCategoryIDs = *req.ApplicableCategoryIDs
+				// todo - check category is exist
+			}
+		case string(entity.ApplicableToUsers):
+			if req.ApplicableUserIDs == nil {
+				return discountparam.UpdateDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_user_required")
+			} else {
+				discount.ApplicableUserIDs = *req.ApplicableUserIDs
+				// todo - check user is exist
+			}
+		case string(entity.ApplicableToProducts):
+			if req.ApplicableProductIDs == nil {
+				return discountparam.UpdateDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_product_required")
+			} else {
+				discount.ApplicableProductIDs = *req.ApplicableProductIDs
+				// todo - check product & variant is exist
+			}
+
+		}
 	}
 	if req.IsActive != nil {
 		discount.IsActive = *req.IsActive
@@ -176,16 +258,20 @@ func (s BackofficeService) isDiscountValid(ctx context.Context, d entity.Discoun
 		return false
 	}
 
-	if len(d.ApplicableUserIDs) > 0 && !contains(d.ApplicableUserIDs, cart.UserID) {
-		return false
-	}
+	switch d.ApplicableTo {
+	case entity.ApplicableToUsers:
+		if len(d.ApplicableUserIDs) > 0 && !contains(d.ApplicableUserIDs, cart.UserID) {
+			return false
+		}
+	case entity.ApplicableToCategories:
+		if len(d.ApplicableCategoryIDs) > 0 && !intersects(d.ApplicableCategoryIDs, cart.CategoryIDs) {
+			return false
+		}
+	case entity.ApplicableToProducts:
+		if len(d.ApplicableProductIDs) > 0 && !HasCommonVariant(d.ApplicableProductIDs, cart.ProductIDs) {
+			return false
+		}
 
-	if len(d.ApplicableProductIDs) > 0 && !intersects(d.ApplicableProductIDs, cart.ProductIDs) {
-		return false
-	}
-
-	if len(d.ApplicableCategoryIDs) > 0 && !intersects(d.ApplicableCategoryIDs, cart.CategoryIDs) {
-		return false
 	}
 
 	return true
@@ -208,6 +294,26 @@ func intersects(slice1, slice2 []string) bool {
 	for _, s := range slice2 {
 		if _, ok := set[s]; ok {
 			return true
+		}
+	}
+	return false
+}
+
+func HasCommonVariant(a []entity.SpecialDiscountItem, b map[string][]string) bool {
+	for _, item := range a {
+		// بررسی وجود ProductID در map
+		if variants, exists := b[item.ProductID]; exists {
+			// اگر در تخفیف، VariantID وجود داره (nil نیست)
+			if item.VariantID != nil {
+				for _, v := range variants {
+					if v == *item.VariantID {
+						return true // اشتراک پیدا شد
+					}
+				}
+			} else {
+				// اگر VariantID مشخص نشده، یعنی تخفیف برای کل محصوله
+				return true
+			}
 		}
 	}
 	return false
@@ -236,52 +342,87 @@ func (s BackofficeService) CalculateDiscountAmount(ctx context.Context, d entity
 	return discountAmount, nil
 }
 
-func (s BackofficeService) calculateEligibleAmount(ctx context.Context, d entity.Discount, cart entity.Cart) (int64, error) {
-	isGeneralDiscount := len(d.ApplicableProductIDs) == 0 && len(d.ApplicableCategoryIDs) == 0
-	if isGeneralDiscount {
-		return int64(cart.CalculateSubtotal()), nil
-	}
+func (s BackofficeService) calculateEligibleAmount(
+	ctx context.Context,
+	d entity.Discount,
+	cart entity.Cart,
+) (int64, error) {
 
-	var eligibleAmount int64 = 0
-
-	productToCategoriesMap, err := s.productInfoProvider.GetProductCategoriesForCartItems(ctx, productparam.GetProductCategoriesForCartItemsRequest{Items: cart.Items})
-	if err != nil {
-		return 0, err
-	}
-
-	productIDSet := make(map[string]struct{})
-	for _, id := range d.ApplicableProductIDs {
-		productIDSet[id] = struct{}{}
-	}
-	categoryIDSet := make(map[string]struct{})
-	for _, id := range d.ApplicableCategoryIDs {
-		categoryIDSet[id] = struct{}{}
-	}
-
-	for _, item := range cart.Items {
-		isEligible := false
-
-		if _, ok := productIDSet[item.ProductID]; ok {
-			isEligible = true
+	switch d.ApplicableTo {
+	case entity.ApplicableToProducts:
+		// SpecialDiscountItems: ProductID + (VariantID اختیاری = همه ورینت‌ها)
+		productsAllVariants := make(map[string]struct{})
+		productVariantSet := make(map[string]map[string]struct{})
+		for _, sdi := range d.ApplicableProductIDs {
+			if sdi.VariantID == nil {
+				productsAllVariants[sdi.ProductID] = struct{}{}
+				continue
+			}
+			if productVariantSet[sdi.ProductID] == nil {
+				productVariantSet[sdi.ProductID] = make(map[string]struct{})
+			}
+			productVariantSet[sdi.ProductID][*sdi.VariantID] = struct{}{}
 		}
 
-		if !isEligible {
-			if categoryIDs, ok := productToCategoriesMap.CategoryIDs[item.ProductID]; ok {
-				for _, catID := range categoryIDs {
-					if _, catOK := categoryIDSet[catID]; catOK {
-						isEligible = true
+		var eligible int64
+		for _, item := range cart.Items {
+			if _, ok := productsAllVariants[item.ProductID]; ok {
+				eligible += item.PriceAtTime * int64(item.Quantity)
+				continue
+			}
+			if vs, ok := productVariantSet[item.ProductID]; ok {
+				if _, ok := vs[item.VariantID]; ok {
+					eligible += item.PriceAtTime * int64(item.Quantity)
+				}
+			}
+		}
+		return eligible, nil
+
+	case entity.ApplicableToCategories:
+		if len(d.ApplicableCategoryIDs) == 0 {
+			return 0, nil
+		}
+		categoryIDSet := make(map[string]struct{}, len(d.ApplicableCategoryIDs))
+		for _, id := range d.ApplicableCategoryIDs {
+			categoryIDSet[id] = struct{}{}
+		}
+		// فقط وقتی لازم است دسته‌ها را می‌گیریم
+		resp, err := s.productInfoProvider.GetProductCategoriesForCartItems(
+			ctx,
+			productparam.GetProductCategoriesForCartItemsRequest{Items: cart.Items},
+		)
+		if err != nil {
+			return 0, err
+		}
+
+		var eligible int64
+		for _, item := range cart.Items {
+			if cats, ok := resp.CategoryIDs[item.ProductID]; ok {
+				for _, c := range cats {
+					if _, hit := categoryIDSet[c]; hit {
+						eligible += item.PriceAtTime * int64(item.Quantity)
 						break
 					}
 				}
 			}
 		}
+		return eligible, nil
 
-		if isEligible {
-			eligibleAmount += item.PriceAtTime * int64(item.Quantity)
+	case entity.ApplicableToUsers:
+		// این مسیر معمولاً برای مجوزدهی/واجدمعرفیته نه مبلغ‌سنجی.
+		// اگر لازم داری مبلغ فقط وقتی کاربر در لیسته محاسبه بشه:
+		if len(d.ApplicableUserIDs) == 0 {
+			return 0, nil
 		}
-	}
+		if !contains(d.ApplicableUserIDs, cart.UserID) {
+			return 0, nil
+		}
+		return int64(cart.CalculateSubtotal()), nil
 
-	return eligibleAmount, nil
+	default:
+		// ناشناخته: هیچ‌چیزی محاسبه نکن
+		return 0, nil
+	}
 }
 
 func (s BackofficeService) UpdateDiscountUsageAfterRegisterOrder(ctx context.Context, req discountparam.UpdateDiscountUsageAfterRegisterOrderRequest) (discountparam.UpdateDiscountUsageAfterRegisterOrderResponse, error) {
@@ -294,32 +435,209 @@ func (s BackofficeService) UpdateDiscountUsageAfterRegisterOrder(ctx context.Con
 	return discountparam.UpdateDiscountUsageAfterRegisterOrderResponse{}, nil
 }
 
-func (s BackofficeService) GetProductIDsThatHaveActiveAutoDiscount(ctx context.Context, _ discountparam.GetProductIDsThatHaveActiveAutoDiscountRequest) (discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse, error) {
+func (s BackofficeService) GetProductIDsThatHaveActiveAutoDiscount(
+	ctx context.Context,
+	_ discountparam.GetProductIDsThatHaveActiveAutoDiscountRequest,
+) (discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse, error) {
+
 	const op = "discountservice.GetProductIDsThatHaveActiveAutoDiscount"
 
+	// مرحله ۱: دریافت تمام تخفیف‌های خودکار فعال
 	autoDiscounts, err := s.repo.GetActiveAutoDiscount(ctx)
 	if err != nil {
 		return discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse{}, richerror.New(op).WithWarpError(err)
 	}
 
-	discountMap := make(map[string]entity.Discount)
+	// مجموعه‌ای از شناسه‌ها برای دریافت اطلاعات به صورت یکجا (Batch)
+	productIDsForPrice := make(map[string]struct{})
+	variantIDsForPrice := make(map[string]struct{})
+	categoryIDs := make(map[string]struct{})
 
 	for _, d := range autoDiscounts {
-		for _, pid := range d.ApplicableProductIDs {
-			discountMap[pid] = d
-		}
-
-		for _, cid := range d.ApplicableCategoryIDs {
-			res, err := s.productInfoProvider.FindProductWithSpecialCategory(ctx, productparam.GetProductWithSpecialCategoryRequest{CategoryID: cid})
-			if err != nil {
-				return discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse{}, err
+		switch d.ApplicableTo {
+		case entity.ApplicableToProducts:
+			for _, p := range d.ApplicableProductIDs {
+				if p.ProductID != "" {
+					productIDsForPrice[p.ProductID] = struct{}{}
+					if p.VariantID != nil && *p.VariantID != "" {
+						variantIDsForPrice[*p.VariantID] = struct{}{}
+					}
+				}
 			}
-			discountMap[res.ProductID] = d
+		case entity.ApplicableToCategories:
+			for _, cid := range d.ApplicableCategoryIDs {
+				if cid != "" {
+					categoryIDs[cid] = struct{}{}
+				}
+			}
 		}
 	}
 
-	return discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse{
-		DiscountMap: discountMap,
-	}, err
+	// تبدیل map به slice برای ارسال به سرویس‌ها
+	catIDSlice := make([]string, 0, len(categoryIDs))
+	for id := range categoryIDs {
+		catIDSlice = append(catIDSlice, id)
+	}
 
+	// مرحله ۲: دریافت محصولات مربوط به دسته‌بندی‌ها
+	categoryToProductIDs := make(map[string][]string) // map[categoryID][]productID
+	if len(catIDSlice) > 0 {
+		prodsByCat, err := s.productInfoProvider.GetProductIDsByCategories(ctx, productparam.GetProductIDsByCategoriesRequest{CatIDs: catIDSlice})
+		if err != nil {
+			return discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse{}, richerror.New(op).WithWarpError(err)
+		}
+		for catID, prodIDs := range prodsByCat.ProdsByCat {
+			categoryToProductIDs[catID] = prodIDs
+			for _, pid := range prodIDs {
+				productIDsForPrice[pid] = struct{}{}
+			}
+		}
+	}
+
+	// تبدیل map به slice برای ارسال به سرویس قیمت
+	prodIDSlice := make([]string, 0, len(productIDsForPrice))
+	for id := range productIDsForPrice {
+		prodIDSlice = append(prodIDSlice, id)
+	}
+	variantIDSlice := make([]string, 0, len(variantIDsForPrice))
+	for id := range variantIDsForPrice {
+		variantIDSlice = append(variantIDSlice, id)
+	}
+
+	// مرحله ۳: دریافت قیمت تمام محصولات و ورینت‌های مورد نیاز به صورت یکجا
+	prices, pErr := s.productInfoProvider.GetPricesOfProducts(ctx, productparam.GetPriceOfProductsRequest{ProductIDs: prodIDSlice, VariantIDs: variantIDSlice})
+
+	if pErr != nil {
+		return discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	// مرحله ۴: پردازش تخفیف‌ها و انتخاب بهترین تخفیف برای هر ترکیب (محصول-تنوع)
+	type BestDiscountInfo struct {
+		Discount productparam.ProductDiscount
+		Value    int // مقدار ریالی تخفیف برای مقایسه
+	}
+	// ساختار کلیدی: map[ProductID]map[VariantID]BestDiscountInfo
+	bestDiscountsPerVariant := make(map[string]map[string]BestDiscountInfo)
+
+	// تابع کمکی برای به‌روزرسانی بهترین تخفیف
+	updateBestDiscount := func(pID, vID string, price float64, d entity.Discount) {
+		var calculatedValue int
+		if d.Type == entity.PercentageDiscount {
+			calculatedValue = int(price * float64(d.Value) / 100)
+		} else { // FixedAmountDiscount
+			calculatedValue = int(d.Value)
+		}
+
+		if _, ok := bestDiscountsPerVariant[pID]; !ok {
+			bestDiscountsPerVariant[pID] = make(map[string]BestDiscountInfo)
+		}
+
+		if existing, exists := bestDiscountsPerVariant[pID][vID]; !exists || calculatedValue > existing.Value {
+
+			bestDiscountsPerVariant[pID][vID] = BestDiscountInfo{
+				Value: calculatedValue,
+				Discount: productparam.ProductDiscount{
+					DiscountID:    d.ID,
+					DiscountType:  string(d.Type),
+					DiscountValue: d.Value,
+					StartAt:       d.StartsAt,
+					ExpiresAt:     d.ExpiresAt,
+					IsActive:      d.IsActive,
+					IsSpecial:     d.IsSpecial,
+					ApplicableTo:  d.ApplicableTo,
+					ProductID:     pID,
+					VariantID:     vID,
+				},
+			}
+		}
+	}
+
+	for _, d := range autoDiscounts {
+		switch d.ApplicableTo {
+		case entity.ApplicableToProducts:
+			for _, p := range d.ApplicableProductIDs {
+				if p.ProductID == "" {
+					continue
+				}
+				var t string
+				var v uint
+				if p.DiscountType != "" {
+					t = string(p.DiscountType)
+				} else {
+					t = string(d.Type)
+				}
+
+				if p.DiscountValue != 0 {
+					v = p.DiscountValue
+				} else {
+					v = d.Value
+				}
+				if p.VariantID != nil && *p.VariantID != "" {
+					variantID := *p.VariantID
+					if variantPrices, ok := prices.Price[p.ProductID]; ok {
+						if price, ok := variantPrices[variantID]; ok {
+							updateBestDiscount(p.ProductID, variantID, price, entity.Discount{
+								ID:           d.ID,
+								Type:         entity.DiscountType(t),
+								Value:        v,
+								StartsAt:     d.StartsAt,
+								ExpiresAt:    d.ExpiresAt,
+								IsActive:     d.IsActive,
+								IsSpecial:    d.IsSpecial,
+								ApplicableTo: d.ApplicableTo,
+							})
+						}
+					}
+				} else {
+					if variantPrices, ok := prices.Price[p.ProductID]; ok {
+						for variantID, price := range variantPrices {
+							updateBestDiscount(p.ProductID, variantID, price, d)
+						}
+					}
+				}
+			}
+
+		case entity.ApplicableToCategories:
+			for _, cid := range d.ApplicableCategoryIDs {
+				productIDs, ok := categoryToProductIDs[cid]
+				if !ok {
+					continue
+				}
+				for _, pid := range productIDs {
+					if variantPrices, ok := prices.Price[pid]; ok {
+						for variantID, price := range variantPrices {
+							updateBestDiscount(pid, variantID, price, d)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// ========================>> مرحله ۵: بازنویسی شده <<========================
+	// ساختار نهایی برای نگهداری تخفیف‌های هر ورینت به صورت مجزا
+	// کلید: ProductID، مقدار: لیستی از تخفیف‌های ورینت‌های آن محصول
+	finalDiscountsMap := make(map[string][]productparam.ProductDiscount)
+
+	for productID, variantDiscounts := range bestDiscountsPerVariant {
+		// برای هر محصول، یک لیست از تخفیف‌های ورینت‌هایش ایجاد می‌کنیم
+		discountsForThisProduct := make([]productparam.ProductDiscount, 0, len(variantDiscounts))
+
+		// بهترین تخفیف محاسبه شده برای هر ورینت را به لیست اضافه می‌کنیم
+		for _, discountInfo := range variantDiscounts {
+			discountsForThisProduct = append(discountsForThisProduct, discountInfo.Discount)
+		}
+
+		// اگر حداقل یک تخفیف برای ورینت‌های این محصول وجود داشت، آن را به نقشه نهایی اضافه می‌کنیم
+		if len(discountsForThisProduct) > 0 {
+			finalDiscountsMap[productID] = discountsForThisProduct
+		}
+	}
+	// =======================================================================
+
+	// نکته مهم: نوع فیلد DiscountMap در استراکت GetProductIDsThatHaveActiveAutoDiscountResponse
+	// باید به map[string][]productparam.ProductDiscount تغییر کند.
+	return discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse{
+		DiscountMap: finalDiscountsMap,
+	}, nil
 }
