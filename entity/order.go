@@ -69,7 +69,7 @@ type OrderItem struct {
 }
 
 type AppliedDiscount struct {
-	DiscountID   string `bson:"discount_id"`
-	DiscountCode string `bson:"discount_code,omitempty"`
-	Amount       int64  `bson:"amount"`
+	DiscountID   string `bson:"discount_id" json:"discount_id"`
+	DiscountCode string `bson:"discount_code,omitempty" json:"discount_code,omitempty"`
+	Amount       int64  `bson:"amount" json:"amount"`
 }

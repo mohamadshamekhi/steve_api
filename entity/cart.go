@@ -65,18 +65,18 @@ func (c *Cart) CalculateSubtotal() uint {
 }
 
 type CheckoutItemResult struct {
-	CartItem
-	HasStockIssue   bool
-	HasPriceChanged bool
-	CurrentPrice    int64
-	DiscountAmount  uint
+	CartItem        `json:",inline"`
+	HasStockIssue   bool  `json:"has_stock_issue"`
+	HasPriceChanged bool  `json:"has_price_changed"`
+	CurrentPrice    int64 `json:"current_price"`
+	DiscountAmount  uint  `json:"discount_amount"`
 }
 
 type CheckoutSummary struct {
-	Items              []CheckoutItemResult
-	Subtotal           int64
-	AppliedDiscounts   []AppliedDiscount
-	FinalPrice         int64
-	IsReady            bool
-	DiscountedSubtotal uint
+	Items              []CheckoutItemResult `bson:"items" json:"items,omitempty"`
+	Subtotal           int64                `json:"subtotal,omitempty"`
+	AppliedDiscounts   []AppliedDiscount    `json:"applied_discounts,omitempty"`
+	FinalPrice         int64                `json:"final_price,omitempty"`
+	IsReady            bool                 `json:"is_ready,omitempty"`
+	DiscountedSubtotal uint                 `json:"discounted_subtotal,omitempty"`
 }
