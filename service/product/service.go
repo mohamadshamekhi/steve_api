@@ -27,6 +27,9 @@ type ProductReader interface {
 	FindProductsIDsByCategory(ctx context.Context, categoryID string) (string, error)
 	GetFilterableAttributes(ctx context.Context, categoryID string) ([]productparam.AggregatedFilterOption, error)
 	GetFilteredProducts(ctx context.Context, filter *productparam.StorefrontFilterProduct, p commonparam.PaginationRequest) (ListResult, error)
+	GetFilterMobileListWithMainInfo(ctx context.Context, name *string, brandID *string) ([]entity.Product, error)
+	GetMinAdnMaxPriceOfProductWithSpecialCategory(ctx context.Context, categoryID string) (uint64, uint64, error)
+	UpdateProductAvrRating(ctx context.Context, ProductID string, AverageRating float64) error
 }
 
 type ProductWriter interface {

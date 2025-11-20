@@ -51,3 +51,26 @@ func (h Handler) StorefrontGetProduct(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
+
+func (h Handler) GetMobileList(c echo.Context) error {
+	const op = "producthandler.GetMobileList"
+	name := c.QueryParam("name")
+	brandID := c.QueryParam("brand_id")
+	req := productparam.GetFilterMobileListWithMainInfoRequest{}
+	if name != "" {
+		req.Name = &name
+	}
+	if brandID != "" {
+		req.BrandID = &brandID
+	}
+
+	resp, err := h.storefrontProductSvc.GetFilterMobileListWithMainInfo(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}

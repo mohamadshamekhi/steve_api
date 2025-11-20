@@ -96,18 +96,19 @@ func (d DB) GetFilteredProducts(ctx context.Context, filter *productparam.Storef
 
 	fullPipeline := basePipeline
 
-	// ۲. اضافه کردن مرحله مرتب‌سازی **قبل** از صفحه‌بندی
 	sortStage := bson.D{}
 	if filter.OrderBy != nil {
 		switch *filter.OrderBy {
 		case "newest":
-			sortStage = bson.D{{"doc.created_at", -1}} // ارجاع به داخل doc
+			sortStage = bson.D{{"doc.created_at", -1}}
 		case "oldest":
-			sortStage = bson.D{{"doc.created_at", 1}} // ارجاع به داخل doc
+			sortStage = bson.D{{"doc.created_at", 1}}
 		case "most_expensive":
 			sortStage = bson.D{{"min_price_variant", -1}}
 		case "least_expensive":
 			sortStage = bson.D{{"min_price_variant", 1}}
+		case "most_sold":
+			sortStage = bson.D{{"doc.sales_count", -1}}
 		default:
 			sortStage = bson.D{{"doc.created_at", -1}}
 		}
@@ -118,7 +119,6 @@ func (d DB) GetFilteredProducts(ctx context.Context, filter *productparam.Storef
 		fullPipeline = append(fullPipeline, bson.D{{"$sort", sortStage}})
 	}
 
-	// ۳. ساختن و اضافه کردن پایپ‌لاین $facet
 	offset := p.GetOffset()
 	limit := p.GetPageSize()
 	facetPipeline := bson.D{
@@ -129,15 +129,14 @@ func (d DB) GetFilteredProducts(ctx context.Context, filter *productparam.Storef
 			"data": bson.A{
 				bson.D{{"$skip", offset}},
 				bson.D{{"$limit", limit}},
-				// **این بخش کلیدی و اصلاح شده است**
-				// ما سند نهایی را با ادغام doc، _id و ورینت‌های فیلتر شده می‌سازیم
+
 				bson.D{{"$replaceRoot", bson.D{
 					{"newRoot", bson.D{
 						{"$mergeObjects", bson.A{
-							"$doc", // تمام فیلدهای اصلی محصول
+							"$doc",
 							bson.M{
-								"_id":      "$_id",               // _id را اضافه می‌کنیم
-								"variants": "$filtered_variants", // فیلد variants را با ورینت‌های فیلتر شده بازنویسی می‌کنیم
+								"_id":      "$_id",
+								"variants": "$filtered_variants",
 							},
 						}},
 					}},
@@ -253,6 +252,8 @@ func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bs
 			"is_second_hand": "$is_second_hand",
 			"description":    "$description",
 			"specifications": "$specifications",
+			"rating":         "$rating",
+			"sales_count":    "$sales_count",
 			"created_at":     "$created_at",
 			"updated_at":     "$updated_at",
 			"deleted_at":     "$deleted_at",

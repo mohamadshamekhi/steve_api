@@ -259,7 +259,7 @@ func (d DB) FindProductsIDsByCategory(ctx context.Context, categoryID string) (s
 }
 
 func (d DB) GetFilterableAttributes(ctx context.Context, categoryID string) ([]productparam.AggregatedFilterOption, error) {
-	const op = "product.repo.GetFilterableAttributes"
+	const op = "productrepo.GetFilterableAttributes"
 
 	pipeline := mongo.Pipeline{
 
@@ -297,4 +297,82 @@ func (d DB) GetFilterableAttributes(ctx context.Context, categoryID string) ([]p
 	}
 
 	return results, nil
+}
+
+func (d DB) GetFilterMobileListWithMainInfo(ctx context.Context, name *string, brandID *string) ([]entity.Product, error) {
+	const op = "productrepo.GetFilterMobileListWithMainInfo"
+	filter := bson.M{}
+
+	if name != nil {
+		filter["name"] = bson.M{"$regex": *name, "$options": "i"}
+	}
+
+	if brandID != nil {
+		filter["brand_id"] = *brandID
+	}
+	filter["deleted_at"] = bson.M{"$exists": false}
+	filter["is_published"] = true
+	projection := bson.M{
+		"id":             1,
+		"name":           1,
+		"slug":           1,
+		"brand_id":       1,
+		"category_id":    1,
+		"gallery":        1,
+		"is_published":   1,
+		"is_second_hand": 1,
+	}
+	fmt.Println("projection", filter)
+	cursor, err := d.collection.Find(ctx, filter, &options.FindOptions{
+		Projection: projection,
+		Sort:       bson.D{{"name", 1}},
+	})
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err)
+	}
+	var products []entity.Product
+	if err = cursor.All(ctx, &products); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
+	}
+
+	return products, nil
+}
+
+func (d DB) GetMinAdnMaxPriceOfProductWithSpecialCategory(ctx context.Context, categoryID string) (uint64, uint64, error) {
+	const op = "productrepo.GetMinAdnMaxPriceOfProductWithSpecialCategory"
+
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{
+			"category_id":  categoryID,
+			"deleted_at":   bson.M{"$exists": false},
+			"is_published": true,
+			"variants":     bson.M{"$exists": true, "$ne": bson.A{}},
+		}}},
+		{{Key: "$unwind", Value: "$variants"}},
+		{{Key: "$group", Value: bson.M{
+			"_id": nil,
+			"min": bson.M{"$min": "$variants.price"},
+			"max": bson.M{"$max": "$variants.price"},
+		}}},
+	}
+
+	cur, err := d.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0, 0, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
+	}
+	defer cur.Close(ctx)
+
+	if !cur.Next(ctx) {
+		return 0, 0, nil
+	}
+
+	var res struct {
+		Min int64 `bson:"min"`
+		Max int64 `bson:"max"`
+	}
+	if err := cur.Decode(&res); err != nil {
+		return 0, 0, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
+	}
+
+	return uint64(res.Min), uint64(res.Max), nil
 }
