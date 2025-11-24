@@ -10,3 +10,9 @@ type GetValidDiscountsForSpecificCartRequest struct {
 type GetValidDiscountsForSpecificCartResponse struct {
 	Discounts []entity.Discount
 }
+
+type GetSpecialDiscountRequest struct {
+}
+type GetSpecialDiscountResponse struct {
+	Discount entity.Discount `json:"discount"`
+}

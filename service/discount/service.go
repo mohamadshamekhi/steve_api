@@ -21,6 +21,7 @@ type DiscountReader interface {
 	FindApplicableDiscounts(ctx context.Context, code string) ([]entity.Discount, error)
 	GetActiveAutoDiscount(ctx context.Context) ([]entity.Discount, error)
 	ExistSpecialDiscount(ctx context.Context, startAt, expiresAt time.Time) (bool, error)
+	GetActiveSpecialDiscount(ctx context.Context) (entity.Discount, error)
 }
 type DiscountWriter interface {
 	Create(ctx context.Context, discount entity.Discount) error

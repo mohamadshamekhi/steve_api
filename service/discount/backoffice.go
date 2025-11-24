@@ -641,3 +641,14 @@ func (s BackofficeService) GetProductIDsThatHaveActiveAutoDiscount(
 		DiscountMap: finalDiscountsMap,
 	}, nil
 }
+
+func (s BackofficeService) GetSpecialDiscount(ctx context.Context, req discountparam.GetSpecialDiscountRequest) (discountparam.GetSpecialDiscountResponse, error) {
+	const op = "backoffice.GetSpecialDiscount"
+	discount, err := s.repo.GetActiveSpecialDiscount(ctx)
+	if err != nil {
+		return discountparam.GetSpecialDiscountResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return discountparam.GetSpecialDiscountResponse{
+		Discount: discount,
+	}, nil
+}

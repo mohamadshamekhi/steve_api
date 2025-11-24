@@ -92,6 +92,7 @@ type MediaService interface {
 
 type DiscountProvider interface {
 	GetProductIDsThatHaveActiveAutoDiscount(ctx context.Context, _ discountparam.GetProductIDsThatHaveActiveAutoDiscountRequest) (discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse, error)
+	GetSpecialDiscount(ctx context.Context, req discountparam.GetSpecialDiscountRequest) (discountparam.GetSpecialDiscountResponse, error)
 }
 
 type StorefrontService struct {
