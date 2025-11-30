@@ -20,8 +20,7 @@ func (v Validator) ValidateCreateCategoryRequest(req categoryparam.CreateCategor
 			validation.When(req.ParentID != nil, validation.Required.Error("validation.required")),
 			validation.By(v.categoryIsExist),
 		),
-		validation.Field(&req.AttributeSetID, validation.Required.Error("validation.required"),
-			validation.By(v.AttrIsExist)),
+		
 		validation.Field(&req.MediaID,
 			validation.Required.Error("validation.required"),
 			validation.By(v.mediaIsExist),
