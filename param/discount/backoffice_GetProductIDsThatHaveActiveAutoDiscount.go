@@ -1,10 +1,12 @@
 package discountparam
 
-import "github.com/abolfazlnorzad/steve/entity"
+import (
+	productparam "github.com/abolfazlnorzad/steve/param/product"
+)
 
 type GetProductIDsThatHaveActiveAutoDiscountRequest struct {
 }
 
 type GetProductIDsThatHaveActiveAutoDiscountResponse struct {
-	DiscountMap map[string]entity.Discount
+	DiscountMap map[string][]productparam.ProductDiscount
 }

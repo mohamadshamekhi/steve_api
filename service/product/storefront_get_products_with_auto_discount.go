@@ -8,7 +8,7 @@ import (
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 )
 
-func (s StorefrontService) GetProductsWithAutoDiscount(ctx context.Context, req productparam.GetProductsWithAutoDiscountsRequest) (productparam.GetProductsWithAutoDiscountsResponse, error) {
+func (s StorefrontService) GetProductsWithAutoDiscount(ctx context.Context, _ productparam.GetProductsWithAutoDiscountsRequest) (productparam.GetProductsWithAutoDiscountsResponse, error) {
 	const op = "productservice.GetProductsWithAutoDiscount"
 	res, err := s.discountProvider.GetProductIDsThatHaveActiveAutoDiscount(ctx, discountparam.GetProductIDsThatHaveActiveAutoDiscountRequest{})
 	if err != nil {
@@ -20,7 +20,6 @@ func (s StorefrontService) GetProductsWithAutoDiscount(ctx context.Context, req 
 		if err != nil {
 			return productparam.GetProductsWithAutoDiscountsResponse{}, richerror.New(op).WithWarpError(err)
 		}
-
 		productList = append(productList, productparam.StorefrontProductList{
 			ID:           prod.ID,
 			Name:         prod.Name,

@@ -30,6 +30,8 @@ type ProductReader interface {
 	GetFilterMobileListWithMainInfo(ctx context.Context, name *string, brandID *string) ([]entity.Product, error)
 	GetMinAdnMaxPriceOfProductWithSpecialCategory(ctx context.Context, categoryID string) (uint64, uint64, error)
 	UpdateProductAvrRating(ctx context.Context, ProductID string, AverageRating float64) error
+	GetProductIDsByCategories(ctx context.Context, catIDs []string) (map[string][]string, error)
+	GetPricesOfProducts(ctx context.Context, prodIDSlice []string, variantIDSlice []string) (map[string]map[string]float64, error)
 }
 
 type ProductWriter interface {
@@ -90,6 +92,7 @@ type MediaService interface {
 
 type DiscountProvider interface {
 	GetProductIDsThatHaveActiveAutoDiscount(ctx context.Context, _ discountparam.GetProductIDsThatHaveActiveAutoDiscountRequest) (discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse, error)
+	GetSpecialDiscount(ctx context.Context, req discountparam.GetSpecialDiscountRequest) (discountparam.GetSpecialDiscountResponse, error)
 }
 
 type StorefrontService struct {

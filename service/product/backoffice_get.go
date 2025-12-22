@@ -110,3 +110,12 @@ func (s BackofficeService) FindProductWithSpecialCategory(ctx context.Context, r
 		ProductID: pid,
 	}, nil
 }
+
+func (s BackofficeService) GetProductIDsByCategories(ctx context.Context, req productparam.GetProductIDsByCategoriesRequest) (productparam.GetProductIDsByCategoriesResponse, error) {
+	const op = "productservice.GetProductIDsByCategories"
+	resp, err := s.repo.GetProductIDsByCategories(ctx, req.CatIDs)
+	if err != nil {
+		return productparam.GetProductIDsByCategoriesResponse{}, err
+	}
+	return productparam.GetProductIDsByCategoriesResponse{ProdsByCat: resp}, nil
+}

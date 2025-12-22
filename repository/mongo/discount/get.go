@@ -90,3 +90,27 @@ func (d DB) FindApplicableDiscounts(ctx context.Context, code string) ([]entity.
 
 	return discounts, nil
 }
+
+func (d DB) GetActiveSpecialDiscount(ctx context.Context) (entity.Discount, error) {
+	const op = "mongodbdiscount.GetActiveSpecialDiscount"
+	var result entity.Discount
+
+	now := time.Now()
+
+	filter := bson.M{
+		"is_special": true,
+		"is_active":  true,
+		"starts_at":  bson.M{"$lte": now},
+		"expires_at": bson.M{"$gte": now},
+	}
+
+	err := d.collection.FindOne(ctx, filter).Decode(&result)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return entity.Discount{}, richerror.New(op).WithWarpError(err).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
+		}
+		return entity.Discount{}, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
+	}
+
+	return result, nil
+}

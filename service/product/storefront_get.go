@@ -63,3 +63,55 @@ func (s StorefrontService) GetProduct(ctx context.Context, req productparam.Stor
 	}
 	return productparam.StorefrontGetProductResponse{Product: productInfo}, nil
 }
+func (s StorefrontService) GetProductBySlug(ctx context.Context, req productparam.StorefrontGetProductBySlugRequest) (productparam.StorefrontGetProductBySlugResponse, error) {
+	const op = "StorefrontService.GetProduct"
+
+	p, err := s.repo.FindBySlug(ctx, req.Slug)
+	if err != nil {
+		return productparam.StorefrontGetProductBySlugResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	productInfo := productparam.ProductInfo{
+		ID:             p.ID,
+		Name:           p.Name,
+		ENTitle:        p.ENTitle,
+		Slug:           p.Slug,
+		Brand:          brandparam.BrandInfo{},
+		Category:       categoryparam.CategoryInfo{},
+		Gallery:        p.Gallery,
+		IsPublished:    p.IsPublished,
+		IsSecondHand:   p.IsSecondHand,
+		Description:    p.Description,
+		Variants:       p.Variants,
+		Specifications: p.Specifications,
+		CreatedAt:      p.CreatedAt,
+		UpdatedAt:      p.UpdatedAt,
+	}
+	cr, cErr := s.categoryProvider.GetCategory(ctx, categoryparam.GetCategoryRequest{ID: p.CategoryID})
+	if cErr != nil {
+		logger.L().Error(fmt.Sprintf("failed to get category: product_id : %s - err : %v", p.ID, cErr))
+	}
+	productInfo.Category = categoryparam.CategoryInfo{
+		ID:           cr.Category.ID,
+		Name:         cr.Category.Name,
+		Description:  cr.Category.Description,
+		URL:          cr.Category.URL,
+		Level:        cr.Category.Level,
+		Slug:         cr.Category.Slug,
+		Ancestors:    cr.Category.Ancestors,
+		AttributeSet: cr.Category.AttributeSet,
+	}
+
+	bres, bErr := s.brandProvider.GetBrand(ctx, brandparam.GetBrandRequest{ID: p.BrandID})
+	if bErr != nil {
+		logger.L().Error(fmt.Sprintf("failed to get banner: product_id : %s - err : %v", p.ID, bErr))
+	}
+
+	productInfo.Brand = brandparam.BrandInfo{
+		ID:          bres.ID,
+		Name:        bres.Name,
+		Description: bres.Description,
+		URL:         bres.Url,
+	}
+	return productparam.StorefrontGetProductBySlugResponse{Product: productInfo}, nil
+}

@@ -14,6 +14,14 @@ const (
 	FixedAmountDiscount DiscountType = "fixed_amount"
 )
 
+type ApplicableTo string
+
+const (
+	ApplicableToProducts   ApplicableTo = "products"
+	ApplicableToCategories ApplicableTo = "categories"
+	ApplicableToUsers      ApplicableTo = "users"
+)
+
 type Discount struct {
 	ID   string       `bson:"_id" json:"id"`
 	Code string       `bson:"code,omitempty" json:"code"`
@@ -33,7 +41,11 @@ type Discount struct {
 
 	UsageLimitPerUser int `bson:"usage_limit_per_user,omitempty" json:"usage_limit_per_user,omitempty"`
 
-	ApplicableProductIDs []string `bson:"applicable_product_ids,omitempty" json:"applicable_product_ids,omitempty"`
+	IsSpecial bool `bson:"is_special,omitempty" json:"is_special,omitempty"`
+
+	ApplicableTo ApplicableTo `json:"applicable_to,omitempty"` // product , category , user
+
+	ApplicableProductIDs []SpecialDiscountItem `bson:"applicable_product_ids,omitempty" json:"applicable_product_ids,omitempty"`
 
 	ApplicableCategoryIDs []string `bson:"applicable_category_ids,omitempty" json:"applicable_category_ids,omitempty"`
 
@@ -42,6 +54,13 @@ type Discount struct {
 	IsActive  bool      `bson:"is_active" json:"is_active"`
 	CreatedAt time.Time `bson:"created_at" json:"created_at"`
 	UpdatedAt time.Time `bson:"updated_at" json:"updated_at"`
+}
+
+type SpecialDiscountItem struct {
+	ProductID     string       `bson:"product_id" json:"product_id"`
+	VariantID     *string      `bson:"variant_id,omitempty" json:"variant_id,omitempty"`
+	DiscountType  DiscountType `bson:"discount_type,omitempty" json:"discount_type,omitempty"`
+	DiscountValue uint         `bson:"discount_value,omitempty" json:"discount_value,omitempty"`
 }
 
 func (d *Discount) BeforeCreate() {
@@ -97,17 +116,28 @@ func (d *Discount) CheckIsValidForUser(userID string, amount uint) error {
 	return nil
 }
 
-func (d *Discount) CalculateAmount(eligibleAmount uint) uint {
-	switch d.Type {
-	case PercentageDiscount:
+func (d *Discount) CalculateAmount(eligibleAmount uint, variantID string) uint {
+	if d.ApplicableTo == ApplicableToProducts {
+		for _, i := range d.ApplicableProductIDs {
+			if i.VariantID != nil && *i.VariantID == variantID {
+				return calculateDiscount(eligibleAmount, i.DiscountType, i.DiscountValue)
+			}
+		}
+	}
 
-		return (eligibleAmount * d.Value) / 100
+	return calculateDiscount(eligibleAmount, d.Type, d.Value)
+}
+
+func calculateDiscount(eligibleAmount uint, discountType DiscountType, discountValue uint) uint {
+	switch discountType {
+	case PercentageDiscount:
+		return (eligibleAmount * discountValue) / 100
 
 	case FixedAmountDiscount:
-		if d.Value > eligibleAmount {
+		if discountValue > eligibleAmount {
 			return eligibleAmount
 		}
-		return d.Value
+		return discountValue
 
 	default:
 		return 0
