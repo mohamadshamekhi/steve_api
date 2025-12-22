@@ -34,6 +34,7 @@ func (h Handler) GetComments(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	lang := getLanguageFromHeader(c.Request().Header)
 	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
 	apiResponse := response.NewSuccessResponse(successMessage, resp)

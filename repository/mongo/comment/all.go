@@ -74,15 +74,129 @@ func (d DB) List(ctx context.Context, f commonparam.FilterRequest, p commonparam
 	}, nil
 }
 
-func (d DB) GetApprovedCommentsWithChildren(ctx context.Context, commentableType string, commentableID string, pagination commonparam.PaginationRequest) (commentservice.StorefrontListResult, error) {
-	// 1. شمارش کل ریشه‌ها (برای Pagination)
+//	func (d DB) GetApprovedCommentsWithChildren(ctx context.Context, commentableType string, commentableID string, pagination commonparam.PaginationRequest) (commentservice.StorefrontListResult, error) {
+//		countPipeline := mongo.Pipeline{
+//			{
+//				{"$match", bson.M{
+//					"commentable_id":   commentableID,
+//					"commentable_type": commentableType,
+//					"parent_id":        bson.M{"$exists": false},
+//					"is_approved":      true,
+//					"deleted_at":       bson.M{"$exists": false},
+//				}},
+//			},
+//			{{"$count", "totalCount"}},
+//		}
+//
+//		countCursor, err := d.collection.Aggregate(ctx, countPipeline)
+//		if err != nil {
+//			return commentservice.StorefrontListResult{}, fmt.Errorf("failed to count roots: %w", err)
+//		}
+//		defer countCursor.Close(ctx)
+//
+//		var countResult []bson.M
+//		countCursor.All(ctx, &countResult)
+//
+//		totalCount := uint(0)
+//		if len(countResult) > 0 {
+//			if count, ok := countResult[0]["totalCount"].(int32); ok {
+//				totalCount = uint(count)
+//			}
+//		}
+//
+//		// اگر کامنت ریشه‌ای وجود ندارد، با TotalCount صفر برگردان
+//		if totalCount == 0 {
+//			return commentservice.StorefrontListResult{TotalCount: 0}, nil
+//		}
+//
+//		// 2. واکشی IDهای ریشه‌های صفحه‌بندی‌شده (کوئری اول)
+//		pipelineRootIDs := mongo.Pipeline{
+//			{
+//				{"$match", bson.M{
+//					"commentable_id":   commentableID,
+//					"commentable_type": commentableType,
+//					"parent_id":        bson.M{"$exists": false},
+//					"is_approved":      true,
+//					"deleted_at":       bson.M{"$exists": false},
+//				}},
+//			},
+//			{{"$sort", bson.D{{Key: "created_at", Value: -1}}}},
+//			{{"$skip", pagination.GetOffset()}},
+//			{{"$limit", pagination.GetPageSize()}},
+//			{{"$project", bson.M{"_id": 1}}}, // فقط IDها را برگردان
+//		}
+//
+//		rootIDCursor, err := d.collection.Aggregate(ctx, pipelineRootIDs)
+//		if err != nil {
+//			return commentservice.StorefrontListResult{}, fmt.Errorf("failed to fetch root IDs: %w", err)
+//		}
+//		defer rootIDCursor.Close(ctx)
+//
+//		var rootDocs []bson.M
+//		rootIDCursor.All(ctx, &rootDocs)
+//
+//		var rootIDs []string
+//		for _, doc := range rootDocs {
+//			if id, ok := doc["_id"].(string); ok {
+//				rootIDs = append(rootIDs, id)
+//			}
+//		}
+//
+//		orConditions := bson.A{
+//			bson.M{"_id": bson.M{"$in": rootIDs}},           // <--- رفع خطای ۱: تعریف صریح
+//			bson.M{"ancestors._id": bson.M{"$in": rootIDs}}, // <--- رفع خطای ۲: تعریف صریح
+//		}
+//
+//		filterAllComments := bson.M{
+//			"$or":              orConditions,
+//			"commentable_id":   commentableID,
+//			"commentable_type": commentableType,
+//			"is_approved":      true,
+//			"deleted_at":       bson.M{"$exists": false},
+//		}
+//
+//		var flatComments []entity.Comment // فرض می‌کنیم entity.Comment ساختار اصلی بدون فیلد Children است
+//		cursor, err := d.collection.Find(ctx, filterAllComments)
+//		if err != nil {
+//			return commentservice.StorefrontListResult{}, fmt.Errorf("failed to fetch flat comments: %w", err)
+//		}
+//		defer cursor.Close(ctx)
+//
+//		if err := cursor.All(ctx, &flatComments); err != nil {
+//			return commentservice.StorefrontListResult{}, fmt.Errorf("failed to decode flat comments: %w", err)
+//		}
+//
+//		// 4. ساختاردهی درختی و بازگرداندن نتایج (انتقال به سرویس)
+//		// در عمل، بهتر است این مرحله در لایه سرویس انجام شود، اما برای سادگی، در اینجا آن را فراخوانی می‌کنیم.
+//		paginatedRoots := BuildCommentTree(flatComments, rootIDs)
+//
+//		return commentservice.StorefrontListResult{
+//			Comments:   paginatedRoots,
+//			TotalCount: totalCount,
+//		}, nil
+//	}
+func (d DB) GetApprovedCommentsWithChildren(ctx context.Context, commentableType string, commentableID string, pagination commonparam.PaginationRequest) (commentservice.StorefrontListResult, int64, error) {
+	const op = "mongodbcomment.GetApprovedCommentsWithChildren"
+
+	totalAllApprovedFilter := bson.M{
+		"commentable_id":   commentableID,
+		"commentable_type": commentableType,
+		"is_approved":      true,
+		"deleted_at":       bson.M{"$exists": false},
+	}
+	totalAllApproved, err := d.collection.CountDocuments(ctx, totalAllApprovedFilter)
+	if err != nil {
+		return commentservice.StorefrontListResult{}, 0, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+
+	// ۱. شمارش ریشه‌های تایید شده (برای صفحه‌بندی دقیق)
 	countPipeline := mongo.Pipeline{
 		{
 			{"$match", bson.M{
 				"commentable_id":   commentableID,
 				"commentable_type": commentableType,
-				"parent_id":        bson.M{"$exists": false},
-				"is_approved":      true,
+				"parent_id":        bson.M{"$exists": false}, // فقط ریشه‌ها
+				"is_approved":      true,                     // فقط تایید شده‌ها
 				"deleted_at":       bson.M{"$exists": false},
 			}},
 		},
@@ -91,26 +205,31 @@ func (d DB) GetApprovedCommentsWithChildren(ctx context.Context, commentableType
 
 	countCursor, err := d.collection.Aggregate(ctx, countPipeline)
 	if err != nil {
-		return commentservice.StorefrontListResult{}, fmt.Errorf("failed to count roots: %w", err)
+		return commentservice.StorefrontListResult{}, 0, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
 	}
 	defer countCursor.Close(ctx)
 
-	var countResult []bson.M
-	countCursor.All(ctx, &countResult)
+	var countResults []bson.M
+	if err := countCursor.All(ctx, &countResults); err != nil {
+		return commentservice.StorefrontListResult{}, 0, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
 
 	totalCount := uint(0)
-	if len(countResult) > 0 {
-		if count, ok := countResult[0]["totalCount"].(int32); ok {
-			totalCount = uint(count)
+	if len(countResults) > 0 {
+		// مدیریت هوشمند تبدیل نوع (مانگو ممکن است int32 یا int64 برگرداند)
+		switch v := countResults[0]["totalCount"].(type) {
+		case int32:
+			totalCount = uint(v)
+		case int64:
+			totalCount = uint(v)
 		}
 	}
 
-	// اگر کامنت ریشه‌ای وجود ندارد، با TotalCount صفر برگردان
 	if totalCount == 0 {
-		return commentservice.StorefrontListResult{TotalCount: 0}, nil
+		return commentservice.StorefrontListResult{TotalCount: 0}, totalAllApproved, nil
 	}
 
-	// 2. واکشی IDهای ریشه‌های صفحه‌بندی‌شده (کوئری اول)
+	// ۲. واکشی شناسه‌های (IDs) ریشه‌های تایید شده برای صفحه فعلی
 	pipelineRootIDs := mongo.Pipeline{
 		{
 			{"$match", bson.M{
@@ -124,57 +243,58 @@ func (d DB) GetApprovedCommentsWithChildren(ctx context.Context, commentableType
 		{{"$sort", bson.D{{Key: "created_at", Value: -1}}}},
 		{{"$skip", pagination.GetOffset()}},
 		{{"$limit", pagination.GetPageSize()}},
-		{{"$project", bson.M{"_id": 1}}}, // فقط IDها را برگردان
+		{{"$project", bson.M{"_id": 1}}},
 	}
 
 	rootIDCursor, err := d.collection.Aggregate(ctx, pipelineRootIDs)
 	if err != nil {
-		return commentservice.StorefrontListResult{}, fmt.Errorf("failed to fetch root IDs: %w", err)
+		return commentservice.StorefrontListResult{}, 0, richerror.New(op).WithWarpError(err)
 	}
 	defer rootIDCursor.Close(ctx)
 
-	var rootDocs []bson.M
-	rootIDCursor.All(ctx, &rootDocs)
+	var rootDocs []struct {
+		ID string `bson:"_id"`
+	}
+	if err := rootIDCursor.All(ctx, &rootDocs); err != nil {
+		return commentservice.StorefrontListResult{}, 0, richerror.New(op).WithWarpError(err)
+	}
 
 	var rootIDs []string
 	for _, doc := range rootDocs {
-		if id, ok := doc["_id"].(string); ok {
-			rootIDs = append(rootIDs, id)
-		}
+		rootIDs = append(rootIDs, doc.ID)
 	}
 
-	orConditions := bson.A{
-		bson.M{"_id": bson.M{"$in": rootIDs}},           // <--- رفع خطای ۱: تعریف صریح
-		bson.M{"ancestors._id": bson.M{"$in": rootIDs}}, // <--- رفع خطای ۲: تعریف صریح
-	}
-
+	// ۳. واکشی تمام کامنت‌های مرتبط (ریشه‌های انتخابی + فرزندان تایید شده آن‌ها)
+	// ✅ فیلتر is_approved: true در اینجا تضمین می‌کند که هیچ فرزند تایید نشده‌ای واکشی نشود.
 	filterAllComments := bson.M{
-		"$or":              orConditions,
+		"$or": bson.A{
+			bson.M{"_id": bson.M{"$in": rootIDs}},           // خودِ ریشه‌ها
+			bson.M{"ancestors._id": bson.M{"$in": rootIDs}}, // تمام نوادگان
+		},
 		"commentable_id":   commentableID,
 		"commentable_type": commentableType,
-		"is_approved":      true,
+		"is_approved":      true, // 👈 فیلتر حیاتی برای تایید شده بودن فرزندان
 		"deleted_at":       bson.M{"$exists": false},
 	}
 
-	var flatComments []entity.Comment // فرض می‌کنیم entity.Comment ساختار اصلی بدون فیلد Children است
+	var flatComments []entity.Comment
 	cursor, err := d.collection.Find(ctx, filterAllComments)
 	if err != nil {
-		return commentservice.StorefrontListResult{}, fmt.Errorf("failed to fetch flat comments: %w", err)
+		return commentservice.StorefrontListResult{}, 0, richerror.New(op).WithWarpError(err)
 	}
 	defer cursor.Close(ctx)
 
 	if err := cursor.All(ctx, &flatComments); err != nil {
-		return commentservice.StorefrontListResult{}, fmt.Errorf("failed to decode flat comments: %w", err)
+		return commentservice.StorefrontListResult{}, 0, richerror.New(op).WithWarpError(err)
 	}
 
-	// 4. ساختاردهی درختی و بازگرداندن نتایج (انتقال به سرویس)
-	// در عمل، بهتر است این مرحله در لایه سرویس انجام شود، اما برای سادگی، در اینجا آن را فراخوانی می‌کنیم.
+	// ۴. ساختاردهی درختی (توسط متد کمکی)
 	paginatedRoots := BuildCommentTree(flatComments, rootIDs)
 
 	return commentservice.StorefrontListResult{
 		Comments:   paginatedRoots,
 		TotalCount: totalCount,
-	}, nil
+	}, totalAllApproved, nil
 }
 
 // service/comment_utils.go یا service/comment_service.go

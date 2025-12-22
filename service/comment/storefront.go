@@ -29,13 +29,14 @@ func NewStorefrontService(
 func (s StorefrontService) GetAprovedCommentsWithChildren(ctx context.Context, req commentparam.StorefrontGetCommentsRequest) (commentparam.StorefrontGetCommentsResponse, error) {
 	const op = "commentService.GetAprovedCommentsWithChildren"
 
-	lr, err := s.repo.GetApprovedCommentsWithChildren(ctx, req.CommentableType, req.CommentableID, req.Pagination)
+	lr, t, err := s.repo.GetApprovedCommentsWithChildren(ctx, req.CommentableType, req.CommentableID, req.Pagination)
 	if err != nil {
 		return commentparam.StorefrontGetCommentsResponse{}, richerror.New(op).WithWarpError(err)
 	}
 
 	return commentparam.StorefrontGetCommentsResponse{
-		Comments: lr.Comments,
+		Comments:                 lr.Comments,
+		AllApprovedCommentsCount: t,
 		Pagination: commonparam.PaginationResponse{
 			PageSize:   req.Pagination.GetPageSize(),
 			PageNumber: req.Pagination.GetPageNumber(),
