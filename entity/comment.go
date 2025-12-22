@@ -30,12 +30,12 @@ type Comment struct {
 	DeletedAt  time.Time `bson:"deleted_at,omitempty"`
 }
 type AncestorComment struct {
-	ID            string `bson:"_id"`
-	CommenterID   string `bson:"commenter_id"`
-	CommenterType string `bson:"commenter_type"`
-	CommenterName string `bson:"commenter_name"`
-	Body          string `bson:"body"`
-	Level         int    `bson:"level"`
+	ID            string `bson:"_id" json:"id"`
+	CommenterID   string `bson:"commenter_id" json:"commenter_id"`
+	CommenterType string `bson:"commenter_type" json:"commenter_type"`
+	CommenterName string `bson:"commenter_name" json:"commenter_name"`
+	Body          string `bson:"body" json:"body"`
+	Level         int    `bson:"level" json:"level"`
 }
 
 func (c *Comment) BeforeCreate() {
