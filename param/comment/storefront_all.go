@@ -14,8 +14,9 @@ type StorefrontGetCommentsRequest struct {
 }
 
 type StorefrontGetCommentsResponse struct {
-	Pagination commonparam.PaginationResponse `json:"pagination"`
-	Comments   []CommentWithChildren          `json:"comments"`
+	Pagination               commonparam.PaginationResponse `json:"pagination"`
+	Comments                 []CommentWithChildren          `json:"comments"`
+	AllApprovedCommentsCount int64                          `json:"all_approved_comments_count"`
 }
 
 type CommentWithChildren struct {

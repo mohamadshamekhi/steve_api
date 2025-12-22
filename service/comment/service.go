@@ -27,7 +27,7 @@ type Repository interface {
 
 	List(ctx context.Context, filter commonparam.FilterRequest, pagination commonparam.PaginationRequest) (ListResult, error)
 	FindManyByIDs(ctx context.Context, ids []string) (map[string]entity.Comment, error)
-	GetApprovedCommentsWithChildren(ctx context.Context, commentableType string, commentableID string, pagination commonparam.PaginationRequest) (StorefrontListResult, error)
+	GetApprovedCommentsWithChildren(ctx context.Context, commentableType string, commentableID string, pagination commonparam.PaginationRequest) (StorefrontListResult, int64, error)
 }
 type Service struct {
 	repo               Repository
