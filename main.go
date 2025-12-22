@@ -12,6 +12,7 @@ import (
 	attributedefinitionhandler "github.com/abolfazlnorzad/steve/delivery/http_server/attributedefinition"
 	backofficehandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
+	bannerhandler "github.com/abolfazlnorzad/steve/delivery/http_server/banner"
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
 	carthandler "github.com/abolfazlnorzad/steve/delivery/http_server/cart"
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
@@ -35,6 +36,7 @@ import (
 	mongodbattribute "github.com/abolfazlnorzad/steve/repository/mongo/attribute"
 	mongodbattributedefinition "github.com/abolfazlnorzad/steve/repository/mongo/attribute_definition"
 	mongodbbackoffice "github.com/abolfazlnorzad/steve/repository/mongo/backoffice"
+	mongodbbanner "github.com/abolfazlnorzad/steve/repository/mongo/banner"
 	mongodbbrand "github.com/abolfazlnorzad/steve/repository/mongo/brand"
 	mongodbcart "github.com/abolfazlnorzad/steve/repository/mongo/cart"
 	mongodbcategory "github.com/abolfazlnorzad/steve/repository/mongo/category"
@@ -221,9 +223,13 @@ func main() {
 	ratingVld := ratingvalidator.New()
 	ratingSvc := ratingservice.New(ratingRepo, productStorefrontSvc)
 	ratingHandler := ratinghandler.New(ratingSvc, translator, ratingVld, authSvc, cfg.Auth, aclSvc)
+	bannerRepo := mongodbbanner.New(mongoRepo)
+	bannerBackofficeSvc := settingservice.NewBannerBackofficeService(bannerRepo, mediaSvc)
+	bannerVld := settingvalidator.NewBannerValidator()
+	bannerHandler := bannerhandler.New(bannerBackofficeSvc, bannerVld, translator, authSvc, cfg.Auth, aclSvc)
 
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
-		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler)
+		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler)
 	server.Serve()
 }
