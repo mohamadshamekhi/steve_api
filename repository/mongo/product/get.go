@@ -376,3 +376,100 @@ func (d DB) GetMinAdnMaxPriceOfProductWithSpecialCategory(ctx context.Context, c
 
 	return uint64(res.Min), uint64(res.Max), nil
 }
+
+func (d DB) GetProductIDsByCategories(ctx context.Context, categoryIDs []string) (map[string][]string, error) {
+
+	filter := bson.M{"category_id": bson.M{"$in": categoryIDs}}
+
+	cursor, err := d.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find products by categories: %w", err)
+	}
+	defer cursor.Close(ctx)
+
+	categoryToProductIDs := make(map[string][]string)
+
+	// پردازش نتایج query
+	for cursor.Next(ctx) {
+		var product entity.Product
+		if err := cursor.Decode(&product); err != nil {
+			return nil, fmt.Errorf("failed to decode product: %w", err)
+		}
+
+		// بررسی دسته‌بندی محصول
+		if product.CategoryID != "" {
+			categoryToProductIDs[product.CategoryID] = append(categoryToProductIDs[product.CategoryID], product.ID)
+		}
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, fmt.Errorf("cursor error: %w", err)
+	}
+
+	return categoryToProductIDs, nil
+}
+
+//// GetPricesOfProducts پیاده‌سازی متد اصلی
+//func (d DB) GetPricesOfProducts(ctx context.Context, prodIDSlice []string, variantIDSlice []string) (map[string]map[string]float64, error) {
+//
+//}
+
+// GetPricesOfProducts قیمت تمام تنوع‌های مربوط به شناسه‌های محصول ورودی را برمی‌گرداند.
+//
+// این متد شناسه‌های محصول (`prodIDSlice`) را دریافت کرده و با یک کوئری به دیتابیس،
+// تمام محصولاتی که شناسه‌ی آن‌ها در این لیست وجود دارد را پیدا می‌کند.
+// سپس برای هر محصول، قیمت تمام تنوع‌هایش را استخراج کرده و در ساختار map[productID]map[variantID]price برمی‌گرداند.
+//
+// نکته: پارامتر `variantIDSlice` در این پیاده‌سازی مستقیماً در کوئری دیتابیس استفاده نمی‌شود،
+// زیرا بهینه‌تر است که کل داکیومنت محصول را یکجا بگیریم و سپس در لایه سرویس، تنوع‌های مورد نظر را فیلتر کنیم.
+// این کار جلوی کوئری‌های پیچیده و متعدد به دیتابیس را می‌گیرد.
+func (d DB) GetPricesOfProducts(ctx context.Context, prodIDSlice []string, variantIDSlice []string) (map[string]map[string]float64, error) {
+	const op = "productrepo.GetPricesOfProducts"
+	// 1. آماده سازی map برای ذخیره قیمت‌ها
+	productPrices := make(map[string]map[string]float64)
+
+	var products []entity.Product
+	filter := bson.M{
+		"_id": bson.M{
+			"$in": prodIDSlice,
+		},
+	}
+
+	cursor, err := d.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed to fetch products: %w", op, err)
+	}
+	if err := cursor.All(ctx, &products); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).
+			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
+	}
+
+	// 3. پردازش داده‌ها و استخراج قیمت‌ها
+	for _, product := range products {
+		// برای هر محصول، ورینت‌های آن را پردازش می‌کنیم
+		for _, variant := range product.Variants {
+			// اگر ورینت در لیست ورینت‌ها باشد، قیمت آن را استخراج می‌کنیم
+			if contains(variantIDSlice, variant.ID) {
+				// اگر محصول در نقشه موجود نباشد، آن را اضافه می‌کنیم
+				if _, exists := productPrices[product.ID]; !exists {
+					productPrices[product.ID] = make(map[string]float64)
+				}
+
+				// ذخیره قیمت ورینت در نقشه
+				productPrices[product.ID][variant.ID] = float64(variant.Price)
+			}
+		}
+	}
+
+	return productPrices, nil
+}
+
+// تابع کمکی برای چک کردن وجود یک ورینت در آرایه
+func contains(slice []string, item string) bool {
+	for _, a := range slice {
+		if a == item {
+			return true
+		}
+	}
+	return false
+}

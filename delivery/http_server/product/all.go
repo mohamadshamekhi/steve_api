@@ -65,6 +65,20 @@ func (h Handler) StorefrontGetProductsWithAutoDiscount(c echo.Context) error {
 	return c.JSON(http.StatusOK, apiResponse)
 }
 
+func (h Handler) GetProductsWithSpecialDiscount(c echo.Context) error {
+	const op = "productservice.GetProductsWithSpecialDiscount"
+	fmt.Println("op", op)
+	resp, err := h.storefrontProductSvc.GetProductsWithSpecialDiscount(c.Request().Context(), productparam.GetProductsWithSpecialDiscountRequest{})
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}
+
 func (h Handler) StorefrontGetFilterableProduct(c echo.Context) error {
 	const op = "productservice.StorefrontGetFilterableProduct"
 	req := productparam.StorefrontGetAllProductRequest{}

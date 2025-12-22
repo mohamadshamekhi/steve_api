@@ -7,12 +7,14 @@ import (
 	cartparam "github.com/abolfazlnorzad/steve/param/cart"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	discountservice "github.com/abolfazlnorzad/steve/service/discount"
+	orderservice "github.com/abolfazlnorzad/steve/service/order"
 )
 
 type StoreFrontService struct {
-	repo  CartReadWriter
-	pRepo PRepository
-	uRepo URepository
+	repo          CartReadWriter
+	pRepo         PRepository
+	uRepo         URepository
+	orderProvider orderservice.StoreFrontService
 }
 
 func NewStorefrontService(repo CartReadWriter,
@@ -24,7 +26,11 @@ func NewStorefrontService(repo CartReadWriter,
 	}
 }
 
-func (s StoreFrontService) AddItemToCart(ctx context.Context, req cartparam.AddItemToCartRequest) (cartparam.AddItemToCartResponse, error) {
+func (s *StoreFrontService) SetOrderProvider(orderProvider orderservice.StoreFrontService) {
+	s.orderProvider = orderProvider
+}
+
+func (s *StoreFrontService) AddItemToCart(ctx context.Context, req cartparam.AddItemToCartRequest) (cartparam.AddItemToCartResponse, error) {
 	const op = "cartservice.AddItemToCart"
 	p, _ := s.pRepo.FindByID(ctx, req.ProductID)
 	userID, _ := ctx.Value("user_id").(string)
@@ -50,7 +56,7 @@ func (s StoreFrontService) AddItemToCart(ctx context.Context, req cartparam.AddI
 	return cartparam.AddItemToCartResponse{}, nil
 }
 
-func (s StoreFrontService) RemoveFromCart(ctx context.Context, req cartparam.RemoveFromCartRequest) (cartparam.RemoveFromCartResponse, error) {
+func (s *StoreFrontService) RemoveFromCart(ctx context.Context, req cartparam.RemoveFromCartRequest) (cartparam.RemoveFromCartResponse, error) {
 	const op = "cartservice.AddItemToCart"
 	userID, _ := ctx.Value("user_id").(string)
 	if err := s.repo.RemoveFromCart(ctx, userID, req.ProductID, req.VariantID); err != nil {
@@ -60,7 +66,7 @@ func (s StoreFrontService) RemoveFromCart(ctx context.Context, req cartparam.Rem
 	return cartparam.RemoveFromCartResponse{}, nil
 }
 
-func (s StoreFrontService) GetMyActiveCart(ctx context.Context, req cartparam.MyActiveCartRequest) (cartparam.MyActiveCartResponse, error) {
+func (s *StoreFrontService) GetMyActiveCart(ctx context.Context, req cartparam.MyActiveCartRequest) (cartparam.MyActiveCartResponse, error) {
 	const op = "cartservice.GetMyActiveCart"
 	cart, err := s.repo.GetUserActiveCart(ctx, req.UserID)
 	if err != nil {
@@ -77,6 +83,7 @@ func (s StoreFrontService) GetMyActiveCart(ctx context.Context, req cartparam.My
 	var cartItems []cartparam.StoreFrontCartItemDetail
 	for _, item := range cart.Items {
 		p, err := s.pRepo.FindByID(ctx, item.ProductID)
+		summary, err := s.orderProvider.FinalizeCartForCheckout(ctx, *cart, "")
 		if err != nil {
 			return cartparam.MyActiveCartResponse{}, richerror.New(op).WithWarpError(err)
 		}
@@ -88,6 +95,7 @@ func (s StoreFrontService) GetMyActiveCart(ctx context.Context, req cartparam.My
 			VariantAttributes: item.VariantAttributes,
 			PriceAtTime:       item.PriceAtTime,
 			Url:               p.GetMainGallery().URL,
+			Summary:           summary,
 		})
 	}
 
@@ -113,25 +121,64 @@ func (s StoreFrontService) GetMyActiveCart(ctx context.Context, req cartparam.My
 	}, nil
 }
 
-func (s StoreFrontService) GetEnrichedCart(ctx context.Context, cart *entity.Cart) (discountservice.EnrichedCart, error) {
-	var pids []string
-	var cids []string
+func (s *StoreFrontService) GetEnrichedCart(
+	ctx context.Context,
+	cart *entity.Cart,
+) (discountservice.EnrichedCart, error) {
+
+	// productID -> []variantID
+	productIDVariantIDs := make(map[string][]string)
+
+	// برای اینکه دسته‌ها تکراری نشوند
+	categoryIDSet := make(map[string]struct{})
 
 	for _, item := range cart.Items {
-		pids = append(pids, item.ProductID)
-		p, _ := s.pRepo.FindByID(ctx, item.ProductID)
-		cids = append(cids, p.CategoryID)
+		// جمع کردن ورینت‌های هر محصول در map
+		if item.ProductID != "" {
+			variants := productIDVariantIDs[item.ProductID]
+
+			// جلوگیری از تکرار VariantID داخل slice
+			if item.VariantID != "" {
+				already := false
+				for _, v := range variants {
+					if v == item.VariantID {
+						already = true
+						break
+					}
+				}
+				if !already {
+					productIDVariantIDs[item.ProductID] = append(variants, item.VariantID)
+				}
+			}
+		}
+
+		// گرفتن دسته‌ی محصول
+		p, err := s.pRepo.FindByID(ctx, item.ProductID)
+		if err != nil {
+			return discountservice.EnrichedCart{}, err
+		}
+		if p.CategoryID != "" {
+			categoryIDSet[p.CategoryID] = struct{}{}
+		}
 	}
+
+	// تبدیل set دسته‌ها به slice
+	cids := make([]string, 0, len(categoryIDSet))
+	for cid := range categoryIDSet {
+		cids = append(cids, cid)
+	}
+
 	res := discountservice.EnrichedCart{
 		Cart:        cart,
-		ProductIDs:  pids,
+		ProductIDs:  productIDVariantIDs, // map[productID][]variantID
 		CategoryIDs: cids,
 		Subtotal:    int64(cart.CalculateSubtotal()),
 	}
+
 	return res, nil
 }
 
-func (s StoreFrontService) UpdateCartStatus(ctx context.Context, req cartparam.UpdateCartStatusRequest) (cartparam.UpdateCartStatusResponse, error) {
+func (s *StoreFrontService) UpdateCartStatus(ctx context.Context, req cartparam.UpdateCartStatusRequest) (cartparam.UpdateCartStatusResponse, error) {
 	const op = "cartservice.UpdateCartStatus"
 	if err := s.repo.UpdateStatus(ctx, req.CartID, req.Status); err != nil {
 		return cartparam.UpdateCartStatusResponse{}, richerror.New(op).WithWarpError(err)
@@ -139,7 +186,7 @@ func (s StoreFrontService) UpdateCartStatus(ctx context.Context, req cartparam.U
 	return cartparam.UpdateCartStatusResponse{}, nil
 }
 
-func (s StoreFrontService) AcceptPriceChange(ctx context.Context, req cartparam.AcceptPriceChangeRequest) (cartparam.AcceptPriceChangeResponse, error) {
+func (s *StoreFrontService) AcceptPriceChange(ctx context.Context, req cartparam.AcceptPriceChangeRequest) (cartparam.AcceptPriceChangeResponse, error) {
 	const op = "cartservice.AcceptPriceChange"
 	variants, err := s.pRepo.GetVariantsByIDs(ctx, []string{req.VariantID})
 	if err != nil {
@@ -152,7 +199,7 @@ func (s StoreFrontService) AcceptPriceChange(ctx context.Context, req cartparam.
 	return cartparam.AcceptPriceChangeResponse{}, nil
 }
 
-func (s StoreFrontService) DeleteItemFromCart(ctx context.Context, req cartparam.DeleteItemFromCartRequest) (cartparam.DeleteItemFromCartResponse, error) {
+func (s *StoreFrontService) DeleteItemFromCart(ctx context.Context, req cartparam.DeleteItemFromCartRequest) (cartparam.DeleteItemFromCartResponse, error) {
 	const op = "cartservice.DeleteItemFromCart"
 
 	if err := s.repo.DeleteItemFromCart(ctx, req.UserID, req.VariantID); err != nil {

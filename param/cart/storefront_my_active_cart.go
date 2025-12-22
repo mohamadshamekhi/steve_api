@@ -39,4 +39,5 @@ type StoreFrontCartItemDetail struct {
 	VariantAttributes []entity.VariantAttribute `bson:"variant_attributes"`
 	PriceAtTime       int64                     `bson:"price_at_time"`
 	Url               string                    `json:"url"`
+	Summary           entity.CheckoutSummary    `json:"summary"`
 }

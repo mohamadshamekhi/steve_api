@@ -305,5 +305,21 @@
   {
     "id": "product.publish.missing_specifications",
     "translation": "امکان انتشار وجود ندارد. لطفاً مقادیر مشخصات فنی زیر را تکمیل کنید: {{.MissingSpecs}}"
+  },
+  {
+    "id": "discount.applicable_to_category_required",
+    "translation": "لطفا حداقل یک دسته بندی انتخاب کنید"
+  },
+  {
+    "id": "discount.applicable_to_user_required",
+    "translation": "لطفا حداقل یک کابر انتخاب کنید"
+  },
+  {
+    "id": "discount.applicable_to_product_required",
+    "translation": "لطفا حداقل یک محصول انتخاب کنید"
+  } ,
+  {
+    "id": "discount.special_discount_is_exist_in_this_time",
+    "translation": "در بازه زمانی داده شده ، تخفیف شگفت انگیز وحود دارد - توجه داشته باشید در هر بازه زمانی تنها یک تخفیف شگفت انگیز میتواند وجود داشته باشد"
   }
 ]
