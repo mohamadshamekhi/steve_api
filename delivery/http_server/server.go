@@ -11,6 +11,7 @@ import (
 	attributedefinitionhandler "github.com/abolfazlnorzad/steve/delivery/http_server/attributedefinition"
 	backofficehandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
+	bannerhandler "github.com/abolfazlnorzad/steve/delivery/http_server/banner"
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
 	carthandler "github.com/abolfazlnorzad/steve/delivery/http_server/cart"
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
@@ -55,6 +56,7 @@ type Server struct {
 	aclHandler            aclhandler.Handler
 	contactUsHandler      contactushandler.Handler
 	ratingHandler         ratinghandler.Handler
+	bannerHandler         bannerhandler.Handler
 }
 
 func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler,
@@ -63,7 +65,7 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 	commentHandler commenthandler.Handler, discountHandler discounthandler.Handler, cartHandler carthandler.Handler,
 	orderHandler orderhandler.Handler, shippingHandler shippinghandler.Handler, repairHandler repairhandler.Handler, sellHandler sellhandler.Handler,
 	aclHandler aclhandler.Handler, contactUsHandler contactushandler.Handler, ratingHandler ratinghandler.Handler,
-
+	bannerHandler bannerhandler.Handler,
 ) Server {
 	return Server{
 		config:                cfg,
@@ -88,6 +90,7 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 		aclHandler:            aclHandler,
 		contactUsHandler:      contactUsHandler,
 		ratingHandler:         ratingHandler,
+		bannerHandler:         bannerHandler,
 	}
 }
 
@@ -166,6 +169,7 @@ func (s Server) Serve() {
 	s.aclHandler.SetRoutes(s.Router)
 	s.contactUsHandler.SetRoutes(s.Router)
 	s.ratingHandler.SetRoutes(s.Router)
+	s.bannerHandler.SetRoutes(s.Router)
 	// Start server
 	address := fmt.Sprintf(":%d", s.config.HTTPServer.Port)
 	fmt.Printf("start echo server on %s\n", address)
