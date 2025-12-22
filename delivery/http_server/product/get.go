@@ -51,6 +51,27 @@ func (h Handler) StorefrontGetProduct(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
+func (h Handler) StorefrontGetProductBySlug(c echo.Context) error {
+	const op = "producthandler.StorefrontGetProductBySlug"
+	slug := c.Param("slug")
+	req := productparam.StorefrontGetProductBySlugRequest{
+		Slug: slug,
+	}
+
+	if err := h.vld.ValidateStorefrontGetProductBySlugRequest(req); err != nil {
+		return err
+	}
+
+	resp, err := h.storefrontProductSvc.GetProductBySlug(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}
 
 func (h Handler) GetMobileList(c echo.Context) error {
 	const op = "producthandler.GetMobileList"

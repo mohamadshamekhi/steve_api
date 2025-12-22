@@ -26,13 +26,6 @@ func (h Handler) GetAll(c echo.Context) error {
 	req.Pagination.PageSize = uint(pageSize)
 	req.Pagination.PageNumber = uint(pageNumber)
 
-	if status := c.QueryParam("status"); status != "" {
-		req.Filter.Status = &status
-	}
-	if userID := c.QueryParam("user_id"); userID != "" {
-		req.Filter.UserID = &userID
-	}
-
 	resp, err := h.backofficeSvc.GetAll(c.Request().Context(), req)
 	if err != nil {
 		return err
