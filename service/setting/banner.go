@@ -2,15 +2,18 @@ package settingservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
+	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 	settingparam "github.com/abolfazlnorzad/steve/param/setting"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 )
 
 type BannerBackofficeService struct {
-	repo BannerRepository
+	repo     BannerRepository
+	mediaSvc MediaService
 }
 
 type BannerRepository interface {
@@ -20,9 +23,15 @@ type BannerRepository interface {
 	Update(ctx context.Context, b *entity.Banner) error
 	List(ctx context.Context, isActive *bool) ([]entity.Banner, error)
 }
+type MediaService interface {
+	GetURLByMediaID(ctx context.Context, req mediaparam.GetUrlByIDRequest) (mediaparam.GetUrlByIDResponse, error)
+	GetURLsByMediaIDs(ctx context.Context, req mediaparam.GetUrlsByIDsRequest) (mediaparam.GetUrlsByIDsResponse, error)
+	DeleteMedia(ctx context.Context, req mediaparam.DeleteMediaRequest) (mediaparam.DeleteMediaResponse, error)
+	FindMediaByID(ctx context.Context, req mediaparam.GetMediaByIDRequest) (mediaparam.GetMediaByIDResponse, error)
+}
 
-func NewBannerBackofficeService(repo BannerRepository) BannerBackofficeService {
-	return BannerBackofficeService{repo: repo}
+func NewBannerBackofficeService(repo BannerRepository, mediaSvc MediaService) BannerBackofficeService {
+	return BannerBackofficeService{repo: repo, mediaSvc: mediaSvc}
 }
 
 func (bs BannerBackofficeService) Create(ctx context.Context, req settingparam.CreateBannerRequest) (settingparam.CreateBannerResponse, error) {
@@ -95,7 +104,33 @@ func (bs BannerBackofficeService) List(ctx context.Context, req settingparam.Lis
 	if err != nil {
 		return settingparam.ListBannerResponse{}, richerror.New(op).WithWarpError(err)
 	}
+	var result []settingparam.BannerInfo
+	var mIds []string
+	for _, banner := range banners {
+		mIds = append(mIds, banner.MediaID)
+	}
+
+	resp, err := bs.mediaSvc.GetURLsByMediaIDs(ctx, mediaparam.GetUrlsByIDsRequest{IDs: mIds})
+	if err != nil {
+		fmt.Println(richerror.New(op).WithWarpError(err).Error())
+	}
+
+	for _, b := range banners {
+
+		result = append(result, settingparam.BannerInfo{
+			ID:        b.ID,
+			Title:     b.Title,
+			MediaID:   b.MediaID,
+			ImageURL:  resp.URLs[b.MediaID],
+			Link:      b.Link,
+			Location:  b.Location,
+			SortOrder: b.SortOrder,
+			IsActive:  b.IsActive,
+			AltText:   b.AltText,
+			CreatedAt: b.CreatedAt,
+		})
+	}
 	return settingparam.ListBannerResponse{
-		Banners: banners,
+		Banners: result,
 	}, nil
 }

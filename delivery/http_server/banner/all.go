@@ -36,3 +36,22 @@ func (h Handler) All(c echo.Context) error {
 	return c.JSON(http.StatusOK, apiResponse)
 
 }
+func (h Handler) GetAllActiveBanner(c echo.Context) error {
+	const op = "bannerhandler.All"
+
+	b := true
+	req := settingparam.ListBannerRequest{
+		IsActive: &b,
+	}
+
+	resp, err := h.backofficeSvc.List(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+
+}

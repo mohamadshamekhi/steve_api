@@ -224,7 +224,7 @@ func main() {
 	ratingSvc := ratingservice.New(ratingRepo, productStorefrontSvc)
 	ratingHandler := ratinghandler.New(ratingSvc, translator, ratingVld, authSvc, cfg.Auth, aclSvc)
 	bannerRepo := mongodbbanner.New(mongoRepo)
-	bannerBackofficeSvc := settingservice.NewBannerBackofficeService(bannerRepo)
+	bannerBackofficeSvc := settingservice.NewBannerBackofficeService(bannerRepo, mediaSvc)
 	bannerVld := settingvalidator.NewBannerValidator()
 	bannerHandler := bannerhandler.New(bannerBackofficeSvc, bannerVld, translator, authSvc, cfg.Auth, aclSvc)
 

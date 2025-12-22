@@ -2,8 +2,6 @@ package settingparam
 
 import (
 	"time"
-
-	"github.com/abolfazlnorzad/steve/entity"
 )
 
 type CreateBannerRequest struct {
@@ -44,5 +42,18 @@ type ListBannerRequest struct {
 }
 
 type ListBannerResponse struct {
-	Banners []entity.Banner `json:"banners"`
+	Banners []BannerInfo `json:"banners"`
+}
+
+type BannerInfo struct {
+	ID        string    `json:"id"`
+	Title     string    `json:"title"`
+	MediaID   string    `json:"media_id"`
+	ImageURL  string    `json:"image_url"`
+	Link      string    `json:"link"`
+	Location  string    `json:"location"`
+	SortOrder int       `json:"sort_order"`
+	IsActive  bool      `json:"is_active"`
+	AltText   string    `json:"alt_text"`
+	CreatedAt time.Time `json:"created_at"`
 }
