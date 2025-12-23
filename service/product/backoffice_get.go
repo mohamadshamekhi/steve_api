@@ -2,13 +2,13 @@ package productservice
 
 import (
 	"context"
-	"fmt"
 
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
 	categoryparam "github.com/abolfazlnorzad/steve/param/category"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	"golang.org/x/sync/errgroup"
 )
 
 func (s BackofficeService) GetProduct(ctx context.Context, req productparam.GetProductRequest) (productparam.GetProductResponse, error) {
@@ -19,48 +19,89 @@ func (s BackofficeService) GetProduct(ctx context.Context, req productparam.GetP
 		return productparam.GetProductResponse{}, richerror.New(op).WithWarpError(err)
 	}
 
+	g, gCtx := errgroup.WithContext(ctx)
+
+	var (
+		catRes   categoryparam.GetCategoryResponse
+		brandRes brandparam.GetBrandResponse
+	)
+
+	g.Go(func() error {
+		var cErr error
+		catRes, cErr = s.categoryProvider.GetCategory(gCtx, categoryparam.GetCategoryRequest{ID: p.CategoryID})
+		if cErr != nil {
+			logger.L().Error("failed to get category", "product_id", p.ID, "err", cErr)
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		var bErr error
+		brandRes, bErr = s.brandProvider.GetBrand(gCtx, brandparam.GetBrandRequest{ID: p.BrandID})
+		if bErr != nil {
+			logger.L().Error("failed to get brand", "product_id", p.ID, "err", bErr)
+		}
+		return nil
+	})
+
+	_ = g.Wait()
+
+	productSpecMap := make(map[string]string)
+	for _, s := range p.Specifications {
+		productSpecMap[s.Key] = s.Value
+	}
+
+	var specs []productparam.Specification
+	if catRes.Category.ID != "" {
+		for _, attr := range catRes.Category.AttributeSet {
+			if val, ok := productSpecMap[attr.Key]; ok {
+				specs = append(specs, productparam.Specification{
+					Key:   attr.Key,
+					Value: val,
+					Name:  attr.Name,
+					Unit:  attr.Unit,
+				})
+			}
+		}
+	}
+
 	productInfo := productparam.ProductInfo{
 		ID:             p.ID,
 		Name:           p.Name,
 		ENTitle:        p.ENTitle,
 		Slug:           p.Slug,
-		Brand:          brandparam.BrandInfo{},
-		Category:       categoryparam.CategoryInfo{},
 		Gallery:        p.Gallery,
 		IsPublished:    p.IsPublished,
 		IsSecondHand:   p.IsSecondHand,
 		Description:    p.Description,
 		Variants:       p.Variants,
-		Specifications: p.Specifications,
 		CreatedAt:      p.CreatedAt,
 		UpdatedAt:      p.UpdatedAt,
-	}
-	cr, cErr := s.categoryProvider.GetCategory(ctx, categoryparam.GetCategoryRequest{ID: p.CategoryID})
-	if cErr != nil {
-		logger.L().Error(fmt.Sprintf("failed to get category: product_id : %s - err : %v", p.ID, cErr))
-	}
-	productInfo.Category = categoryparam.CategoryInfo{
-		ID:           cr.Category.ID,
-		Name:         cr.Category.Name,
-		Description:  cr.Category.Description,
-		URL:          cr.Category.URL,
-		Level:        cr.Category.Level,
-		Slug:         cr.Category.Slug,
-		Ancestors:    cr.Category.Ancestors,
-		AttributeSet: cr.Category.AttributeSet,
+		Specifications: specs,
 	}
 
-	bres, bErr := s.brandProvider.GetBrand(ctx, brandparam.GetBrandRequest{ID: p.BrandID})
-	if bErr != nil {
-		logger.L().Error(fmt.Sprintf("failed to get banner: product_id : %s - err : %v", p.ID, bErr))
+	if catRes.Category.ID != "" {
+		productInfo.Category = categoryparam.CategoryInfo{
+			ID:           catRes.Category.ID,
+			Name:         catRes.Category.Name,
+			Description:  catRes.Category.Description,
+			URL:          catRes.Category.URL,
+			Level:        catRes.Category.Level,
+			Slug:         catRes.Category.Slug,
+			Ancestors:    catRes.Category.Ancestors,
+			AttributeSet: catRes.Category.AttributeSet,
+		}
 	}
 
-	productInfo.Brand = brandparam.BrandInfo{
-		ID:          bres.ID,
-		Name:        bres.Name,
-		Description: bres.Description,
-		URL:         bres.Url,
+	if brandRes.ID != "" {
+		productInfo.Brand = brandparam.BrandInfo{
+			ID:          brandRes.ID,
+			Name:        brandRes.Name,
+			Description: brandRes.Description,
+			URL:         brandRes.Url,
+		}
 	}
+
 	return productparam.GetProductResponse{Product: productInfo}, nil
 }
 

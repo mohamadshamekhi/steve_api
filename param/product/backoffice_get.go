@@ -28,12 +28,19 @@ type ProductInfo struct {
 	Description  string                     `json:"description"`
 	Rating       float64                    `json:"rating"`
 
-	Variants       []entity.Variant       `json:"variants"`
-	Specifications []entity.Specification `json:"specifications,omitempty"`
+	Variants       []entity.Variant `json:"variants"`
+	Specifications []Specification  `json:"specifications,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	DeletedAt time.Time `json:"deleted_at,omitempty"`
+}
+
+type Specification struct {
+	Key   string `bson:"key" json:"key"`
+	Value string `bson:"value" json:"value"`
+	Name  string `bson:"name" json:"name"`
+	Unit  string `bson:"unit,omitempty" json:"unit"`
 }
 
 type GetProductsByIDsRequest struct {
