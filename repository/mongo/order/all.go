@@ -104,3 +104,20 @@ func (d DB) GetUserOrderWithDetails(ctx context.Context, userID string, p common
 		TotalCount: totalCount,
 	}, nil
 }
+
+func (d DB) GetUserOrderStatics(ctx context.Context, userID string, status entity.OrderStatus) (uint64, error) {
+	const op = "mongodborder.GetUserOrderStatics"
+
+	filter := bson.M{
+		"user_id":    userID,
+		"status":     status,
+		"deleted_at": bson.M{"$exists": false},
+	}
+
+	count, err := d.collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return 0, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+
+	return uint64(count), nil
+}

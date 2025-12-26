@@ -22,6 +22,7 @@ type StorefrontListResult struct {
 type OrderReader interface {
 	GetAll(ctx context.Context, f orderparam.BackofficeFilterOrder, p commonparam.PaginationRequest) (ListResult, error)
 	GetUserOrderWithDetails(ctx context.Context, UserID string, p commonparam.PaginationRequest) (StorefrontListResult, error)
+	GetUserOrderStatics(ctx context.Context, userID string, status entity.OrderStatus) (uint64, error)
 }
 
 type OrderWriter interface {

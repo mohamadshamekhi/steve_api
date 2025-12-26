@@ -29,3 +29,13 @@ type GetUserOrderResponse struct {
 	Pagination commonparam.PaginationResponse `json:"pagination"`
 	Orders     []StoreFrontOrderInfo          `json:"orders"`
 }
+
+type GetUserOrderStaticsRequest struct {
+	UserID string `json:"user_id"`
+}
+
+type GetUserOrderStaticsResponse struct {
+	OrderProcessing uint64 `json:"order_processing"`
+	OrderDelivered  uint64 `json:"order_delivered"`
+	OrderRefunded   uint64 `json:"order_refunded"`
+}
