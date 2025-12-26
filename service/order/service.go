@@ -14,8 +14,14 @@ type ListResult struct {
 	TotalCount int64
 }
 
+type StorefrontListResult struct {
+	Orders     []orderparam.StoreFrontOrderInfo
+	TotalCount int64
+}
+
 type OrderReader interface {
 	GetAll(ctx context.Context, f orderparam.BackofficeFilterOrder, p commonparam.PaginationRequest) (ListResult, error)
+	GetUserOrderWithDetails(ctx context.Context, UserID string, p commonparam.PaginationRequest) (StorefrontListResult, error)
 }
 
 type OrderWriter interface {

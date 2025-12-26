@@ -51,3 +51,56 @@ func (d DB) GetAll(ctx context.Context, f orderparam.BackofficeFilterOrder, p co
 		TotalCount: totalCount,
 	}, nil
 }
+
+func (d DB) GetUserOrderWithDetails(ctx context.Context, userID string, p commonparam.PaginationRequest) (orderservice.StorefrontListResult, error) {
+	const op = "mongodborder.GetUserOrderWithDetails"
+
+	filter := bson.M{"user_id": userID}
+
+	totalCount, err := d.collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return orderservice.StorefrontListResult{}, richerror.New(op).WithWarpError(err)
+	}
+
+	if totalCount == 0 {
+		return orderservice.StorefrontListResult{Orders: []orderparam.StoreFrontOrderInfo{}, TotalCount: 0}, nil
+	}
+
+	findOptions := options.Find().
+		SetSort(bson.D{{Key: "created_at", Value: -1}}). // جدیدترین‌ها اول
+		SetSkip(int64(p.GetOffset())).
+		SetLimit(int64(p.GetPageSize()))
+
+	cursor, err := d.collection.Find(ctx, filter, findOptions)
+	if err != nil {
+		return orderservice.StorefrontListResult{}, richerror.New(op).WithWarpError(err)
+	}
+	defer cursor.Close(ctx)
+
+	var dbOrders []entity.Order
+	if err := cursor.All(ctx, &dbOrders); err != nil {
+		return orderservice.StorefrontListResult{}, richerror.New(op).WithWarpError(err)
+	}
+
+	ordersInfo := make([]orderparam.StoreFrontOrderInfo, 0, len(dbOrders))
+	for _, o := range dbOrders {
+		ordersInfo = append(ordersInfo, orderparam.StoreFrontOrderInfo{
+			ID:              o.ID,
+			UserID:          o.UserID,
+			Items:           o.Items,
+			ShippingAddress: o.ShippingAddress,
+			SubtotalAmount:  o.SubtotalAmount,
+			ShippingAmount:  o.ShippingAmount,
+			FinalAmount:     o.FinalAmount,
+			Shipping:        o.Shipping,
+			Status:          o.Status,
+			CreatedAt:       o.CreatedAt,
+			UpdatedAt:       o.UpdatedAt,
+		})
+	}
+
+	return orderservice.StorefrontListResult{
+		Orders:     ordersInfo,
+		TotalCount: totalCount,
+	}, nil
+}

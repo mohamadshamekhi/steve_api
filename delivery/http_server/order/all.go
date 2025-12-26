@@ -36,3 +36,29 @@ func (h Handler) GetAll(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
+func (h Handler) GetUserOrder(c echo.Context) error {
+	const op = "orderhandler.GetUserOrder"
+	var req orderparam.GetUserOrderRequest
+
+	pageNumber, nErr := strconv.ParseUint(c.QueryParam("page_number"), 10, 64)
+	if nErr != nil {
+		pageNumber = commonparam.DefaultPageNumber
+	}
+
+	pageSize, sErr := strconv.ParseUint(c.QueryParam("page_size"), 10, 64)
+	if sErr != nil {
+		pageSize = commonparam.DefaultPageSize
+	}
+	req.Pagination.PageSize = uint(pageSize)
+	req.Pagination.PageNumber = uint(pageNumber)
+	req.UserID = c.Get("user_id").(string)
+	resp, err := h.storefrontSvc.GetUserOrders(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}

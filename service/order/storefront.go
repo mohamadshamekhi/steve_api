@@ -6,6 +6,7 @@ import (
 
 	"github.com/abolfazlnorzad/steve/entity"
 	cartparam "github.com/abolfazlnorzad/steve/param/cart"
+	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	discountparam "github.com/abolfazlnorzad/steve/param/discount"
 	orderparam "github.com/abolfazlnorzad/steve/param/order"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
@@ -429,4 +430,22 @@ func (s *StoreFrontService) isDiscountApplicableToItem(
 	default:
 		return false
 	}
+}
+
+func (s StoreFrontService) GetUserOrders(ctx context.Context, req orderparam.GetUserOrderRequest) (orderparam.GetUserOrderResponse, error) {
+	const op = "orderservice.GetUserOrder"
+	resp, err := s.repo.GetUserOrderWithDetails(ctx, req.UserID, req.Pagination)
+	if err != nil {
+		return orderparam.GetUserOrderResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	return orderparam.GetUserOrderResponse{
+		Pagination: commonparam.PaginationResponse{
+			PageSize:   req.Pagination.GetPageSize(),
+			PageNumber: req.Pagination.GetPageNumber(),
+			Total:      uint(resp.TotalCount),
+		},
+		Orders: resp.Orders,
+	}, nil
+
 }
