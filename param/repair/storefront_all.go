@@ -30,3 +30,11 @@ type RepairInfo struct {
 	CreatedAt   time.Time              `bson:"created_at" json:"created_at"`
 	UpdatedAt   time.Time              `bson:"updated_at" json:"updated_at"`
 }
+
+type GetUserReairStaticRequest struct {
+	UserID string `json:"user_id"`
+}
+
+type GetUserReairStaticResponse struct {
+	Count uint64 `json:"count"`
+}

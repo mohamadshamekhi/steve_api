@@ -2,10 +2,11 @@ package mediaservice
 
 import (
 	"context"
-	"mime/multipart"
+	"io"
 	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
+	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 	"github.com/abolfazlnorzad/steve/pkg/cache"
 )
 
@@ -30,9 +31,10 @@ type UploadResult struct {
 	MimeType   string
 }
 type StorageProvider interface {
-	Upload(ctx context.Context, domain string, role string, isPublic bool, file multipart.File, header *multipart.FileHeader) (UploadResult, error)
+	Upload(ctx context.Context, domain string, role string, isPublic bool, file io.Reader, info mediaparam.FileMetadata) (UploadResult, error)
 	GetURL(ctx context.Context, media *entity.Media) (string, error)
 	Delete(ctx context.Context, media *entity.Media) error
+	TransformToWebP(input io.Reader) (io.ReadSeeker, int64, error)
 }
 
 type Repository interface {

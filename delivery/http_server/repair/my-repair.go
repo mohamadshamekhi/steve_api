@@ -44,3 +44,19 @@ func (h Handler) MyRepair(c echo.Context) error {
 	return c.JSON(http.StatusOK, apiResponse)
 
 }
+
+func (h Handler) Statics(c echo.Context) error {
+	const op = "repairhandler.Statics"
+
+	req := repairparam.GetUserReairStaticRequest{UserID: c.Get("user_id").(string)}
+	resp, err := h.storefrontSvc.GetUserRepairStatics(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+
+}

@@ -34,3 +34,11 @@ type SellInfo struct {
 	CreatedAt time.Time `bson:"created_at" json:"created_at"`
 	UpdatedAt time.Time `bson:"updated_at" json:"updated_at"`
 }
+
+type GetUserSellStaticsRequest struct {
+	UserID string `json:"user_id"`
+}
+
+type GetUserSellStaticsResponse struct {
+	Count uint64 `json:"count"`
+}

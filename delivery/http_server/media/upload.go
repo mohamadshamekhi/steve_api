@@ -30,8 +30,8 @@ func (h Handler) UploadFile(c echo.Context) error {
 	var req mediaparam.UploadMediaRequest
 	req.Domain = c.FormValue("domain")
 	req.UploaderID = c.FormValue("uploader_id")
-	req.UploaderType = c.FormValue("uploader_type")
 	req.IsPublic = c.FormValue("is_public") == "true"
+	req.ConvertToWebp = c.FormValue("convert_to_webp") == "true"
 	req.UploaderType = "backoffice"
 	cl := claim.GetClaimsFromEchoContext(c)
 	req.UploaderID = cl.EntityID
@@ -74,6 +74,7 @@ func (h Handler) StorefrontUploadFile(c echo.Context) error {
 	req.Domain = c.FormValue("domain")
 	req.UploaderID = c.FormValue("uploader_id")
 	req.UploaderType = c.FormValue("uploader_type")
+	req.ConvertToWebp = c.FormValue("convert_to_webp") == "true"
 	cl := claim.GetClaimsFromEchoContext(c)
 	req.UploaderID = cl.EntityID
 	req.UploaderType = cl.Kind
