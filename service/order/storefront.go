@@ -3,9 +3,11 @@ package orderservice
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	cartparam "github.com/abolfazlnorzad/steve/param/cart"
+	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	discountparam "github.com/abolfazlnorzad/steve/param/discount"
 	orderparam "github.com/abolfazlnorzad/steve/param/order"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
@@ -429,4 +431,69 @@ func (s *StoreFrontService) isDiscountApplicableToItem(
 	default:
 		return false
 	}
+}
+
+func (s StoreFrontService) GetUserOrders(ctx context.Context, req orderparam.GetUserOrderRequest) (orderparam.GetUserOrderResponse, error) {
+	const op = "orderservice.GetUserOrder"
+	resp, err := s.repo.GetUserOrderWithDetails(ctx, req.UserID, req.Pagination)
+	if err != nil {
+		return orderparam.GetUserOrderResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	return orderparam.GetUserOrderResponse{
+		Pagination: commonparam.PaginationResponse{
+			PageSize:   req.Pagination.GetPageSize(),
+			PageNumber: req.Pagination.GetPageNumber(),
+			Total:      uint(resp.TotalCount),
+		},
+		Orders: resp.Orders,
+	}, nil
+
+}
+func (s StoreFrontService) GetUserOrderStatics(ctx context.Context, req orderparam.GetUserOrderStaticsRequest) (orderparam.GetUserOrderStaticsResponse, error) {
+	const op = "orderservice.GetUserOrderStatics"
+	var pCount, cCounter, dCounter uint64
+
+	var wg sync.WaitGroup
+
+	wg.Add(3)
+
+	go func() {
+		defer wg.Done()
+		count, err := s.repo.GetUserOrderStatics(ctx, req.UserID, entity.OrderStatusProcessing)
+		if err != nil {
+			logger.L().Error("failed to get processing order statistics", "error", err, "user_id", req.UserID)
+			return
+		}
+		pCount = count
+	}()
+
+	go func() {
+		defer wg.Done()
+		count, err := s.repo.GetUserOrderStatics(ctx, req.UserID, entity.OrderStatusDelivered)
+		if err != nil {
+			logger.L().Error("failed to get delivered order statistics", "error", err, "user_id", req.UserID)
+			return
+		}
+		dCounter = count
+	}()
+
+	go func() {
+		defer wg.Done()
+		count, err := s.repo.GetUserOrderStatics(ctx, req.UserID, entity.OrderStatusRefunded)
+		if err != nil {
+			logger.L().Error("failed to get refunded order statistics", "error", err, "user_id", req.UserID)
+			return
+		}
+		cCounter = count
+	}()
+
+	wg.Wait()
+
+	return orderparam.GetUserOrderStaticsResponse{
+		OrderProcessing: pCount,
+		OrderDelivered:  dCounter,
+		OrderRefunded:   cCounter,
+	}, nil
+
 }

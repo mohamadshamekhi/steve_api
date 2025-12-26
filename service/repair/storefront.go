@@ -24,6 +24,7 @@ type StorefrontService struct {
 type StorefrontRepo interface {
 	Add(ctx context.Context, repair entity.Repair) error
 	All(ctx context.Context, filter commonparam.FilterRequest, pagination commonparam.PaginationRequest) (ListResult, error)
+	GetUserRepairRequestStatics(ctx context.Context, userID string) (uint64, error)
 }
 
 func NewStorefrontService(r StorefrontRepo, uProvider UserProvider,
@@ -166,5 +167,16 @@ func (s StorefrontService) GetAllRepair(ctx context.Context, req repairparam.Get
 			Total:      uint(resp.TotalCount),
 		},
 		Repairs: repairInfo,
+	}, nil
+}
+
+func (s StorefrontService) GetUserRepairStatics(ctx context.Context, req repairparam.GetUserReairStaticRequest) (repairparam.GetUserReairStaticResponse, error) {
+	const op = "sellhandler.GetUserRepairStatics"
+	c, err := s.Repo.GetUserRepairRequestStatics(ctx, req.UserID)
+	if err != nil {
+		return repairparam.GetUserReairStaticResponse{}, err
+	}
+	return repairparam.GetUserReairStaticResponse{
+		Count: c,
 	}, nil
 }

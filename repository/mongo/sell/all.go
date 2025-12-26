@@ -55,3 +55,22 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 		TotalCount: totalCount,
 	}, nil
 }
+
+func (d DB) GetUserSellRequestCount(ctx context.Context, userID string) (uint64, error) {
+	const op = "mongodbusedphone.GetUserSellRequestCount"
+
+	filter := bson.M{
+		"user_id":    userID,
+		"deleted_at": bson.M{"$exists": false},
+	}
+
+	count, err := d.collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return 0, richerror.New(op).
+			WithWarpError(err).
+			WithKind(richerror.KindUnexpected).
+			WithMessageKey("global.something_wrong")
+	}
+
+	return uint64(count), nil
+}

@@ -16,6 +16,7 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.POST("/add-address", h.AddAddress, middleware.Auth(h.authSvc, h.authCfg))
 	g.POST("/update-address/:id", h.UpdateAddress, middleware.Auth(h.authSvc, h.authCfg))
 	g.POST("/logout", h.Logout, middleware.Auth(h.authSvc, h.authCfg))
+	g.POST("/me", h.Me, middleware.Auth(h.authSvc, h.authCfg))
 
 	g.GET("", h.GetAllUser, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.acl, key.ListUsers))
 }

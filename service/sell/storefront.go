@@ -24,6 +24,7 @@ type StorefrontService struct {
 type StorefrontRepo interface {
 	Add(ctx context.Context, sell entity.Sell) error
 	All(ctx context.Context, filter commonparam.FilterRequest, pagination commonparam.PaginationRequest) (ListResult, error)
+	GetUserSellRequestCount(ctx context.Context, UserID string) (uint64, error)
 }
 
 func NewStorefrontService(r StorefrontRepo, uProvider UserProvider,
@@ -173,5 +174,17 @@ func (s StorefrontService) GetMySell(ctx context.Context, req sellparam.GetAllMy
 			Total:      uint(resp.TotalCount),
 		},
 		Sells: sellInfos,
+	}, nil
+}
+
+func (s StorefrontService) GetUserSellStatics(ctx context.Context, req sellparam.GetUserSellStaticsRequest) (sellparam.GetUserSellStaticsResponse, error) {
+	const op = "sellservice.GetUserSellStatics"
+
+	c, err := s.Repo.GetUserSellRequestCount(ctx, req.UserID)
+	if err != nil {
+		return sellparam.GetUserSellStaticsResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return sellparam.GetUserSellStaticsResponse{
+		Count: c,
 	}, nil
 }

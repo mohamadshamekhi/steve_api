@@ -8,3 +8,11 @@ type StoreFrontUpdateProfileRequest struct {
 
 type StoreFrontUpdateProfileResponse struct {
 }
+
+type MeRequest struct {
+	UserID string
+}
+
+type MeResponse struct {
+	User UserInfo `json:"user"`
+}
