@@ -30,6 +30,8 @@ func Auth(service authservice.Service, cfg authservice.Config) echo.MiddlewareFu
 				return nil, err
 			}
 			if !res {
+				c.Set("user_id", claims.EntityID)
+				c.Set("user_type", claims.Kind)
 				return claims, nil
 			}
 			return nil, richerror.New("middleware.auth").WithMessageKey("auth.you_must_logged_in").WithKind(richerror.KindUnauthorized)

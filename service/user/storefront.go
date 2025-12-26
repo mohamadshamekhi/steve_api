@@ -149,3 +149,26 @@ func (s StoreFrontService) Logout(ctx context.Context, req userparam.LogoutReque
 
 	return userparam.LogoutResponse{}, nil
 }
+
+func (s StoreFrontService) Me(ctx context.Context, request userparam.MeRequest) (userparam.MeResponse, error) {
+	const OP = "userservice.Me"
+	u, err := s.repo.GetUsersByIDs(ctx, []string{request.UserID})
+	if err != nil {
+		return userparam.MeResponse{}, richerror.New(OP).WithWarpError(err)
+	}
+	if len(u) == 0 {
+		return userparam.MeResponse{}, richerror.New(OP).WithKind(richerror.KindUnauthorized).WithMessageKey("validation.unauthorized")
+	}
+	userInfo := userparam.UserInfo{
+		ID:          u[0].ID,
+		Name:        u[0].Name,
+		PhoneNumber: u[0].PhoneNumber,
+		CreatedAt:   u[0].CreatedAt,
+		Addresses:   u[0].Addresses,
+	}
+
+	return userparam.MeResponse{
+		User: userInfo,
+	}, nil
+
+}
