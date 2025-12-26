@@ -1,27 +1,35 @@
 package liarastorage
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"image"
 	"log"
+	"math/rand/v2"
 
 	"github.com/abolfazlnorzad/steve/entity"
+	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 
 	"io"
-	"mime/multipart"
 	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/oklog/ulid/v2"
+	"github.com/nickalie/go-webpbin"
 )
 
 type Config struct {
@@ -33,48 +41,61 @@ type Config struct {
 }
 
 type Disk struct {
-	config   Config
-	client   *s3.S3
-	MediaCfg mediaservice.Config
+	config        Config
+	client        *s3.Client
+	presignClient *s3.PresignClient
+	MediaCfg      mediaservice.Config
 }
 
 func New(credential Config, mcfg mediaservice.Config) *Disk {
 
-	sess, err := session.NewSession(&aws.Config{
-		Endpoint:    aws.String(credential.Endpoint),
-		Region:      aws.String("us-east-1"), // Region is required but can be arbitrary for S3-compatible storage
-		Credentials: credentials.NewStaticCredentials(credential.AwsAccessKeyID, credential.AwsSecretAccessKey, ""),
+	creds := credentials.NewStaticCredentialsProvider(credential.AwsAccessKeyID, credential.AwsSecretAccessKey, "")
+	fmt.Println("credentials: ", creds)
+	cfg, err := awsconfig.LoadDefaultConfig(context.TODO(),
+		awsconfig.WithCredentialsProvider(creds),
+		awsconfig.WithRegion("us-east-1"),
+	)
+	if err != nil {
+		log.Fatalf("Failed to create sdk config: %v", err)
+	}
+	fmt.Println("eeeee", credential.Endpoint)
+
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		o.BaseEndpoint = aws.String(credential.Endpoint)
+		o.UsePathStyle = true
 	})
 
-	if err != nil {
-		log.Fatalf("Failed to create liara session: %v", err)
-
-	}
-
-	client := s3.New(sess)
+	presignClient := s3.NewPresignClient(client)
 
 	return &Disk{
-		config:   credential,
-		client:   client,
-		MediaCfg: mcfg,
+		config:        credential,
+		client:        client,
+		MediaCfg:      mcfg,
+		presignClient: presignClient,
 	}
 }
 
 func (d *Disk) GetURL(ctx context.Context, media *entity.Media) (string, error) {
+
+	if media.IsPublic {
+		return fmt.Sprintf("%s/%s", "https://steve-storage-dev.storage.c2.liara.space", media.Path), nil
+	}
+
 	targetBucket := d.config.PrivateBucketName
 	if media.IsPublic {
 		targetBucket = d.config.PublicBucketName
 	}
-	req, _ := d.client.GetObjectRequest(&s3.GetObjectInput{
+	presignedReq, err := d.presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(targetBucket),
 		Key:    aws.String(media.Path),
+	}, func(opts *s3.PresignOptions) {
+		opts.Expires = time.Hour
 	})
-	url, err := req.Presign(d.MediaCfg.PresignedPrivateURLExpiration)
 	if err != nil {
-		return "", richerror.New("adapter.s3.GeneratePresignedURL").WithWarpError(err).WithKind(richerror.KindUnexpected)
+		return "", err
 	}
 
-	return url, nil
+	return presignedReq.URL, nil
 }
 
 func (d *Disk) Delete(ctx context.Context, media *entity.Media) error {
@@ -82,7 +103,10 @@ func (d *Disk) Delete(ctx context.Context, media *entity.Media) error {
 	if media.IsPublic {
 		targetBucket = d.config.PublicBucketName
 	}
-	_, err := d.client.DeleteObject(&s3.DeleteObjectInput{Bucket: aws.String(targetBucket), Key: aws.String(media.Path)})
+	_, err := d.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(targetBucket),
+		Key:    aws.String(media.Path),
+	})
 
 	return err
 }
@@ -104,20 +128,19 @@ func (d *Disk) Upload(
 	domain string,
 	role string,
 	isPublic bool,
-	file multipart.File,
-	header *multipart.FileHeader,
+	file io.Reader,
+	info mediaparam.FileMetadata,
 ) (mediaservice.UploadResult, error) {
 	const op = "liarastorage.Upload"
-
 	policy := d.MediaCfg.GetPolicy(role)
 
-	if header.Size > policy.MaxUploadSizeBytes {
+	if int64(info.Size) > policy.MaxUploadSizeBytes {
 		return mediaservice.UploadResult{}, richerror.New(op).
 			WithKind(richerror.KindInvalid).
 			WithMessageKey("media.file_too_large").
 			WithMeta(map[string]any{
 				"max_size_bytes":    policy.MaxUploadSizeBytes,
-				"actual_size_bytes": header.Size,
+				"actual_size_bytes": info.Size,
 			})
 	}
 
@@ -126,14 +149,6 @@ func (d *Disk) Upload(
 	if err != nil && err != io.EOF {
 		return mediaservice.UploadResult{}, richerror.New(op).
 			WithWarpError(err).
-			WithKind(richerror.KindUnexpected).
-			WithMessageKey("global.something_wrong")
-	}
-
-	_, seekErr := file.Seek(0, 0)
-	if seekErr != nil {
-		return mediaservice.UploadResult{}, richerror.New(op).
-			WithWarpError(seekErr).
 			WithKind(richerror.KindUnexpected).
 			WithMessageKey("global.something_wrong")
 	}
@@ -157,22 +172,25 @@ func (d *Disk) Upload(
 	fileType := getFileTypeFromMime(mimeType)
 
 	datePath := time.Now().Format("2006/01/02")
-	ext := filepath.Ext(header.Filename)
-	uniqueFileName := fmt.Sprintf("%s%s", ulid.Make().String(), ext)
-
+	uniqueFileName := fmt.Sprintf("%d%s", rand.Int(), filepath.Ext(info.Filename))
 	filePath := fmt.Sprintf("%s/%s/%s/%s", domain, fileType, datePath, uniqueFileName)
 
 	targetBucket := d.config.PrivateBucketName
 	if isPublic {
 		targetBucket = d.config.PublicBucketName
 	}
+	fullReader := io.MultiReader(bytes.NewReader(buffer[:512]), file)
 
-	_, err = d.client.PutObject(&s3.PutObjectInput{
+	_, err = d.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:      aws.String(targetBucket),
 		Key:         aws.String(filePath),
-		Body:        file,
-		ContentType: aws.String(mimeType),
+		Body:        fullReader,
+		ContentType: aws.String(info.ContentType),
+		//nolint
+		ContentLength: aws.Int64(int64(info.Size)),
+		ACL:           types.ObjectCannedACLPublicRead,
 	})
+
 	if err != nil {
 		return mediaservice.UploadResult{}, richerror.New(op).
 			WithWarpError(err).
@@ -184,4 +202,24 @@ func (d *Disk) Upload(
 		BucketName: targetBucket,
 		MimeType:   mimeType,
 	}, nil
+}
+
+func (d *Disk) TransformToWebP(input io.Reader) (io.ReadSeeker, int64, error) {
+	const OP = "mediaadapter.Disk.TransformToWebP"
+
+	img, _, err := image.Decode(input)
+	if err != nil {
+		return nil, 0, richerror.New(OP).WithWarpError(err).WithMessageKey("فرمت تصویر قابل شناسایی نیست")
+	}
+
+	var b bytes.Buffer
+	if err := webpbin.NewCWebP().
+		Quality(75).
+		InputImage(img).
+		Output(&b).
+		Run(); err != nil {
+		return nil, 0, richerror.New(OP).WithWarpError(err)
+	}
+
+	return bytes.NewReader(b.Bytes()), int64(b.Len()), nil
 }
