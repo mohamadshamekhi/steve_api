@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"image"
 	"log"
 	"math/rand/v2"
 
@@ -12,6 +11,7 @@ import (
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
+	"github.com/disintegration/imaging"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
@@ -208,19 +208,27 @@ func (d *Disk) Upload(
 func (d *Disk) TransformToWebP(input io.Reader) (io.ReadSeeker, int64, error) {
 	const OP = "mediaadapter.Disk.TransformToWebP"
 
-	img, _, err := image.Decode(input)
+	data, err := io.ReadAll(input)
 	if err != nil {
-		return nil, 0, richerror.New(OP).WithWarpError(err).WithMessageKey("فرمت تصویر قابل شناسایی نیست")
+		return nil, 0, richerror.New(OP).WithWarpError(err)
 	}
 
-	// ۲. استفاده از پکیج chai2010/webp برای تبدیل (بدون نیاز به cwebp binary)
+	img, err := imaging.Decode(bytes.NewReader(data), imaging.AutoOrientation(true))
+	if err != nil {
+		return nil, 0, richerror.New(OP).
+			WithWarpError(err).
+			WithMessageKey("فرمت تصویر قابل شناسایی نیست یا متادیتای آن مشکل دارد")
+	}
+
 	var b bytes.Buffer
 	err = webp.Encode(&b, img, &webp.Options{
 		Lossless: false,
-		Quality:  10, // کیفیت را روی مقدار معقول ۷۵ قرار دادیم
+		Quality:  10,
 	})
 	if err != nil {
-		return nil, 0, richerror.New(OP).WithWarpError(err).WithMessageKey("خطا در تبدیل به فرمت وب‌پی")
+		return nil, 0, richerror.New(OP).
+			WithWarpError(err).
+			WithMessageKey("خطا در تبدیل به فرمت وب‌پی")
 	}
 
 	return bytes.NewReader(b.Bytes()), int64(b.Len()), nil
