@@ -214,7 +214,7 @@ func (d *Disk) TransformToWebP(input io.Reader) (io.ReadSeeker, int64, error) {
 
 	var b bytes.Buffer
 	if err := webpbin.NewCWebP().
-		Quality(75).
+		Quality(15).
 		InputImage(img).
 		Output(&b).
 		Run(); err != nil {
