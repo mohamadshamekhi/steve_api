@@ -29,6 +29,7 @@ import (
 	"strings"
 	"time"
 
+	_ "github.com/chai2010/webp"
 	"github.com/nickalie/go-webpbin"
 )
 
