@@ -29,8 +29,8 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/chai2010/webp"
-	"github.com/nickalie/go-webpbin"
+	"github.com/chai2010/webp"
+	//"github.com/nickalie/go-webpbin"
 )
 
 type Config struct {
@@ -213,13 +213,14 @@ func (d *Disk) TransformToWebP(input io.Reader) (io.ReadSeeker, int64, error) {
 		return nil, 0, richerror.New(OP).WithWarpError(err).WithMessageKey("فرمت تصویر قابل شناسایی نیست")
 	}
 
+	// ۲. استفاده از پکیج chai2010/webp برای تبدیل (بدون نیاز به cwebp binary)
 	var b bytes.Buffer
-	if err := webpbin.NewCWebP().
-		Quality(15).
-		InputImage(img).
-		Output(&b).
-		Run(); err != nil {
-		return nil, 0, richerror.New(OP).WithWarpError(err)
+	err = webp.Encode(&b, img, &webp.Options{
+		Lossless: false,
+		Quality:  10, // کیفیت را روی مقدار معقول ۷۵ قرار دادیم
+	})
+	if err != nil {
+		return nil, 0, richerror.New(OP).WithWarpError(err).WithMessageKey("خطا در تبدیل به فرمت وب‌پی")
 	}
 
 	return bytes.NewReader(b.Bytes()), int64(b.Len()), nil
