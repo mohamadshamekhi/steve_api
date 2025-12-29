@@ -32,7 +32,7 @@ mongo:
   db_name: "steve"
 
 media:
-  public_base_url: "s3.ir-thr-at1.arvanstorage.ir"
+  public_base_url: "https://s3.ir-thr-at1.arvanstorage.ir"
   allowed_extensions:
     - "mp4"
     - "png"
