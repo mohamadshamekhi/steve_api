@@ -32,6 +32,7 @@ COPY --from=builder /app/main .
 
 # کپی فایل تنظیمات (yml)
 COPY --from=builder /app/config.yml .
+COPY --from=builder /app/config ./config
 
 # باز کردن پورت برنامه
 EXPOSE 7777
