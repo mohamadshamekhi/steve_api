@@ -79,7 +79,7 @@ func New(credential Config, mcfg mediaservice.Config) *Disk {
 func (d *Disk) GetURL(ctx context.Context, media *entity.Media) (string, error) {
 
 	if media.IsPublic {
-		return fmt.Sprintf("%s/%s", "https://steve-storage-dev.storage.c2.liara.space", media.Path), nil
+		return fmt.Sprintf("%s/%s", d.config.Endpoint, media.Path), nil
 	}
 
 	targetBucket := d.config.PrivateBucketName

@@ -61,7 +61,7 @@ func (s Service) UploadFile(ctx context.Context, req mediaparam.UploadMediaReque
 	}
 	media := &entity.Media{
 		OriginalFileName: req.Header.Filename,
-		StorageProvider:  "liara-s3", // todo - add to cfg
+		StorageProvider:  "arvan", // todo - add to cfg
 		Path:             res.Path,
 		IsPublic:         req.IsPublic,
 		MimeType:         res.MimeType,
@@ -130,7 +130,7 @@ func (s Service) StorefrontUploadFile(ctx context.Context, req mediaparam.Storef
 	}
 	media := &entity.Media{
 		OriginalFileName: req.Header.Filename,
-		StorageProvider:  "liara-s3", // todo - add to cfg
+		StorageProvider:  "arvan", // todo - add to cfg
 		Path:             res.Path,
 		IsPublic:         true,
 		MimeType:         res.MimeType,
