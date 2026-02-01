@@ -9,7 +9,7 @@ import (
 )
 
 func (v Validator) ValidateUpdateArticleRequest(req articleparam.UpdateArticleRequest) error {
-	const op = "categoryvalidator.ValidateUpdateCategoryRequest"
+	const op = "articlevalidator.ValidateUpdateArticleRequest"
 
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.ID,
@@ -23,10 +23,26 @@ func (v Validator) ValidateUpdateArticleRequest(req articleparam.UpdateArticleRe
 				validation.Required.Error("validation.required"),
 			),
 		),
+		validation.Field(&req.Slug,
+			validation.When(req.Slug != nil,
+				validation.Required.Error("validation.required"),
+				validation.By(v.SlugIsUnique),
+			),
+		),
 		validation.Field(&req.MediaID,
 			validation.When(req.MediaID != nil,
 				validation.Required.Error("validation.required"),
 				validation.By(v.mediaIsExist),
+			),
+		),
+		validation.Field(&req.Tags,
+			validation.When(req.Tags != nil,
+				validation.Required.Error("validation.required"),
+			),
+		),
+		validation.Field(&req.MetaDescription,
+			validation.When(req.MetaDescription != nil,
+				validation.Required.Error("validation.required"),
 			),
 		),
 	); err != nil {

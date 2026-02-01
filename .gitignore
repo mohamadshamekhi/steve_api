@@ -229,3 +229,8 @@ Temporary Items
 ./cmd/example.go
 
 env-tmp.sh
+
+/tmp
+.air.toml
+DockerfileDev
+docker-compose-Dev.yml

@@ -11,18 +11,21 @@ import (
 )
 
 func (v Validator) ValidateCreateArticleRequest(req articleparam.AddArticleRequest) error {
-	const op = "backofficevalidatorauth.ValidateLoginWithPhoneNumberRequest"
+	const op = "articlevalidator.ValidateCreateArticleRequest"
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.Title,
 			validation.Required.Error("validation.required")),
 		validation.Field(&req.Body,
 			validation.Required.Error("validation.required"),
 		),
+		validation.Field(&req.Slug,
+			validation.Required.Error("validation.required"),
+			validation.By(v.SlugIsUnique),
+		),
 		validation.Field(&req.MediaID,
 			validation.Required.Error("validation.required"),
 			validation.By(v.mediaIsExist),
 		)); err != nil {
-
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {
 			return richerror.New(op).
@@ -71,4 +74,36 @@ func (v Validator) mediaIsExist(value any) error {
 		return err
 	}
 	return nil
+}
+
+func (v Validator) SlugIsUnique(value any) error {
+	var slug string
+	switch v := value.(type) {
+	case string:
+		slug = v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		slug = *v
+	default:
+		return richerror.New("articlevalidator.SlugIsUnique.type_assertion").
+			WithKind(richerror.KindUnexpected).
+			WithWarpError(errors.New("unexpected type for slug"))
+	}
+
+	if slug == "" {
+		return nil
+	}
+
+	_, err := v.aRepo.FindBySlug(context.Background(), slug)
+	if err != nil {
+		var rErr *richerror.RichError
+		if errors.As(err, &rErr) && rErr.Kind() == richerror.KindNotFound {
+			return nil
+		}
+		return err
+	}
+
+	return errors.New("validation.slug_already_exists")
 }

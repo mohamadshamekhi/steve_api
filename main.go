@@ -140,9 +140,9 @@ func main() {
 	categorySvc := categoryservice.NewBackofficeService(categoryRepo, mediaSvc, attrSvc)
 
 	articleRepo := mongodbarticle.New(mongoRepo)
-	articleVld := articlevalidator.New(articleRepo, mediaSvc)
-	articleSvc := articleservice.NewBackofficeService(articleRepo, mediaSvc)
-	storefrontSvc := articleservice.NewStorefrontService(articleRepo, mediaSvc)
+	articleVld := articlevalidator.New(articleRepo, articleRepo, mediaSvc)
+	articleSvc := articleservice.NewBackofficeService(articleRepo, mediaSvc, backOfficeMongoRepo)
+	storefrontSvc := articleservice.NewStorefrontService(articleRepo, mediaSvc, backOfficeMongoRepo)
 	storefrontVld := articlevalidator.NewStorefrontValidator(articleRepo)
 	articleHandler := articlehandler.New(translator, authSvc, cfg.Auth, aclSvc, articleSvc, articleVld, storefrontSvc, storefrontVld)
 
@@ -188,6 +188,7 @@ func main() {
 	shippingRepo := mongodbshipping.New(mongoRepo)
 	shippingVld := settingvalidator.NewShippingValidator(shippingRepo)
 	shippingBakcofficeSvc := settingservice.NewBackofficeShippingService(shippingRepo)
+	shippingStorefrontSvc := settingservice.NewStorefrontShippingService(shippingRepo)
 	orderSvc := orderservice.New(&cartSvc, discountbackofficeSvc, productSvc, orderRepo, userSvc, shippingBakcofficeSvc)
 	cartSvc.SetOrderProvider(orderSvc)
 	cartHandler := carthandler.New(cartSvc, cartBackofficeSvc, orderSvc, cartVld, translator, authSvc, cfg.Auth, aclSvc)
@@ -196,7 +197,7 @@ func main() {
 	orderBackofficeSvc := orderservice.NewBackofficeService(orderRepo, backofficeUserSvc)
 	orderHandler := orderhandler.New(orderSvc, orderBackofficeSvc, orderVld, translator, authSvc, cfg.Auth, aclSvc)
 
-	shippingHandler := shippinghandler.New(shippingBakcofficeSvc, shippingVld, translator, authSvc, cfg.Auth, aclSvc)
+	shippingHandler := shippinghandler.New(shippingBakcofficeSvc, shippingStorefrontSvc, shippingVld, translator, authSvc, cfg.Auth, aclSvc)
 
 	repairRepo := mongodbrepair.New(mongoRepo)
 	repairVld := repairvalidator.New()

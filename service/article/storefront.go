@@ -11,39 +11,51 @@ import (
 )
 
 type StorefrontService struct {
-	repo     ArticleReader
+	aRepo    ArticleReader
 	mediaSvc MediaService
+	bRepo    BackOfficeReader
 }
 
-func NewStorefrontService(repo ArticleReader, mediaSvc MediaService) StorefrontService {
+func NewStorefrontService(articleRepo ArticleReader, mediaSvc MediaService, backOffice BackOfficeReader) StorefrontService {
 	return StorefrontService{
-		repo:     repo,
+		aRepo:    articleRepo,
 		mediaSvc: mediaSvc,
+		bRepo:    backOffice,
 	}
 }
 
 func (s StorefrontService) GetSingleStorefrontArticle(ctx context.Context, req articleparam.GetStorefrontArticleRequest) (articleparam.GetStorefrontArticleResponse, error) {
 	const op = "ArticleService.Get"
-	article, err := s.repo.FindByID(ctx, req.ID)
+	article, err := s.aRepo.FindByID(ctx, req.ID)
 	if err != nil {
 		return articleparam.GetStorefrontArticleResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	if !article.DeletedAt.IsZero() || !article.IsPublished {
 		return articleparam.GetStorefrontArticleResponse{}, richerror.New(op).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
 	}
+
+	backOfficeInfo, bErr := s.bRepo.GetBackOfficeUserByID(ctx, article.BackOfficeID)
+	if bErr != nil {
+		return articleparam.GetStorefrontArticleResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
 	res, err := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: article.MediaID})
 	if err != nil {
 		logger.L().Error(fmt.Sprintf("ERROR: article media get failed for ID %s\n", article.MediaID))
 	}
 	a := articleparam.StorefrontArticleDetail{
-		ID:          article.ID,
-		Title:       article.Title,
-		Slug:        article.Slug,
-		Body:        article.Body,
-		IsPublished: article.IsPublished,
-		MediaUrl:    res.URL,
-		CreatedAt:   article.CreatedAt,
-		UpdatedAt:   article.UpdatedAt,
+		ID:              article.ID,
+		Title:           article.Title,
+		Slug:            article.Slug,
+		Body:            article.Body,
+		IsPublished:     article.IsPublished,
+		Tags:            article.Tags,
+		MetaDescription: article.MetaDescription,
+		BackOfficeID:    article.BackOfficeID,
+		BackOfficeName:  backOfficeInfo.Name,
+		MediaUrl:        res.URL,
+		CreatedAt:       article.CreatedAt,
+		UpdatedAt:       article.UpdatedAt,
 	}
 	return articleparam.GetStorefrontArticleResponse{
 		Article: a,
@@ -52,7 +64,7 @@ func (s StorefrontService) GetSingleStorefrontArticle(ctx context.Context, req a
 
 func (s StorefrontService) GetAllStorefrontArticles(ctx context.Context, req articleparam.AllStorefrontArticleRequest) (articleparam.AllStorefrontArticleResponse, error) {
 	const op = "ArticleService.GetAllStorefrontArticles"
-	resp, err := s.repo.All(ctx, req.Filter, req.Pagination)
+	resp, err := s.aRepo.All(ctx, req.Filter, req.Pagination)
 	if err != nil {
 		return articleparam.AllStorefrontArticleResponse{}, richerror.New(op).WithWarpError(err)
 	}
@@ -75,14 +87,24 @@ func (s StorefrontService) GetAllStorefrontArticles(ctx context.Context, req art
 	}
 
 	for _, a := range resp.Articles {
+
+		//todo-یک متد جدید برای گرفتن همزمان چند انتیتی با استفاده از چند ای دی
+		backOfficeInfo, bErr := s.bRepo.GetBackOfficeUserByID(ctx, a.BackOfficeID)
+		if bErr != nil {
+			return articleparam.AllStorefrontArticleResponse{}, richerror.New(op).WithWarpError(err)
+		}
+
 		articlesInfo = append(articlesInfo, articleparam.StorefrontArticle{
-			ID:          a.ID,
-			Title:       a.Title,
-			Slug:        a.Slug,
-			IsPublished: a.IsPublished,
-			MediaUrl:    urlMap.URLs[a.MediaID],
-			CreatedAt:   a.CreatedAt,
-			UpdatedAt:   a.UpdatedAt,
+			ID:             a.ID,
+			Title:          a.Title,
+			Slug:           a.Slug,
+			IsPublished:    a.IsPublished,
+			Tags:           a.Tags,
+			BackOfficeID:   a.BackOfficeID,
+			BackOfficeName: backOfficeInfo.Name,
+			MediaUrl:       urlMap.URLs[a.MediaID],
+			CreatedAt:      a.CreatedAt,
+			UpdatedAt:      a.UpdatedAt,
 		})
 	}
 
