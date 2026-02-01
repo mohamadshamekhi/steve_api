@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   app:
-    build: .
+    image: 5.78.55.0:5051/steve/backend/steve-go:${IMAGE_TAG:-latest}
     container_name: steve_app
     restart: unless-stopped
     ports:
@@ -12,8 +12,8 @@ services:
       - redis
       - nats
     environment:
-      - ST_MONGO__HOST=${ST_MONGO__HOST}
-      - ST_MONGO__PORT=${ST_MONGO__PORT}
+      - ST_MONGO__HOST=mongodb
+      - ST_MONGO__PORT=27017
       - ST_MONGO__USERNAME=${ST_MONGO__USERNAME}
       - ST_MONGO__PASSWORD=${ST_MONGO__PASSWORD}
       - ST_MONGO__DB_NAME=${ST_MONGO__DB_NAME}
@@ -23,8 +23,8 @@ services:
       - ST_OBJECT_STORAGE__PUBLIC_BUCKET_NAME=${ST_OBJECT_STORAGE__PUBLIC_BUCKET_NAME}
       - ST_MELLIPAYAMAK__USERNAME=${ST_MELLIPAYAMAK__USERNAME}
       - ST_MELLIPAYAMAK__PASSWORD=${ST_MELLIPAYAMAK__PASSWORD}
-      - ST_REDIS__HOST=${ST_REDIS__HOST}
-      - ST_REDIS__PORT=${ST_REDIS__PORT}
+      - ST_REDIS__HOST=redis
+      - ST_REDIS__PORT=6379
       - NATS_URL=nats://nats:4222
     networks:
       - steve_network
@@ -34,8 +34,8 @@ services:
     container_name: my_mongo_db
     restart: unless-stopped
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      - MONGO_INITDB_ROOT_USERNAME=${ST_MONGO__USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${ST_MONGO__PASSWORD}
     ports:
       - "27017:27017"
     volumes:
@@ -54,34 +54,13 @@ services:
     networks:
       - steve_network
 
-  nats:
-    image: nats:2.11.4-alpine3.21
-    container_name: my_nats_server
-    restart: unless-stopped
-    ports:
-      - "4222:4222"
-      - "8222:8222"
-    command: [
-      "nats-server",
-      "-js",
-      "-sd", "/data/jetstream",
-      "--http_port", "8222"
-    ]
-    volumes:
-      - nats_jetstream_data:/data/jetstream
-    networks:
-      - steve_network
 
-# تعریف شبکه‌ها
 networks:
   steve_network:
     driver: bridge
 
-# تعریف Volumeها برای ماندگاری داده‌ها
 volumes:
   mongo_data:
     driver: local
   redis_data:
-    driver: local
-  nats_jetstream_data:
     driver: local

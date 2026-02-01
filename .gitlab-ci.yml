@@ -1,0 +1,83 @@
+image: docker:24.0.5
+
+variables:
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_DRIVER: overlay2
+  # آدرس رجیستری و تصویر
+  REGISTRY_URL: "5.78.55.0:5051"
+  IMAGE_NAME: "5.78.55.0:5051/steve/backend/steve-go"
+  # اطلاعات سرور مقصد
+  SERVER_IP: "185.97.116.112"
+  SERVER_USER: "ubuntu"
+  SERVER_PATH: "~/projects/steve-app"
+
+stages:
+  - build
+  - deploy
+
+build_job:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.14.0-debug
+    entrypoint: [ "" ]
+  script:
+    - echo "🏗️ Building & Pushing Steve App..."
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"${REGISTRY_URL}\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
+      --destination "${IMAGE_NAME}:latest"
+      --insecure
+      --skip-tls-verify
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+
+
+deploy_job:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
+  script:
+    - echo "🚀 Preparing Environment..."
+    - |
+      echo "ST_MONGO__HOST=mongodb" > .env
+      echo "ST_MONGO__PORT=27017" >> .env
+      echo "ST_MONGO__USERNAME=$ST_MONGO__USERNAME" >> .env
+      echo "ST_MONGO__PASSWORD=$ST_MONGO__PASSWORD" >> .env
+      echo "ST_MONGO__DB_NAME=$ST_MONGO__DB_NAME" >> .env
+      echo "MONGO_INITDB_ROOT_USERNAME=$ST_MONGO__USERNAME" >> .env
+      echo "MONGO_INITDB_ROOT_PASSWORD=$ST_MONGO__PASSWORD" >> .env
+      echo "ST_REDIS__HOST=redis" >> .env
+      echo "ST_REDIS__PORT=6379" >> .env
+      echo "ST_OBJECT_STORAGE__AWS_ACCESS_KEY_ID=$ST_AWS_KEY" >> .env
+      echo "ST_OBJECT_STORAGE__AWS_SECRET_ACCESS_KEY=$ST_AWS_SECRET" >> .env
+      echo "ST_OBJECT_STORAGE__ENDPOINT=$ST_STORAGE_ENDPOINT" >> .env
+      echo "ST_OBJECT_STORAGE__PUBLIC_BUCKET_NAME=$ST_BUCKET" >> .env
+      echo "ST_MELLIPAYAMAK__USERNAME=$SMS_USER" >> .env
+      echo "ST_MELLIPAYAMAK__PASSWORD=$SMS_PASS" >> .env
+      echo "IMAGE_TAG=$CI_COMMIT_SHORT_SHA" >> .env
+      echo "DOCKER_REGISTRY=${REGISTRY_URL}" >> .env
+
+    - ssh $SERVER_USER@$SERVER_IP "mkdir -p ${SERVER_PATH}"
+    - scp .env $SERVER_USER@$SERVER_IP:${SERVER_PATH}/.env
+    - scp docker-compose.yml $SERVER_USER@$SERVER_IP:${SERVER_PATH}/docker-compose.yml
+
+    - echo "🚢 Running Containers on Server..."
+    - ssh $SERVER_USER@$SERVER_IP "
+      cd ${SERVER_PATH} &&
+      docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD ${REGISTRY_URL} &&
+      export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
+      docker compose pull &&
+      docker compose up -d --remove-orphans &&
+      docker image prune -f
+      "
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
