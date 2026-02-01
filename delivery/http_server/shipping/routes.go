@@ -12,4 +12,6 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.GET("/:id", h.FindByID, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ListBrands))
 	g.GET("", h.All, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ListBrands))
 	g.PATCH("/:id", h.Update, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateBrand))
+
+	g.GET("/storefront", h.GetAllStorefront)
 }

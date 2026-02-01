@@ -9,7 +9,7 @@ import (
 )
 
 func (v Validator) ValidateDeleteArticleRequest(req articleparam.DeleteArticleRequest) error {
-	const op = "categoryvalidator.ValidateDeleteBrandRequest"
+	const op = "articlevalidator.ValidateDeleteArticleRequest"
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.ID,
 			validation.Required.Error("validation.required"),

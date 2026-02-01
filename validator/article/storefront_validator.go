@@ -57,7 +57,7 @@ func (v StorefrontValidator) isArticleExist(value any) error {
 }
 
 func (v StorefrontValidator) ValidateGetStoreArticleRequest(req articleparam.GetStorefrontArticleRequest) error {
-	const op = "backofficevalidatorauth.ValidateGetStoreArticleRequest"
+	const op = "articlevalidator.ValidateGetStoreArticleRequest"
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.ID,
 			validation.Required.Error("validation.required"),

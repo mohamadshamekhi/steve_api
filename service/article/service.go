@@ -25,6 +25,10 @@ type ArticleWriter interface {
 	Delete(ctx context.Context, category entity.Article) error
 }
 
+type BackOfficeReader interface {
+	GetBackOfficeUserByID(ctx context.Context, id string) (entity.BackOffice, error)
+}
+
 type ArticleReadWriter interface {
 	ArticleReader
 	ArticleWriter

@@ -9,17 +9,22 @@ import (
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 )
 
-type Repository interface {
+type MediaRepository interface {
 	FindByID(ctx context.Context, id string) (entity.Article, error)
 }
 
+type ArticleRepository interface {
+	FindBySlug(ctx context.Context, slug string) (entity.Article, error)
+}
+
 type Validator struct {
-	repo     Repository
+	mRepo    MediaRepository
+	aRepo    ArticleRepository
 	mediaSvc mediaservice.Service
 }
 
-func New(repo Repository, mediaSvc mediaservice.Service) Validator {
-	return Validator{repo: repo, mediaSvc: mediaSvc}
+func New(mRepo MediaRepository, aRepo ArticleRepository, mediaSvc mediaservice.Service) Validator {
+	return Validator{mRepo: mRepo, aRepo: aRepo, mediaSvc: mediaSvc}
 }
 
 func (v Validator) articleIsExist(value any) error {
@@ -42,7 +47,7 @@ func (v Validator) articleIsExist(value any) error {
 		return nil
 	}
 
-	a, err := v.repo.FindByID(context.Background(), id)
+	a, err := v.mRepo.FindByID(context.Background(), id)
 
 	if err != nil || a.ID == "" {
 		var rErr *richerror.RichError

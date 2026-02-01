@@ -1,6 +1,8 @@
 package backofficemiddleware
 
 import (
+	"context"
+
 	"github.com/abolfazlnorzad/steve/config"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
@@ -30,6 +32,12 @@ func BackofficeAuth(service authservice.Service, cfg authservice.Config) echo.Mi
 				return nil, err
 			}
 			if !res {
+				ctx := context.WithValue(
+					c.Request().Context(),
+					"backoffice_id",
+					claims.EntityID,
+				)
+				c.SetRequest(c.Request().WithContext(ctx))
 				return claims, nil
 			}
 			return nil, richerror.New("middleware.auth").WithMessageKey("auth.you_must_logged_in").WithKind(richerror.KindUnauthorized)

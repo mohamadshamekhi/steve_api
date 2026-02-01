@@ -10,66 +10,61 @@ import (
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
-	"github.com/abolfazlnorzad/steve/pkg/slug"
 )
 
 type BackofficeService struct {
-	repo     ArticleReadWriter
+	aRepo    ArticleReadWriter
 	mediaSvc MediaService
+	bRepo    BackOfficeReader
 }
 
-func NewBackofficeService(repo ArticleReadWriter, mediaSvc MediaService) BackofficeService {
-	return BackofficeService{repo: repo, mediaSvc: mediaSvc}
+func NewBackofficeService(articleRepo ArticleReadWriter, mediaSvc MediaService, backOfficeRepo BackOfficeReader) BackofficeService {
+	return BackofficeService{aRepo: articleRepo, mediaSvc: mediaSvc, bRepo: backOfficeRepo}
 }
 
 func (s BackofficeService) Create(ctx context.Context, req articleparam.AddArticleRequest) (articleparam.AddArticleResponse, error) {
 	const op = "articleservice.Create"
 
+	val := ctx.Value("backoffice_id")
+	backOfficeID := val.(string)
+
 	a := entity.Article{
-		Title:       req.Title,
-		Body:        req.Body,
-		IsPublished: req.IsPublished,
-		MediaID:     req.MediaID,
-	}
-	slug := slug.GenerateSlug(a.Title)
-	counter := 1
-	for {
-		existingArticle, err := s.repo.FindBySlug(ctx, slug)
-		if err != nil {
-			var rErr *richerror.RichError
-			if errors.As(err, &rErr) && rErr.Kind() == richerror.KindNotFound {
-				break
-			}
-			return articleparam.AddArticleResponse{}, richerror.New(op).WithWarpError(err)
-		}
-
-		if existingArticle.ID == "" {
-			break
-		}
-
-		slug = fmt.Sprintf("%s-%d", slug, counter)
-		counter++
+		Title:           req.Title,
+		Slug:            req.Slug,
+		Body:            req.Body,
+		IsPublished:     req.IsPublished,
+		Tags:            req.Tags,
+		BackOfficeID:    backOfficeID,
+		MetaDescription: req.MetaDescription,
+		MediaID:         req.MediaID,
 	}
 
-	a.Slug = slug
 	a.BeforeCreate()
 
-	if err := s.repo.Create(ctx, a); err != nil {
+	if err := s.aRepo.Create(ctx, a); err != nil {
 		return articleparam.AddArticleResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	res, err := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: a.MediaID})
 	if err != nil {
 		return articleparam.AddArticleResponse{}, richerror.New(op).WithWarpError(err)
 	}
+	backOfficeInfo, bErr := s.bRepo.GetBackOfficeUserByID(ctx, backOfficeID)
+	if bErr != nil {
+		return articleparam.AddArticleResponse{}, richerror.New(op).WithWarpError(bErr)
+	}
 	articleInfo := articleparam.ArticleInfo{
-		ID:          a.ID,
-		Title:       a.Title,
-		Slug:        a.Slug,
-		Body:        a.Body,
-		IsPublished: a.IsPublished,
-		MediaUrl:    res.URL,
-		CreatedAt:   a.CreatedAt,
-		UpdatedAt:   a.UpdatedAt,
+		ID:              a.ID,
+		Title:           a.Title,
+		Slug:            a.Slug,
+		Body:            a.Body,
+		IsPublished:     a.IsPublished,
+		Tags:            a.Tags,
+		MetaDescription: a.MetaDescription,
+		BackOfficeID:    a.BackOfficeID,
+		BackOfficeName:  backOfficeInfo.Name,
+		MediaUrl:        res.URL,
+		CreatedAt:       a.CreatedAt,
+		UpdatedAt:       a.UpdatedAt,
 	}
 	return articleparam.AddArticleResponse{
 		Article: articleInfo,
@@ -79,7 +74,7 @@ func (s BackofficeService) Create(ctx context.Context, req articleparam.AddArtic
 
 func (s BackofficeService) Update(ctx context.Context, req articleparam.UpdateArticleRequest) (articleparam.UpdateArticleResponse, error) {
 	const op = "articleservice.Update"
-	article, err := s.repo.FindByID(ctx, req.ID)
+	article, err := s.aRepo.FindByID(ctx, req.ID)
 	if err != nil {
 		return articleparam.UpdateArticleResponse{}, richerror.New(op).WithWarpError(err)
 	}
@@ -88,35 +83,26 @@ func (s BackofficeService) Update(ctx context.Context, req articleparam.UpdateAr
 
 	if req.Title != nil && *req.Title != article.Title {
 		article.Title = *req.Title
+	}
 
-		slug := slug.GenerateSlug(article.Title)
-		counter := 1
-		for {
-			existingArticle, err := s.repo.FindBySlug(ctx, slug)
-			if err != nil {
-				var rErr *richerror.RichError
-				if errors.As(err, &rErr) && rErr.Kind() == richerror.KindNotFound {
-					break
-				}
-				return articleparam.UpdateArticleResponse{}, richerror.New(op).WithWarpError(err)
-			}
-
-			if existingArticle.ID == "" {
-				break
-			}
-
-			slug = fmt.Sprintf("%s-%d", slug, counter)
-			counter++
-		}
-
-		article.Slug = slug
+	if req.Slug != nil && *req.Slug != article.Slug {
+		article.Slug = *req.Slug
 	}
 
 	if req.Body != nil {
 		article.Body = *req.Body
 	}
+
 	if req.IsPublished != nil {
 		article.IsPublished = *req.IsPublished
+	}
+
+	if req.Tags != nil {
+		article.Tags = *req.Tags
+	}
+
+	if req.MetaDescription != nil {
+		article.MetaDescription = *req.MetaDescription
 	}
 
 	if req.MediaID != nil && *req.MediaID != article.MediaID {
@@ -138,7 +124,7 @@ func (s BackofficeService) Update(ctx context.Context, req articleparam.UpdateAr
 		article.MediaID = *req.MediaID
 	}
 
-	if uErr := s.repo.Update(ctx, article); uErr != nil {
+	if uErr := s.aRepo.Update(ctx, article); uErr != nil {
 		return articleparam.UpdateArticleResponse{}, richerror.New(op).WithWarpError(uErr).WithKind(richerror.KindUnexpected)
 	}
 	if oldMediaIDToDelete != "" {
@@ -157,15 +143,25 @@ func (s BackofficeService) Update(ctx context.Context, req articleparam.UpdateAr
 	if err != nil {
 		return articleparam.UpdateArticleResponse{}, richerror.New(op).WithWarpError(err)
 	}
+
+	backOfficeInfo, bErr := s.bRepo.GetBackOfficeUserByID(ctx, article.BackOfficeID)
+	if bErr != nil {
+		return articleparam.UpdateArticleResponse{}, richerror.New(op).WithWarpError(bErr)
+	}
+
 	articleInfo := articleparam.ArticleInfo{
-		ID:          article.ID,
-		Title:       article.Title,
-		Slug:        article.Slug,
-		Body:        article.Body,
-		IsPublished: article.IsPublished,
-		MediaUrl:    res.URL,
-		CreatedAt:   article.CreatedAt,
-		UpdatedAt:   article.UpdatedAt,
+		ID:              article.ID,
+		Title:           article.Title,
+		Slug:            article.Slug,
+		Body:            article.Body,
+		IsPublished:     article.IsPublished,
+		Tags:            article.Tags,
+		MetaDescription: article.MetaDescription,
+		BackOfficeID:    article.BackOfficeID,
+		BackOfficeName:  backOfficeInfo.Name,
+		MediaUrl:        res.URL,
+		CreatedAt:       article.CreatedAt,
+		UpdatedAt:       article.UpdatedAt,
 	}
 
 	return articleparam.UpdateArticleResponse{
@@ -175,14 +171,14 @@ func (s BackofficeService) Update(ctx context.Context, req articleparam.UpdateAr
 
 func (s BackofficeService) Delete(ctx context.Context, req articleparam.DeleteArticleRequest) (articleparam.DeleteArticleResponse, error) {
 	const op = "articleservice.Delete"
-	article, err := s.repo.FindByID(ctx, req.ID)
+	article, err := s.aRepo.FindByID(ctx, req.ID)
 	if err != nil {
 		return articleparam.DeleteArticleResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	if !article.DeletedAt.IsZero() {
 		return articleparam.DeleteArticleResponse{}, richerror.New(op).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
 	}
-	if dErr := s.repo.Delete(ctx, article); dErr != nil {
+	if dErr := s.aRepo.Delete(ctx, article); dErr != nil {
 		return articleparam.DeleteArticleResponse{}, richerror.New(op).WithWarpError(dErr)
 	}
 	// todo-write background job for delete media after one day and children's media
@@ -197,7 +193,7 @@ func (s BackofficeService) Delete(ctx context.Context, req articleparam.DeleteAr
 
 func (s BackofficeService) GetArticle(ctx context.Context, req articleparam.GetArticleRequest) (articleparam.GetArticleResponse, error) {
 	const op = "articleservice.GetArticle"
-	article, err := s.repo.FindByID(ctx, req.ID)
+	article, err := s.aRepo.FindByID(ctx, req.ID)
 	if err != nil {
 		return articleparam.GetArticleResponse{}, richerror.New(op).WithWarpError(err)
 	}
@@ -208,15 +204,23 @@ func (s BackofficeService) GetArticle(ctx context.Context, req articleparam.GetA
 	if err != nil {
 		logger.L().Error(fmt.Sprintf("ERROR: article media get failed for ID %s\n", article.MediaID))
 	}
+	backOfficeInfo, bErr := s.bRepo.GetBackOfficeUserByID(ctx, article.BackOfficeID)
+	if bErr != nil {
+		return articleparam.GetArticleResponse{}, richerror.New(op).WithWarpError(bErr)
+	}
 	a := articleparam.ArticleInfo{
-		ID:          article.ID,
-		Title:       article.Title,
-		Slug:        article.Slug,
-		Body:        article.Body,
-		IsPublished: article.IsPublished,
-		MediaUrl:    res.URL,
-		CreatedAt:   article.CreatedAt,
-		UpdatedAt:   article.UpdatedAt,
+		ID:              article.ID,
+		Title:           article.Title,
+		Slug:            article.Slug,
+		Body:            article.Body,
+		IsPublished:     article.IsPublished,
+		Tags:            article.Tags,
+		MetaDescription: article.MetaDescription,
+		BackOfficeID:    article.BackOfficeID,
+		BackOfficeName:  backOfficeInfo.Name,
+		MediaUrl:        res.URL,
+		CreatedAt:       article.CreatedAt,
+		UpdatedAt:       article.UpdatedAt,
 	}
 	return articleparam.GetArticleResponse{
 		Article: a,
@@ -225,7 +229,7 @@ func (s BackofficeService) GetArticle(ctx context.Context, req articleparam.GetA
 
 func (s BackofficeService) GetAll(ctx context.Context, req articleparam.AllArticleRequest) (articleparam.AllArticleResponse, error) {
 	const op = "articleservice.GetAll"
-	resp, err := s.repo.All(ctx, req.Filter, req.Pagination)
+	resp, err := s.aRepo.All(ctx, req.Filter, req.Pagination)
 	if err != nil {
 		return articleparam.AllArticleResponse{}, richerror.New(op).WithWarpError(err)
 	}
@@ -248,15 +252,26 @@ func (s BackofficeService) GetAll(ctx context.Context, req articleparam.AllArtic
 	}
 
 	for _, a := range resp.Articles {
+
+		//todo-یک متد جدید برای گرفتن همزمان چند انتیتی با استفاده از چند ای دی
+		backOfficeInfo, bErr := s.bRepo.GetBackOfficeUserByID(ctx, a.BackOfficeID)
+		if bErr != nil {
+			return articleparam.AllArticleResponse{}, richerror.New(op).WithWarpError(bErr)
+		}
+
 		articlesInfo = append(articlesInfo, articleparam.ArticleInfo{
-			ID:          a.ID,
-			Title:       a.Title,
-			Slug:        a.Slug,
-			Body:        a.Body,
-			IsPublished: a.IsPublished,
-			MediaUrl:    urlMap.URLs[a.MediaID],
-			CreatedAt:   a.CreatedAt,
-			UpdatedAt:   a.UpdatedAt,
+			ID:              a.ID,
+			Title:           a.Title,
+			Slug:            a.Slug,
+			Body:            a.Body,
+			IsPublished:     a.IsPublished,
+			Tags:            a.Tags,
+			MetaDescription: a.MetaDescription,
+			BackOfficeID:    a.BackOfficeID,
+			BackOfficeName:  backOfficeInfo.Name,
+			MediaUrl:        urlMap.URLs[a.MediaID],
+			CreatedAt:       a.CreatedAt,
+			UpdatedAt:       a.UpdatedAt,
 		})
 	}
 
