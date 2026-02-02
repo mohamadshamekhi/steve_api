@@ -29,6 +29,7 @@ build_job:
       --destination "${IMAGE_NAME}:latest"
       --insecure
       --skip-tls-verify
+      --dns 8.8.8.8 --dns 1.1.1.1
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
