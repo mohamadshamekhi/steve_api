@@ -5,7 +5,7 @@ variables:
   DOCKER_DRIVER: overlay2
   REGISTRY_URL: "5.78.55.0:5051"
   IMAGE_NAME: "5.78.55.0:5051/steve/backend/steve-go"
-  SERVER_IP: "185.97.116.112"
+  SERVER_IP: "37.32.4.62"
   SERVER_USER: "ubuntu"
   SERVER_PATH: "~/projects/steve-app"
 
