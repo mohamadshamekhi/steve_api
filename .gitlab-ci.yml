@@ -20,6 +20,8 @@ build_job:
     entrypoint: [ "" ]
   script:
     - echo "🏗️ Building & Pushing Steve App..."
+    - echo "nameserver 8.8.8.8" > /etc/resolv.conf
+    - echo "nameserver 1.1.1.1" >> /etc/resolv.conf
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"${REGISTRY_URL}\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor
@@ -29,7 +31,6 @@ build_job:
       --destination "${IMAGE_NAME}:latest"
       --insecure
       --skip-tls-verify
-      --dns 8.8.8.8 --dns 1.1.1.1
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
