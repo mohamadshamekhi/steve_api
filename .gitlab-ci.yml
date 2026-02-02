@@ -74,9 +74,9 @@ deploy_job:
 #    - scp docker-compose.yml $SERVER_USER@$SERVER_IP:${SERVER_PATH}/docker-compose.yml
 
     - echo "🚢 Running Containers on Server..."
-    - ssh $SERVER_USER@$SERVER_IP "
+    - ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
       cd ${SERVER_PATH} &&
-      docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD ${REGISTRY_URL} &&
+      echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin ${REGISTRY_URL} &&
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
       docker compose pull &&
       docker compose up -d --remove-orphans &&
