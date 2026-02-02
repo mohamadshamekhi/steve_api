@@ -67,9 +67,9 @@ deploy_job:
       echo "IMAGE_TAG=$CI_COMMIT_SHORT_SHA" >> .env
       echo "DOCKER_REGISTRY=${REGISTRY_URL}" >> .env
 
-    - ssh $SERVER_USER@$SERVER_IP "mkdir -p ${SERVER_PATH}"
-    - scp .env $SERVER_USER@$SERVER_IP:${SERVER_PATH}/.env
-    - scp docker-compose.yml $SERVER_USER@$SERVER_IP:${SERVER_PATH}/docker-compose.yml
+#    - ssh $SERVER_USER@$SERVER_IP "mkdir -p ${SERVER_PATH}"
+#    - scp .env $SERVER_USER@$SERVER_IP:${SERVER_PATH}/.env
+#    - scp docker-compose.yml $SERVER_USER@$SERVER_IP:${SERVER_PATH}/docker-compose.yml
 
     - echo "🚢 Running Containers on Server..."
     - ssh $SERVER_USER@$SERVER_IP "
