@@ -76,13 +76,16 @@ deploy_job:
     - echo "🚢 Running Containers on Server..."
     - ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
       cd ${SERVER_PATH} &&
-      echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin ${REGISTRY_URL} &&
-      
+      # ۱. لاگین به ریجستری شخصی
+      echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin git.soraapoint.com:5051 &&
+      # ۲. ست کردن تگ
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
-      
+      # ۳. فقط ایمیج اپلیکیشن را پول کن (چون بقیه رو قبلاً دستی آوردی)
       docker compose pull app &&
-
-      docker compose up -d --remove-orphans
+      # ۴. بالا آوردن کانتینرها
+      docker compose up -d --remove-orphans &&
+      # ۵. تمیزکاری ایمیج‌های قدیمی
+      docker image prune -f
       "
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
