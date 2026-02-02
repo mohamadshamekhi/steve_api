@@ -46,6 +46,9 @@ deploy_job:
   script:
     - echo "🚀 Preparing Environment..."
     - |
+      echo "nameserver 8.8.8.8" > /etc/resolv.conf
+      apk update --no-cache
+      apk add --no-cache openssh-client
       echo "ST_MONGO__HOST=steve_db" > .env
       echo "ST_MONGO__PORT=27017" >> .env
       echo "ST_MONGO__USERNAME=$ST_MONGO__USERNAME" >> .env
