@@ -76,7 +76,7 @@ deploy_job:
     - echo "🚢 Running Containers on Server..."
     - ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
       cd ${SERVER_PATH} &&
-      echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin ${REGISTRY_URL} &&
+      echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin http://${REGISTRY_URL} &&
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
       docker compose pull &&
       docker compose up -d --remove-orphans &&
