@@ -14,8 +14,8 @@ type Config struct {
 }
 
 type Adapter struct {
-	nc *nats.Conn            // اتصال به NATS (Core NATS)
-	js nats.JetStreamContext // زمینه JetStream
+	nc *nats.Conn
+	js nats.JetStreamContext
 }
 
 func New(cfg Config) *Adapter {
