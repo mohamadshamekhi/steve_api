@@ -13,6 +13,7 @@ type Validator struct {
 }
 
 type Repository interface {
+	IsBackOfficeUserIsExistByID(ctx context.Context, id string) (bool, error)
 	IsBackOfficeUserIsExistByPhoneNumber(ctx context.Context, phoneNumber string) (bool, error)
 	GetBackOfficeUserByID(ctx context.Context, id string) (entity.BackOffice, error)
 	GetBackOfficeUserByPhoneNumber(ctx context.Context, phoneNumber string) (entity.BackOffice, error)

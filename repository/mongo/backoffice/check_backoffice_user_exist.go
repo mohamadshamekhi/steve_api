@@ -27,3 +27,20 @@ func (d DB) IsBackOfficeUserIsExistByPhoneNumber(ctx context.Context, phoneNumbe
 	}
 	return true, nil
 }
+
+func (d DB) IsBackOfficeUserIsExistByID(ctx context.Context, id string) (bool, error) {
+	const op = "mongodbbackoffice.IsBackOfficeUserIsExistByID"
+
+	var backOfficeUser entity.BackOffice
+	if err := d.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&backOfficeUser); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return false, nil
+		}
+		return false, richerror.New(op).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected).
+			WithMeta(map[string]any{"id": id})
+	}
+	if backOfficeUser.ID == "" {
+		return false, nil
+	}
+	return true, nil
+}

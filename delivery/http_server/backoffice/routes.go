@@ -13,4 +13,5 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.PATCH("/update/:id", h.UpdateBackofficeUser, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateBackofficeUser))
 	g.GET("/me", h.MyProfile, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg))
 	g.POST("/logout", h.Logout, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg))
+	g.GET("/:id", h.Get, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ViewBackofficeUser))
 }
