@@ -3,10 +3,8 @@ image: docker:24.0.5
 variables:
   DOCKER_HOST: tcp://docker:2375
   DOCKER_DRIVER: overlay2
-  # آدرس رجیستری و تصویر
   REGISTRY_URL: "5.78.55.0:5051"
   IMAGE_NAME: "5.78.55.0:5051/steve/backend/steve-go"
-  # اطلاعات سرور مقصد
   SERVER_IP: "185.97.116.112"
   SERVER_USER: "ubuntu"
   SERVER_PATH: "~/projects/steve-app"
