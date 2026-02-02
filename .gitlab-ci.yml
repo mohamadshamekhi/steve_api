@@ -46,14 +46,14 @@ deploy_job:
   script:
     - echo "🚀 Preparing Environment..."
     - |
-      echo "ST_MONGO__HOST=mongodb" > .env
+      echo "ST_MONGO__HOST=steve_db" > .env
       echo "ST_MONGO__PORT=27017" >> .env
       echo "ST_MONGO__USERNAME=$ST_MONGO__USERNAME" >> .env
       echo "ST_MONGO__PASSWORD=$ST_MONGO__PASSWORD" >> .env
       echo "ST_MONGO__DB_NAME=$ST_MONGO__DB_NAME" >> .env
       echo "MONGO_INITDB_ROOT_USERNAME=$ST_MONGO__USERNAME" >> .env
       echo "MONGO_INITDB_ROOT_PASSWORD=$ST_MONGO__PASSWORD" >> .env
-      echo "ST_REDIS__HOST=redis" >> .env
+      echo "ST_REDIS__HOST=steve_cache" >> .env
       echo "ST_REDIS__PORT=6379" >> .env
       echo "ST_OBJECT_STORAGE__AWS_ACCESS_KEY_ID=$ST_AWS_KEY" >> .env
       echo "ST_OBJECT_STORAGE__AWS_SECRET_ACCESS_KEY=$ST_AWS_SECRET" >> .env

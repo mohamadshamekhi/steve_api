@@ -30,7 +30,7 @@ services:
 
   mongodb:
     image: mongo:7.0
-    container_name: my_mongo_db
+    container_name: steve_db
     restart: unless-stopped
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${ST_MONGO__USERNAME}
@@ -44,7 +44,7 @@ services:
 
   redis:
     image: redis:7.2-alpine
-    container_name: my_redis_cache
+    container_name: steve_cache
     restart: unless-stopped
     ports:
       - "6379:6379"
