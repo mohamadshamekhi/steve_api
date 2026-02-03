@@ -12,6 +12,7 @@ import (
 
 type Reader interface {
 	FindByID(ctx context.Context, id string) (entity.Article, error)
+	FindBySlug(ctx context.Context, slug string) (entity.Article, error)
 }
 
 type StorefrontValidator struct {
@@ -33,16 +34,50 @@ func (v StorefrontValidator) isArticleExist(value any) error {
 		}
 		id = *v
 	default:
-		return richerror.New("brandvalidator.BrandIsUnique.type_assertion").
+		return richerror.New("articlevalidator.articleIsUnique.type_assertion").
 			WithKind(richerror.KindUnexpected).
-			WithWarpError(errors.New("unexpected type for brand name"))
+			WithWarpError(errors.New("unexpected type for article id"))
 	}
 
 	if id == "" {
-		return nil
+		return errors.New("id is empty")
 	}
 
 	a, err := v.repo.FindByID(context.Background(), id)
+
+	if err != nil || a.ID == "" {
+		var rErr *richerror.RichError
+		if errors.As(err, &rErr) {
+			if rErr.Kind() == richerror.KindNotFound {
+				return errors.New(rErr.MessageKey())
+			}
+		}
+		return err
+	}
+	return nil
+}
+
+func (v StorefrontValidator) isArticleExistBySlug(value any) error {
+	var slug string
+	switch v := value.(type) {
+	case string:
+		slug = v
+
+	case *string:
+		if v == nil {
+			return nil
+		}
+		slug = *v
+	default:
+		return richerror.New("articlevalidator.articleIsUnique.type_assertion").
+			WithKind(richerror.KindUnexpected).
+			WithWarpError(errors.New("unexpected type for article slug"))
+	}
+
+	if slug == "" {
+		return errors.New("slug is empty")
+	}
+	a, err := v.repo.FindBySlug(context.Background(), slug)
 
 	if err != nil || a.ID == "" {
 		var rErr *richerror.RichError
@@ -78,5 +113,33 @@ func (v StorefrontValidator) ValidateGetStoreArticleRequest(req articleparam.Get
 	}
 
 	//nolint
+	return nil
+}
+
+func (v StorefrontValidator) ValidateGetBySlugStoreArticleRequest(req articleparam.GetBySlugStorefrontArticleRequest) error {
+	const op = "articlevalidator.ValidateGetBySlugStoreArticleRequest"
+	if err := validation.ValidateStruct(&req,
+		validation.Field(&req.Slug,
+			validation.By(func(value interface{}) error {
+				if value == "" || value == ":slug" {
+					return errors.New("slug is empty")
+				}
+				return nil
+			}),
+
+			validation.By(v.isArticleExistBySlug)),
+	); err != nil {
+		var vErrs validation.Errors
+		if errors.As(err, &vErrs) {
+			return richerror.New(op).
+				WithKind(richerror.KindInvalid).
+				WithMessageKey("global.validation_failed").
+				WithMeta(map[string]any{"fields": vErrs})
+		}
+
+		return richerror.New(op).WithKind(richerror.KindUnexpected).
+			WithMessageKey("global.something_wrong").WithWarpError(err)
+
+	}
 	return nil
 }

@@ -50,3 +50,24 @@ func (h Handler) GetSingleStorefront(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
+
+func (h Handler) GetSingleBySlugStorefront(c echo.Context) error {
+	const op = "articlehandler.GetBySlugStorefront"
+	slug := c.Param("slug")
+	req := articleparam.GetBySlugStorefrontArticleRequest{
+		Slug: slug,
+	}
+	if err := h.storefrontVld.ValidateGetBySlugStoreArticleRequest(req); err != nil {
+		return err
+	}
+
+	resp, err := h.storefrontSvc.GetSingleBySlugStorefrontArticle(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}

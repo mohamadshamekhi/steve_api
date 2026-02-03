@@ -16,6 +16,7 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 
 	storefrontGroup := e.Group("article/storefront")
 	storefrontGroup.GET("", h.GetAllStorefront)
+	storefrontGroup.GET("/get-by-slug/:slug", h.GetSingleBySlugStorefront)
 	storefrontGroup.GET("/:id", h.GetSingleStorefront)
 
 }
