@@ -1,7 +1,7 @@
 package main
 
 import (
-	natsadapter "github.com/abolfazlnorzad/steve/adapter/nats"
+	"github.com/abolfazlnorzad/steve/adapter/mellipayamak"
 	redisadapter "github.com/abolfazlnorzad/steve/adapter/redis"
 	liarastorage "github.com/abolfazlnorzad/steve/adapter/storage/liara"
 	"github.com/abolfazlnorzad/steve/config"
@@ -97,13 +97,10 @@ import (
 
 func main() {
 	cfg := config.C()
+	mp := mellipayamak.New(cfg.MelliPayamak)
 	redisRepo := redisadapter.New(cfg.Redis)
-	nats := natsadapter.New(natsadapter.Config{
-		Host: "localhost",
-		Port: 4222,
-	})
 	redisotp := redisotp.New(redisRepo)
-	authSvc := authservice.New(cfg.Auth, redisotp, nats)
+	authSvc := authservice.New(cfg.Auth, redisotp, mp)
 	mongoRepo := mongodb.NewMongoDB(cfg.Mongo)
 	backOfficeMongoRepo := mongodbbackoffice.New(mongoRepo)
 	backOfficeSvc := backofficeservice.New(cfg.BackOffice, authSvc, backOfficeMongoRepo, redisotp)

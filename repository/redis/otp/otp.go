@@ -47,3 +47,18 @@ func (d DB) StoreNewActiveCodeForUser(ctx context.Context, key string, code stri
 	}
 	return nil
 }
+
+func (d DB) DeleteUserActiveCode(ctx context.Context, key string) error {
+	const op = "redisotp.DeleteUserActiveCode"
+
+	_, err := d.adapter.Client().Del(ctx, key).Result()
+	if err != nil {
+		return richerror.New(op).
+			WithWarpError(err).
+			WithKind(richerror.KindUnexpected).
+			WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).
+			WithMeta(map[string]any{"key": key})
+	}
+
+	return nil
+}

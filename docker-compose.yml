@@ -24,7 +24,6 @@ services:
       - ST_MELLIPAYAMAK__PASSWORD=${ST_MELLIPAYAMAK__PASSWORD}
       - ST_REDIS__HOST=redis
       - ST_REDIS__PORT=6379
-      - NATS_URL=nats://nats:4222
     networks:
       - steve_network
 
@@ -58,6 +57,7 @@ networks:
   steve_network:
     driver: bridge
 
+# تعریف Volumeها برای ماندگاری داده‌ها
 volumes:
   mongo_data:
     driver: local
