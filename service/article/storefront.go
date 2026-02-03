@@ -25,7 +25,7 @@ func NewStorefrontService(articleRepo ArticleReader, mediaSvc MediaService, back
 }
 
 func (s StorefrontService) GetSingleStorefrontArticle(ctx context.Context, req articleparam.GetStorefrontArticleRequest) (articleparam.GetStorefrontArticleResponse, error) {
-	const op = "ArticleService.Get"
+	const op = "ArticleService.GetSingleStorefrontArticle"
 	article, err := s.aRepo.FindByID(ctx, req.ID)
 	if err != nil {
 		return articleparam.GetStorefrontArticleResponse{}, richerror.New(op).WithWarpError(err)
@@ -36,7 +36,7 @@ func (s StorefrontService) GetSingleStorefrontArticle(ctx context.Context, req a
 
 	backOfficeInfo, bErr := s.bRepo.GetBackOfficeUserByID(ctx, article.BackOfficeID)
 	if bErr != nil {
-		return articleparam.GetStorefrontArticleResponse{}, richerror.New(op).WithWarpError(err)
+		return articleparam.GetStorefrontArticleResponse{}, richerror.New(op).WithWarpError(bErr)
 	}
 
 	res, err := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: article.MediaID})
@@ -58,6 +58,44 @@ func (s StorefrontService) GetSingleStorefrontArticle(ctx context.Context, req a
 		UpdatedAt:       article.UpdatedAt,
 	}
 	return articleparam.GetStorefrontArticleResponse{
+		Article: a,
+	}, nil
+}
+
+func (s StorefrontService) GetSingleBySlugStorefrontArticle(ctx context.Context, req articleparam.GetBySlugStorefrontArticleRequest) (articleparam.GetBySlugStorefrontArticleResponse, error) {
+	const op = "ArticleService.GetSingleBySlugStorefrontArticle"
+	article, err := s.aRepo.FindBySlug(ctx, req.Slug)
+	if err != nil {
+		return articleparam.GetBySlugStorefrontArticleResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	if !article.DeletedAt.IsZero() || !article.IsPublished {
+		return articleparam.GetBySlugStorefrontArticleResponse{}, richerror.New(op).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
+	}
+
+	backOfficeInfo, bErr := s.bRepo.GetBackOfficeUserByID(ctx, article.BackOfficeID)
+	if bErr != nil {
+		return articleparam.GetBySlugStorefrontArticleResponse{}, richerror.New(op).WithWarpError(bErr)
+	}
+
+	res, err := s.mediaSvc.GetURLByMediaID(ctx, mediaparam.GetUrlByIDRequest{ID: article.MediaID})
+	if err != nil {
+		logger.L().Error(fmt.Sprintf("ERROR: article media get failed for ID %s\n", article.MediaID))
+	}
+	a := articleparam.StorefrontArticleDetail{
+		ID:              article.ID,
+		Title:           article.Title,
+		Slug:            article.Slug,
+		Body:            article.Body,
+		IsPublished:     article.IsPublished,
+		Tags:            article.Tags,
+		MetaDescription: article.MetaDescription,
+		BackOfficeID:    article.BackOfficeID,
+		BackOfficeName:  backOfficeInfo.Name,
+		MediaUrl:        res.URL,
+		CreatedAt:       article.CreatedAt,
+		UpdatedAt:       article.UpdatedAt,
+	}
+	return articleparam.GetBySlugStorefrontArticleResponse{
 		Article: a,
 	}, nil
 }
