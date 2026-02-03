@@ -20,10 +20,6 @@ auth:
   expiration_time_opt_code: 5m
   sign_key: test
 
-nats:
-  host: 127.0.0.1
-  port: 4222
-
 mongo:
   host: 127.0.0.1
   username: "root"
@@ -65,3 +61,11 @@ media:
         - "image/png"
         - "image/jpeg"
         - "image/webp"
+
+mellipayamak:
+    username:
+    password:
+    url: "https://api.payamak-panel.com/post/Send.asmx"
+    patterns:
+      otp : "422053"
+    from_number: "50002710070797"

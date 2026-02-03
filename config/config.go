@@ -2,7 +2,6 @@ package config
 
 import (
 	"github.com/abolfazlnorzad/steve/adapter/mellipayamak"
-	natsadapter "github.com/abolfazlnorzad/steve/adapter/nats"
 	redisadapter "github.com/abolfazlnorzad/steve/adapter/redis"
 	liarastorage "github.com/abolfazlnorzad/steve/adapter/storage/liara"
 	mongodb "github.com/abolfazlnorzad/steve/repository/mongo"
@@ -22,7 +21,6 @@ type Config struct {
 	BackOffice    backofficeservice.Config `koanf:"backoffice"`
 	User          userservice.Config       `koanf:"user"`
 	Redis         redisadapter.Config      `koanf:"redis"`
-	Nats          natsadapter.Config       `koanf:"nats"`
 	Mongo         mongodb.Config           `koanf:"mongo"`
 	ObjectStorage liarastorage.Config      `koanf:"object_storage"`
 	Media         mediaservice.Config      `koanf:"media"`

@@ -3,15 +3,12 @@ package authservice
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
 	"time"
 
-	"github.com/abolfazlnorzad/steve/contract/goproto/auth"
-	"github.com/abolfazlnorzad/steve/pkg/constant"
 	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
-	"github.com/nats-io/nats.go"
-	"google.golang.org/protobuf/proto"
 )
 
 func (s Service) GenerateOTPCode(ctx context.Context, phoneNumber string, prefix string) error {
@@ -22,43 +19,24 @@ func (s Service) GenerateOTPCode(ctx context.Context, phoneNumber string, prefix
 		return richerror.New(op).WithWarpError(cErr)
 	}
 	if !resp {
-		// todo - uncomment !!! important !!!
-		//code := fmt.Sprintf("%d", 10000+rand.IntN(99999))
-		code := "77777"
+		code := fmt.Sprintf("%d", 10000+rand.IntN(99999))
 		sErr := s.repo.StoreNewActiveCodeForUser(ctx, key, code, s.cfg.ExpirationTimeOptCode)
 		if sErr != nil {
 			return richerror.New(op).WithWarpError(sErr)
 		}
-		return nil
-		//return s.publishMessageToNats(phoneNumber, code)
+		otpCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		mErr := s.melliPayamakProvider.SendOTP(otpCtx, phoneNumber, code)
+		if mErr != nil {
+			dErr := s.repo.DeleteUserActiveCode(ctx, key)
+			if dErr != nil {
+				logger.L().Error("failed to delete user active code from db. key: ", key, "err: ", dErr)
+			}
+			logger.L().Error("failed to send otp: ", phoneNumber, "err: ", mErr)
+			return richerror.New(op).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithWarpError(mErr).WithKind(richerror.KindUnexpected)
+		}
 	}
 
-	return nil
-}
-
-func (s Service) publishMessageToNats(phoneNumber string, code string) error {
-	const op = "authservice.GenerateOTPCode"
-
-	event := &auth.SendOTPCode{Code: code, PhoneNumber: phoneNumber}
-	payload, mErr := proto.Marshal(event)
-	if mErr != nil {
-		return richerror.New(op).WithWarpError(mErr).WithKind(richerror.KindUnexpected).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong)
-	}
-	// todo - remove this code and transfer to package that init all stream or use Terraform or k8s opt
-	_, aErr := s.nats.NatsJS().AddStream(&nats.StreamConfig{
-		Name:     "notification",
-		MaxAge:   1 * 24 * time.Hour,
-		Subjects: []string{"notification.*"},
-	})
-	if aErr != nil {
-		return richerror.New(op).WithWarpError(aErr).WithKind(richerror.KindUnexpected).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong)
-	}
-	ack, pErr := s.nats.NatsJS().Publish(constant.SendOTPSubject, payload)
-	if pErr != nil {
-		return richerror.New(op).WithWarpError(pErr).WithKind(richerror.KindUnexpected).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong)
-	}
-	// todo - if necessary, we can store this published message into db.
-	logger.L().Info("message published successfully, ack.Stream , ack.Sequence", ack.Stream, ack.Sequence)
 	return nil
 }
 
