@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 )
@@ -78,9 +79,7 @@ func (a Adapter) SendSimple(ctx context.Context, to string, message string) erro
 }
 
 type MelliPayamakResponse struct {
-	Value        string `json:"Value"`
-	RetStatus    int    `json:"RetStatus"`
-	StrRetStatus string `json:"StrRetStatus"`
+	Value map[string]string `json:"Value"`
 }
 
 func (a Adapter) doRequest(ctx context.Context, op string, endpoint string, body any, to string) error {
@@ -109,30 +108,30 @@ func (a Adapter) doRequest(ctx context.Context, op string, endpoint string, body
 	defer func() { _ = resp.Body.Close() }()
 
 	bodyBytes, _ := io.ReadAll(resp.Body)
-	resultStr := strings.TrimSpace(string(bodyBytes))
 	var apiResp MelliPayamakResponse
-	if err := json.Unmarshal(bodyBytes, &apiResp); err != nil {
+	if err := json.Unmarshal(bodyBytes, &apiResp.Value); err != nil {
 		logger.L().Error("sms_non_json_response", "body", string(bodyBytes))
 		return richerror.New(op).WithMessageKey("invalid response format")
 	}
 
-	if apiResp.RetStatus != 1 && apiResp.RetStatus != 0 {
-
-		logger.L().Error("sms_provider_logic_error",
-			"status", apiResp.RetStatus,
-			"message", apiResp.StrRetStatus,
-			"to", to,
-		)
-		return richerror.New(op).
-			WithMeta(map[string]any{"ret_status": apiResp.RetStatus, "msg": apiResp.StrRetStatus}).
-			WithMessageKey("provider rejected data")
+	key := "d"
+	if value, ok := apiResp.Value[key]; ok {
+		if len(value) > 15 {
+			logger.L().Info("sms_sent_successfully", "to", to, "response_id", apiResp.Value[key])
+			return nil
+		} else {
+			logger.L().Error("sms_sent_unsuccessfully", "to", to, "response_id", apiResp.Value[key])
+			return richerror.New(op).
+				WithMeta(map[string]any{"response": apiResp.Value}).
+				WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
+		}
 	}
-	if apiResp.RetStatus == 1 {
-		logger.L().Info("sms_sent_successfully", "to", to, "sms_id", resultStr)
-		return nil
-	}
-	logger.L().Error("sms_sent_unsuccessfully", "to", to, "sms_id", resultStr)
+	logger.L().Error("sms_provider_logic_error",
+		"response", apiResp.Value,
+		"to", to,
+	)
 	return richerror.New(op).
-		WithMeta(map[string]any{"ret_status": apiResp.RetStatus, "msg": apiResp.StrRetStatus}).
-		WithMessageKey("sms_sent_unsuccessfully")
+		WithMeta(map[string]any{"response": apiResp.Value}).
+		WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected)
+
 }

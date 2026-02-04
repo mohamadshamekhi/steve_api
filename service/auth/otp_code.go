@@ -6,7 +6,6 @@ import (
 	"math/rand/v2"
 	"time"
 
-	"github.com/abolfazlnorzad/steve/pkg/errmsg"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 )
@@ -33,7 +32,7 @@ func (s Service) GenerateOTPCode(ctx context.Context, phoneNumber string, prefix
 				logger.L().Error("failed to delete user active code from db. key: ", key, "err: ", dErr)
 			}
 			logger.L().Error("failed to send otp: ", phoneNumber, "err: ", mErr)
-			return richerror.New(op).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithWarpError(mErr).WithKind(richerror.KindUnexpected)
+			return richerror.New(op).WithWarpError(mErr)
 		}
 	}
 

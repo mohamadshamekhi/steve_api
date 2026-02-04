@@ -15,16 +15,17 @@ type GetProductsWithAutoDiscountsResponse struct {
 }
 
 type StorefrontProductList struct {
-	ID           string                  `json:"id"`
-	Name         string                  `json:"name"`
-	ENTitle      string                  `json:"en_title"`
-	Slug         string                  `json:"slug"`
-	Gallery      []entity.ProductGallery `json:"gallery"`
-	Rating       float64                 `json:"rating"`
-	IsPublished  bool                    `json:"is_published"`
-	IsSecondHand bool                    `json:"is_second_hand"`
-	Discount     []ProductDiscount       `json:"discount"`
-	Variant      []entity.Variant        `json:"variant" bson:"variant"`
+	ID             string                  `json:"id"`
+	Name           string                  `json:"name"`
+	ENTitle        string                  `json:"en_title"`
+	Slug           string                  `json:"slug"`
+	Gallery        []entity.ProductGallery `json:"gallery"`
+	Rating         float64                 `json:"rating"`
+	IsPublished    bool                    `json:"is_published"`
+	IsSecondHand   bool                    `json:"is_second_hand"`
+	Discount       []ProductDiscount       `json:"discount"`
+	Variant        []entity.Variant        `json:"variant" bson:"variant"`
+	Specifications []Specification         `json:"specifications,omitempty"`
 }
 
 type GetProductWithSpecialCategoryRequest struct {
