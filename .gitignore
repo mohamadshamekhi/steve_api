@@ -234,3 +234,5 @@ env-tmp.sh
 .air.toml
 DockerfileDev
 docker-compose-Dev.yml
+/.bin/
+/.bin/webp/

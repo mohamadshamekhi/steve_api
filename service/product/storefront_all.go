@@ -3,10 +3,13 @@ package productservice
 import (
 	"context"
 
+	categoryparam "github.com/abolfazlnorzad/steve/param/category"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	discountparam "github.com/abolfazlnorzad/steve/param/discount"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
+	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	"golang.org/x/sync/errgroup"
 )
 
 func (s StorefrontService) GetFilteredProduct(ctx context.Context, req productparam.StorefrontGetAllProductRequest) (productparam.StorefrontGetAllProductResponse, error) {
@@ -22,21 +25,53 @@ func (s StorefrontService) GetFilteredProduct(ctx context.Context, req productpa
 	}
 
 	list := []productparam.StorefrontProductList{}
+	g, gCtx := errgroup.WithContext(ctx)
+
+	var catRes categoryparam.GetCategoryResponse
 
 	for _, product := range resp.Products {
-		list = append(list, productparam.StorefrontProductList{
-			ID:           product.ID,
-			Name:         product.Name,
-			ENTitle:      product.ENTitle,
-			Slug:         product.Slug,
-			Gallery:      product.Gallery,
-			IsPublished:  product.IsPublished,
-			IsSecondHand: product.IsSecondHand,
-			Discount:     res.DiscountMap[product.ID],
-			Variant:      product.Variants,
-			Rating:       product.Rating,
+
+		g.Go(func() error {
+			var cErr error
+			catRes, cErr = s.categoryProvider.GetCategory(gCtx, categoryparam.GetCategoryRequest{ID: product.CategoryID})
+			if cErr != nil {
+				logger.L().Error("failed to get category", "product_id", product.ID, "err", cErr)
+			}
+			productSpecMap := make(map[string]string)
+			for _, s := range product.Specifications {
+				productSpecMap[s.Key] = s.Value
+			}
+			var specs []productparam.Specification
+			if catRes.Category.ID != "" {
+				for _, attr := range catRes.Category.AttributeSet {
+					if val, ok := productSpecMap[attr.Key]; ok {
+						specs = append(specs, productparam.Specification{
+							Key:   attr.Key,
+							Value: val,
+							Name:  attr.Name,
+							Unit:  attr.Unit,
+						})
+					}
+				}
+			}
+			list = append(list, productparam.StorefrontProductList{
+				ID:             product.ID,
+				Name:           product.Name,
+				ENTitle:        product.ENTitle,
+				Slug:           product.Slug,
+				Gallery:        product.Gallery,
+				IsPublished:    product.IsPublished,
+				IsSecondHand:   product.IsSecondHand,
+				Discount:       res.DiscountMap[product.ID],
+				Variant:        product.Variants,
+				Rating:         product.Rating,
+				Specifications: specs,
+			})
+			return nil
 		})
+
 	}
+	g.Wait()
 
 	return productparam.StorefrontGetAllProductResponse{
 		Pagination: commonparam.PaginationResponse{
