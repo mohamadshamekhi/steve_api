@@ -39,3 +39,10 @@ type GetUserOrderStaticsResponse struct {
 	OrderDelivered  uint64 `json:"order_delivered"`
 	OrderRefunded   uint64 `json:"order_refunded"`
 }
+
+type GetOrderByIDRequest struct {
+	ID string `json:"id"`
+}
+type GetOrderByIDResponse struct {
+	Order entity.Order `json:"order"`
+}

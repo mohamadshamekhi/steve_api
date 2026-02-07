@@ -47,6 +47,7 @@ type ProductWriter interface {
 	DeleteVariant(ctx context.Context, ProductID string, VariantID string) error
 	UpdateVariant(ctx context.Context, ProductID string, variant entity.Variant) error
 	UpdateQuantity(ctx context.Context, ProductID string, variant entity.Variant, finalQuantity uint) error
+	UpdateProductSalesCount(ctx context.Context, ProductID string, quantity uint) error
 }
 
 type ProductReadWriter interface {
@@ -96,7 +97,7 @@ type DiscountProvider interface {
 }
 
 type StorefrontService struct {
-	repo             ProductReader
+	repo             ProductReadWriter
 	mediaSvc         MediaService
 	categoryProvider CategoryProvider
 	brandProvider    BrandProvider
@@ -104,7 +105,7 @@ type StorefrontService struct {
 }
 
 func NewStorefrontService(
-	repo ProductReader,
+	repo ProductReadWriter,
 	mediaSvc MediaService,
 	categoryProvider CategoryProvider,
 	brandProvider BrandProvider,

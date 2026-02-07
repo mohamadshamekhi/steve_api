@@ -92,3 +92,27 @@ func (d DB) UpdateProductAvrRating(ctx context.Context, ProductID string, Averag
 
 	return nil
 }
+
+func (d DB) UpdateProductSalesCount(ctx context.Context, ProductID string, quantity uint) error {
+	const op = "product.repo.UpdateProductSalesCount"
+
+	filter := bson.M{"_id": ProductID}
+
+	update := bson.M{
+		"$inc": bson.M{"sales_count": quantity},
+	}
+
+	result, err := d.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+
+	if result.MatchedCount == 0 {
+		return richerror.New(op).
+			WithKind(richerror.KindNotFound).
+			WithMessageKey("product.not_found").
+			WithMeta(map[string]any{"product_id": ProductID})
+	}
+
+	return nil
+}

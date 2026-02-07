@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/abolfazlnorzad/steve/adapter/gateway"
 	"github.com/abolfazlnorzad/steve/adapter/mellipayamak"
 	redisadapter "github.com/abolfazlnorzad/steve/adapter/redis"
 	liarastorage "github.com/abolfazlnorzad/steve/adapter/storage/liara"
@@ -8,6 +9,7 @@ import (
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
+	paymentservice "github.com/abolfazlnorzad/steve/service/payment"
 	userservice "github.com/abolfazlnorzad/steve/service/user"
 )
 
@@ -25,4 +27,6 @@ type Config struct {
 	ObjectStorage liarastorage.Config      `koanf:"object_storage"`
 	Media         mediaservice.Config      `koanf:"media"`
 	MelliPayamak  mellipayamak.Config      `koanf:"mellipayamak"`
+	Payment       paymentservice.Config    `koanf:"payment"`
+	Zarinpal      gateway.Config           `koanf:"zarinpal"`
 }
