@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand/v2"
-	"time"
 
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -23,7 +22,7 @@ func (s Service) GenerateOTPCode(ctx context.Context, phoneNumber string, prefix
 		if sErr != nil {
 			return richerror.New(op).WithWarpError(sErr)
 		}
-		otpCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		otpCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ExpirationTimeOtpContext)
 		defer cancel()
 		mErr := s.melliPayamakProvider.SendOTP(otpCtx, phoneNumber, code)
 		if mErr != nil {
