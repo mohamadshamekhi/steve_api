@@ -497,3 +497,22 @@ func (s StoreFrontService) GetUserOrderStatics(ctx context.Context, req orderpar
 	}, nil
 
 }
+
+func (s StoreFrontService) GetOrderByID(ctx context.Context, req orderparam.GetOrderByIDRequest) (orderparam.GetOrderByIDResponse, error) {
+	const op = "orderservice.GetOrderByID"
+	o, err := s.repo.GetOrderByID(ctx, req.ID)
+	if err != nil {
+		return orderparam.GetOrderByIDResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return orderparam.GetOrderByIDResponse{
+		Order: o,
+	}, nil
+}
+
+func (s StoreFrontService) UpdateOrderStatus(ctx context.Context, req orderparam.UpdateStatusRequest) (orderparam.UpdateStatusResponse, error) {
+	const op = "orderservice.UpdateOrderStatus"
+	if err := s.repo.UpdateOrderStatus(ctx, req.OrderID, req.Status); err != nil {
+		return orderparam.UpdateStatusResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return orderparam.UpdateStatusResponse{}, nil
+}

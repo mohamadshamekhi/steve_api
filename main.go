@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/abolfazlnorzad/steve/adapter/gateway"
 	"github.com/abolfazlnorzad/steve/adapter/mellipayamak"
 	redisadapter "github.com/abolfazlnorzad/steve/adapter/redis"
 	liarastorage "github.com/abolfazlnorzad/steve/adapter/storage/liara"
@@ -21,6 +22,7 @@ import (
 	discounthandler "github.com/abolfazlnorzad/steve/delivery/http_server/discount"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	orderhandler "github.com/abolfazlnorzad/steve/delivery/http_server/order"
+	paymenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/payment"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
 	ratinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/rating"
 	repairhandler "github.com/abolfazlnorzad/steve/delivery/http_server/repair"
@@ -45,6 +47,7 @@ import (
 	mongodbdiscount "github.com/abolfazlnorzad/steve/repository/mongo/discount"
 	mongodbmedia "github.com/abolfazlnorzad/steve/repository/mongo/media"
 	mongodborder "github.com/abolfazlnorzad/steve/repository/mongo/order"
+	mongodbpayment "github.com/abolfazlnorzad/steve/repository/mongo/payment"
 	mongodbproduct "github.com/abolfazlnorzad/steve/repository/mongo/product"
 	mongodbrating "github.com/abolfazlnorzad/steve/repository/mongo/rating"
 	mongodbrepair "github.com/abolfazlnorzad/steve/repository/mongo/repair"
@@ -68,6 +71,7 @@ import (
 	fetcherservice "github.com/abolfazlnorzad/steve/service/fetcher"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 	orderservice "github.com/abolfazlnorzad/steve/service/order"
+	paymentservice "github.com/abolfazlnorzad/steve/service/payment"
 	productservice "github.com/abolfazlnorzad/steve/service/product"
 	ratingservice "github.com/abolfazlnorzad/steve/service/rating"
 	repairservice "github.com/abolfazlnorzad/steve/service/repair"
@@ -225,9 +229,13 @@ func main() {
 	bannerBackofficeSvc := settingservice.NewBannerBackofficeService(bannerRepo, mediaSvc)
 	bannerVld := settingvalidator.NewBannerValidator()
 	bannerHandler := bannerhandler.New(bannerBackofficeSvc, bannerVld, translator, authSvc, cfg.Auth, aclSvc)
+	paymentRepo := mongodbpayment.New(mongoRepo)
+	zarinpal := gateway.NewZarinpalAdapter(cfg.Zarinpal)
+	paymentSvc := paymentservice.NewService(cfg.Payment, paymentRepo, orderSvc, zarinpal, discountbackofficeSvc, productStorefrontSvc)
+	paymentHandler := paymenthandler.New(paymentSvc, translator, authSvc, cfg.Auth, aclSvc)
 
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
-		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler)
+		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler, paymentHandler)
 	server.Serve()
 }

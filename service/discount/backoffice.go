@@ -301,9 +301,7 @@ func intersects(slice1, slice2 []string) bool {
 
 func HasCommonVariant(a []entity.SpecialDiscountItem, b map[string][]string) bool {
 	for _, item := range a {
-		// بررسی وجود ProductID در map
 		if variants, exists := b[item.ProductID]; exists {
-			// اگر در تخفیف، VariantID وجود داره (nil نیست)
 			if item.VariantID != nil {
 				for _, v := range variants {
 					if v == *item.VariantID {
@@ -311,7 +309,6 @@ func HasCommonVariant(a []entity.SpecialDiscountItem, b map[string][]string) boo
 					}
 				}
 			} else {
-				// اگر VariantID مشخص نشده، یعنی تخفیف برای کل محصوله
 				return true
 			}
 		}
@@ -386,7 +383,6 @@ func (s BackofficeService) calculateEligibleAmount(
 		for _, id := range d.ApplicableCategoryIDs {
 			categoryIDSet[id] = struct{}{}
 		}
-		// فقط وقتی لازم است دسته‌ها را می‌گیریم
 		resp, err := s.productInfoProvider.GetProductCategoriesForCartItems(
 			ctx,
 			productparam.GetProductCategoriesForCartItemsRequest{Items: cart.Items},
@@ -409,8 +405,6 @@ func (s BackofficeService) calculateEligibleAmount(
 		return eligible, nil
 
 	case entity.ApplicableToUsers:
-		// این مسیر معمولاً برای مجوزدهی/واجدمعرفیته نه مبلغ‌سنجی.
-		// اگر لازم داری مبلغ فقط وقتی کاربر در لیسته محاسبه بشه:
 		if len(d.ApplicableUserIDs) == 0 {
 			return 0, nil
 		}
@@ -420,7 +414,6 @@ func (s BackofficeService) calculateEligibleAmount(
 		return int64(cart.CalculateSubtotal()), nil
 
 	default:
-		// ناشناخته: هیچ‌چیزی محاسبه نکن
 		return 0, nil
 	}
 }
@@ -442,13 +435,11 @@ func (s BackofficeService) GetProductIDsThatHaveActiveAutoDiscount(
 
 	const op = "discountservice.GetProductIDsThatHaveActiveAutoDiscount"
 
-	// مرحله ۱: دریافت تمام تخفیف‌های خودکار فعال
 	autoDiscounts, err := s.repo.GetActiveAutoDiscount(ctx)
 	if err != nil {
 		return discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse{}, richerror.New(op).WithWarpError(err)
 	}
 
-	// مجموعه‌ای از شناسه‌ها برای دریافت اطلاعات به صورت یکجا (Batch)
 	productIDsForPrice := make(map[string]struct{})
 	variantIDsForPrice := make(map[string]struct{})
 	categoryIDs := make(map[string]struct{})
@@ -614,29 +605,20 @@ func (s BackofficeService) GetProductIDsThatHaveActiveAutoDiscount(
 		}
 	}
 
-	// ========================>> مرحله ۵: بازنویسی شده <<========================
-	// ساختار نهایی برای نگهداری تخفیف‌های هر ورینت به صورت مجزا
-	// کلید: ProductID، مقدار: لیستی از تخفیف‌های ورینت‌های آن محصول
 	finalDiscountsMap := make(map[string][]productparam.ProductDiscount)
 
 	for productID, variantDiscounts := range bestDiscountsPerVariant {
-		// برای هر محصول، یک لیست از تخفیف‌های ورینت‌هایش ایجاد می‌کنیم
 		discountsForThisProduct := make([]productparam.ProductDiscount, 0, len(variantDiscounts))
 
-		// بهترین تخفیف محاسبه شده برای هر ورینت را به لیست اضافه می‌کنیم
 		for _, discountInfo := range variantDiscounts {
 			discountsForThisProduct = append(discountsForThisProduct, discountInfo.Discount)
 		}
 
-		// اگر حداقل یک تخفیف برای ورینت‌های این محصول وجود داشت، آن را به نقشه نهایی اضافه می‌کنیم
 		if len(discountsForThisProduct) > 0 {
 			finalDiscountsMap[productID] = discountsForThisProduct
 		}
 	}
-	// =======================================================================
 
-	// نکته مهم: نوع فیلد DiscountMap در استراکت GetProductIDsThatHaveActiveAutoDiscountResponse
-	// باید به map[string][]productparam.ProductDiscount تغییر کند.
 	return discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse{
 		DiscountMap: finalDiscountsMap,
 	}, nil

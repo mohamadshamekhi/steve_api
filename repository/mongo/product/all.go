@@ -42,14 +42,7 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 				// برای شناسه‌ها، از برابری دقیق استفاده می‌کنیم.
 				filter[key] = valueStr
 
-			// می‌توانید case های دیگری برای فیلدهای عددی اضافه کنید.
-			// case "min_price":
-			// 	if price, err := strconv.Atoi(valueStr); err == nil {
-			// 		filter["price"] = bson.M{"$gte": price}
-			// 	}
-
 			default:
-				// برای هر کلید ناشناخته دیگری، از برابری دقیق استفاده می‌کنیم.
 				filter[key] = value
 			}
 		}
@@ -88,7 +81,6 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 func (d DB) GetFilteredProducts(ctx context.Context, filter *productparam.StorefrontFilterProduct, p commonparam.PaginationRequest) (productservice.ListResult, error) {
 	const op = "mongodbproduct.GetFilteredProducts"
 
-	// ۱. گرفتن پایپ‌لاین پایه (که حالا خروجی‌اش درست است)
 	basePipeline, err := d.buildBasePipeline(*filter)
 	if err != nil {
 		return productservice.ListResult{}, err
@@ -183,7 +175,6 @@ func (d DB) GetFilteredProducts(ctx context.Context, filter *productparam.Storef
 func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bson.D, error) {
 	pipeline := []bson.D{}
 
-	// ========== مرحله ۱: Match اولیه (فیلدهای سطح بالای محصول) ==========
 	initialMatch := bson.D{{"is_published", true}}
 	if filter.BrandID != nil && *filter.BrandID != "" {
 		initialMatch = append(initialMatch, bson.E{"brand_id", *filter.BrandID})
@@ -223,7 +214,6 @@ func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bs
 		pipeline = append(pipeline, bson.D{{"$match", variantMatch}})
 	}
 
-	// ========== مرحله ۳: فیلتر کردن بر اساس Specifications ==========
 	if len(filter.Filter) > 0 {
 		specMatches := bson.A{}
 		for key, val := range filter.Filter {
@@ -236,7 +226,6 @@ func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bs
 		pipeline = append(pipeline, bson.D{{"$match", bson.D{{"$and", specMatches}}}})
 	}
 
-	// ========== مرحله ۴: Group (جمع‌آوری مجدد محصول) ==========
 	pipeline = append(pipeline, bson.D{{"$group", bson.D{
 		{"_id", "$_id"},
 		{"filtered_variants", bson.D{{"$push", "$variants"}}},
@@ -260,11 +249,10 @@ func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bs
 		}}}},
 	}}})
 
-	// ========== مرحله ۵: Lookup برای پیدا کردن تخفیف‌های مرتبط ==========
 	now := time.Now()
 	pipeline = append(pipeline, bson.D{
 		{"$lookup", bson.M{
-			"from": "discounts", // نام کالکشن تخفیف‌های شما
+			"from": "discounts",
 			"let": bson.M{
 				"product_id":  "$_id",
 				"category_id": "$doc.category_id",
@@ -273,29 +261,24 @@ func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bs
 				bson.M{"$match": bson.M{
 					"$expr": bson.M{
 						"$and": bson.A{
-							// شرط ۱: تخفیف فعال، در بازه زمانی معتبر و دارای ظرفیت استفاده باشد
 							bson.M{"$eq": bson.A{"$is_active", true}},
 							bson.M{"$lte": bson.A{"$starts_at", now}},
 							bson.M{"$gte": bson.A{"$expires_at", now}},
 							bson.M{"$gt": bson.A{"$total_usage_limit", "$usage_count"}},
 
-							// شرط ۲: تخفیف قابل اعمال بر روی این محصول باشد (عمومی یا خاص)
 							bson.M{"$or": bson.A{
-								// حالت الف: تخفیف عمومی است (به هیچ محصول یا دسته‌بندی خاصی محدود نشده)
 								bson.M{"$and": bson.A{
 									bson.M{"$eq": bson.A{bson.M{"$ifNull": bson.A{"$applicable_product_ids", bson.A{}}}, bson.A{}}},
 									bson.M{"$eq": bson.A{bson.M{"$ifNull": bson.A{"$applicable_category_ids", bson.A{}}}, bson.A{}}},
 								}},
-								// حالت ب: ID محصول در لیست محصولات مجاز تخفیف قرار دارد
 								bson.M{"$in": bson.A{"$$product_id", bson.M{"$ifNull": bson.A{"$applicable_product_ids", bson.A{}}}}},
-								// حالت ج: ID دسته‌بندی محصول در لیست دسته‌بندی‌های مجاز تخفیف قرار دارد
 								bson.M{"$in": bson.A{"$$category_id", bson.M{"$ifNull": bson.A{"$applicable_category_ids", bson.A{}}}}},
 							}},
 						},
 					},
 				}},
 			},
-			"as": "discounts", // نتیجه در فیلد 'discounts' ذخیره می‌شود
+			"as": "discounts",
 		}},
 	})
 

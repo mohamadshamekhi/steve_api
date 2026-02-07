@@ -70,3 +70,16 @@ mellipayamak:
     patterns:
       otp : "422053"
     from_number: "50002710070797"
+
+payment:
+  callback_url: "http://stevemobile/payment"
+  gateway: "zarinpal"
+
+
+zarinpal:
+  currency: "IRT"
+  merchant_id: 4d6d0d74-bf98-4980-bc18-2512fefeba1f
+  verify_url: https://sandbox.zarinpal.com/pg/v4/payment/verify.json
+  start_pay_url: https://sandbox.zarinpal.com/pg/StartPay
+  request_url: https://sandbox.zarinpal.com/pg/v4/payment/request.json
+
