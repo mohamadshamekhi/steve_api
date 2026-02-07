@@ -6,10 +6,11 @@ import (
 )
 
 type Config struct {
-	SignKey               string        `koanf:"sign_key"`
-	AccessSubject         string        `koanf:"access_subject"`
-	AccessExpirationTime  time.Duration `koanf:"access_expiration_time"`
-	ExpirationTimeOptCode time.Duration `koanf:"expiration_time_opt_code"`
+	SignKey                  string        `koanf:"sign_key"`
+	AccessSubject            string        `koanf:"access_subject"`
+	AccessExpirationTime     time.Duration `koanf:"access_expiration_time"`
+	ExpirationTimeOptCode    time.Duration `koanf:"expiration_time_opt_code"`
+	ExpirationTimeOtpContext time.Duration `koanf:"expiration_time_otp_context"`
 }
 
 type Repository interface {

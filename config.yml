@@ -19,6 +19,7 @@ user:
 auth:
   expiration_time_opt_code: 5m
   sign_key: test
+  expiration_time_otp_context: 15s
 
 mongo:
   host: 127.0.0.1
