@@ -24,19 +24,24 @@ func (s StorefrontService) GetFilteredProduct(ctx context.Context, req productpa
 		return productparam.StorefrontGetAllProductResponse{}, richerror.New(op).WithWarpError(err)
 	}
 
-	list := []productparam.StorefrontProductList{}
+	list := make([]productparam.StorefrontProductList, len(resp.Products))
+
 	g, gCtx := errgroup.WithContext(ctx)
 
-	var catRes categoryparam.GetCategoryResponse
-
-	for _, product := range resp.Products {
+	for i, p := range resp.Products {
+		index := i
+		product := p
 
 		g.Go(func() error {
+
+			var catRes categoryparam.GetCategoryResponse
 			var cErr error
+
 			catRes, cErr = s.categoryProvider.GetCategory(gCtx, categoryparam.GetCategoryRequest{ID: product.CategoryID})
 			if cErr != nil {
 				logger.L().Error("failed to get category", "product_id", product.ID, "err", cErr)
 			}
+
 			productSpecMap := make(map[string]string)
 			for _, s := range product.Specifications {
 				productSpecMap[s.Key] = s.Value
@@ -54,7 +59,8 @@ func (s StorefrontService) GetFilteredProduct(ctx context.Context, req productpa
 					}
 				}
 			}
-			list = append(list, productparam.StorefrontProductList{
+			// we don't need mutex because every goroutine write on spsefic index
+			list[index] = productparam.StorefrontProductList{
 				ID:             product.ID,
 				Name:           product.Name,
 				ENTitle:        product.ENTitle,
@@ -66,10 +72,9 @@ func (s StorefrontService) GetFilteredProduct(ctx context.Context, req productpa
 				Variant:        product.Variants,
 				Rating:         product.Rating,
 				Specifications: specs,
-			})
+			}
 			return nil
 		})
-
 	}
 	g.Wait()
 
