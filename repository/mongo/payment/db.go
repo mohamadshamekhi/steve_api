@@ -149,3 +149,22 @@ func (d DB) UpdatePaymentFailed(ctx context.Context, paymentID string) error {
 
 	return nil
 }
+
+func (d DB) GetPaymentsByOrderID(ctx context.Context, orderID string) ([]entity.Payment, error) {
+	const op = "mongodbpayment.GetPaymentsByOrderID"
+
+	filter := bson.M{"order_id": orderID}
+
+	cursor, err := d.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err)
+	}
+	defer cursor.Close(ctx)
+
+	var payments []entity.Payment
+	if err := cursor.All(ctx, &payments); err != nil {
+		return nil, richerror.New(op).WithWarpError(err)
+	}
+
+	return payments, nil
+}

@@ -27,6 +27,7 @@ type Repository interface {
 	GetPaymentByGatewayTransactionID(ctx context.Context, authority string) (entity.Payment, error)
 	UpdatePaymentSuccess(ctx context.Context, paymentID string, refID string, cardPan string) error
 	UpdatePaymentFailed(ctx context.Context, paymentID string) error
+	GetPaymentsByOrderID(ctx context.Context, orderID string) ([]entity.Payment, error)
 }
 
 type DiscountProvider interface {
@@ -164,4 +165,15 @@ func (s Service) VerifyPayment(ctx context.Context, req paymentparam.VerifyPayme
 		TrackingCode: refID,
 		Message:      "پرداخت با موفقیت انجام شد",
 	}, nil
+}
+
+func (s Service) GetPaymentsByOrderID(ctx context.Context, req paymentparam.GetPaymentsByOrderIDRequest) (paymentparam.GetPaymentsByOrderIDResponse, error) {
+	const op = "paymentservice.GetPaymentsByOrderID"
+
+	payments, err := s.repo.GetPaymentsByOrderID(ctx, req.OrderID)
+	if err != nil {
+		return paymentparam.GetPaymentsByOrderIDResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	return paymentparam.GetPaymentsByOrderIDResponse{Payments: payments}, nil
 }

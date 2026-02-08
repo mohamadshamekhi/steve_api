@@ -10,6 +10,7 @@ import (
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	discountparam "github.com/abolfazlnorzad/steve/param/discount"
 	orderparam "github.com/abolfazlnorzad/steve/param/order"
+	paymentparam "github.com/abolfazlnorzad/steve/param/payment"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
 	settingparam "github.com/abolfazlnorzad/steve/param/setting"
 	userparam "github.com/abolfazlnorzad/steve/param/user"
@@ -24,6 +25,7 @@ type StoreFrontService struct {
 	repo             OrderReadWriter
 	userProvider     StorefrontUserProvider
 	shippingProvider ShippingProvider
+	paymentProvider  StorefrontPaymentProvider
 }
 
 type ShippingProvider interface {
@@ -50,6 +52,10 @@ type StorefrontUserProvider interface {
 	FindAddressByID(ctx context.Context, req userparam.FindAddressByIDRequest) (userparam.FindAddressByIDResponse, error)
 }
 
+type StorefrontPaymentProvider interface {
+	GetPaymentsByOrderID(ctx context.Context, req paymentparam.GetPaymentsByOrderIDRequest) (paymentparam.GetPaymentsByOrderIDResponse, error)
+}
+
 func New(cartProvider StorefrontCartProvider,
 	discountProvider StorefrontDiscountProvider,
 	productProvider StorefrontProductProvider,
@@ -64,6 +70,10 @@ func New(cartProvider StorefrontCartProvider,
 		userProvider:     userProvider,
 		shippingProvider: shippingProvider,
 	}
+}
+
+func (s *StoreFrontService) SetPaymentProvider(p StorefrontPaymentProvider) {
+	s.paymentProvider = p
 }
 
 func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.RegisterOrderRequest) (orderparam.RegisterOrderResponse, error) {
@@ -438,6 +448,16 @@ func (s StoreFrontService) GetUserOrders(ctx context.Context, req orderparam.Get
 	resp, err := s.repo.GetUserOrderWithDetails(ctx, req.UserID, req.Pagination)
 	if err != nil {
 		return orderparam.GetUserOrderResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	for i := range resp.Orders {
+
+		payments, err := s.paymentProvider.GetPaymentsByOrderID(ctx, paymentparam.GetPaymentsByOrderIDRequest{OrderID: resp.Orders[i].ID})
+		if err != nil {
+			return orderparam.GetUserOrderResponse{}, richerror.New(op).WithWarpError(err)
+		}
+
+		resp.Orders[i].Payments = payments.Payments
 	}
 
 	return orderparam.GetUserOrderResponse{

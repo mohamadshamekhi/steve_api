@@ -6,18 +6,24 @@ import (
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	orderparam "github.com/abolfazlnorzad/steve/param/order"
+	paymentparam "github.com/abolfazlnorzad/steve/param/payment"
 	userparam "github.com/abolfazlnorzad/steve/param/user"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 )
 
 type BackofficeService struct {
-	repo         OrderReadWriter
-	userProvider UserProvider
+	repo            OrderReadWriter
+	userProvider    UserProvider
+	paymentProvider PaymentProvider
 }
 
 func NewBackofficeService(repo OrderReadWriter, userProvider UserProvider) BackofficeService {
 	return BackofficeService{repo: repo, userProvider: userProvider}
+}
+
+func (s *BackofficeService) SetPaymentProvider(p PaymentProvider) {
+	s.paymentProvider = p
 }
 
 func (s BackofficeService) GetAll(ctx context.Context, req orderparam.GetAllOrderRequest) (orderparam.GetAllOrderResponse, error) {
@@ -64,6 +70,12 @@ func (s BackofficeService) GetAll(ctx context.Context, req orderparam.GetAllOrde
 				}
 			}
 		}
+		payments, err := s.paymentProvider.GetPaymentsByOrderID(ctx,
+			paymentparam.GetPaymentsByOrderIDRequest{OrderID: order.ID},
+		)
+		if err != nil {
+			return orderparam.GetAllOrderResponse{}, richerror.New(op).WithWarpError(err)
+		}
 		list = append(list, orderparam.BackofficeOrderList{
 			ID:              order.ID,
 			UserPhoneNumber: u.PhoneNumber,
@@ -74,6 +86,7 @@ func (s BackofficeService) GetAll(ctx context.Context, req orderparam.GetAllOrde
 			SubtotalAmount:  order.SubtotalAmount,
 			ShippingAmount:  order.ShippingAmount,
 			FinalAmount:     order.FinalAmount,
+			Payments:        payments.Payments,
 			Status:          order.Status,
 			CreatedAt:       order.CreatedAt,
 			UpdatedAt:       order.UpdatedAt,
