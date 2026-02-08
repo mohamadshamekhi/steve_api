@@ -5,6 +5,7 @@ import (
 
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
 	categoryparam "github.com/abolfazlnorzad/steve/param/category"
+	discountparam "github.com/abolfazlnorzad/steve/param/discount"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -24,6 +25,7 @@ func (s StorefrontService) GetProduct(ctx context.Context, req productparam.Stor
 	var (
 		catRes   categoryparam.GetCategoryResponse
 		brandRes brandparam.GetBrandResponse
+		disRes   discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse
 	)
 
 	g.Go(func() error {
@@ -40,6 +42,13 @@ func (s StorefrontService) GetProduct(ctx context.Context, req productparam.Stor
 		brandRes, bErr = s.brandProvider.GetBrand(gCtx, brandparam.GetBrandRequest{ID: p.BrandID})
 		if bErr != nil {
 			logger.L().Error("failed to get brand", "product_id", p.ID, "err", bErr)
+		}
+		return nil
+	})
+	g.Go(func() error {
+		disRes, err = s.discountProvider.GetProductIDsThatHaveActiveAutoDiscount(ctx, discountparam.GetProductIDsThatHaveActiveAutoDiscountRequest{})
+		if err != nil {
+			logger.L().Error("failed to get product ids", "product_id", p.ID, "err", err)
 		}
 		return nil
 	})
@@ -77,6 +86,7 @@ func (s StorefrontService) GetProduct(ctx context.Context, req productparam.Stor
 		Variants:       p.Variants,
 		CreatedAt:      p.CreatedAt,
 		UpdatedAt:      p.UpdatedAt,
+		Discount:       disRes.DiscountMap[p.ID],
 		Specifications: specs,
 	}
 
@@ -113,6 +123,7 @@ func (s StorefrontService) GetProductBySlug(ctx context.Context, req productpara
 	var (
 		catRes   categoryparam.GetCategoryResponse
 		brandRes brandparam.GetBrandResponse
+		disRes   discountparam.GetProductIDsThatHaveActiveAutoDiscountResponse
 	)
 
 	g.Go(func() error {
@@ -129,6 +140,13 @@ func (s StorefrontService) GetProductBySlug(ctx context.Context, req productpara
 		brandRes, bErr = s.brandProvider.GetBrand(gCtx, brandparam.GetBrandRequest{ID: p.BrandID})
 		if bErr != nil {
 			logger.L().Error("failed to get brand", "product_id", p.ID, "err", bErr)
+		}
+		return nil
+	})
+	g.Go(func() error {
+		disRes, err = s.discountProvider.GetProductIDsThatHaveActiveAutoDiscount(ctx, discountparam.GetProductIDsThatHaveActiveAutoDiscountRequest{})
+		if err != nil {
+			logger.L().Error("failed to get product ids", "product_id", p.ID, "err", err)
 		}
 		return nil
 	})
@@ -164,6 +182,7 @@ func (s StorefrontService) GetProductBySlug(ctx context.Context, req productpara
 		IsSecondHand:   p.IsSecondHand,
 		Description:    p.Description,
 		Variants:       p.Variants,
+		Discount:       disRes.DiscountMap[p.ID],
 		CreatedAt:      p.CreatedAt,
 		UpdatedAt:      p.UpdatedAt,
 		Specifications: specs,

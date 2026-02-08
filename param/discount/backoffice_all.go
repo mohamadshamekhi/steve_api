@@ -17,14 +17,14 @@ type GetAllDiscountsParamResponse struct {
 
 type DiscountsList struct {
 	ID              string    `json:"id" bson:"_id"`
-	Code            string    `json:"code"`
-	Type            string    `json:"type"`
-	Value           uint      `json:"value"`
-	IsActive        bool      `json:"is_active"`
-	IsSpecial       bool      `json:"is_special"`
-	ApplicableTo    string    `json:"applicable_to"`
+	Code            string    `json:"code" bson:"code"`
+	Type            string    `json:"type" bson:"type"`
+	Value           uint      `json:"value" bson:"value"`
+	IsActive        bool      `json:"is_active" bson:"is_active"`
+	IsSpecial       bool      `json:"is_special" bson:"is_special"`
+	ApplicableTo    string    `json:"applicable_to" bson:"applicable_to"`
 	StartsAt        time.Time `json:"starts_at" bson:"starts_at"`
 	ExpiresAt       time.Time `json:"expires_at" bson:"expires_at"`
-	TotalUsageLimit int       `json:"total_usage_limit,omitempty"`
-	UsageCount      int       `json:"usage_count"`
+	TotalUsageLimit int       `json:"total_usage_limit,omitempty" bson:"total_usage_limit"`
+	UsageCount      int       `json:"usage_count" bson:"usage_count"`
 }
