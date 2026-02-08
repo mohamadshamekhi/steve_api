@@ -66,12 +66,18 @@ func (s BackofficeService) GetAll(ctx context.Context, req orderparam.GetAllOrde
 		}
 		list = append(list, orderparam.BackofficeOrderList{
 			ID:              order.ID,
-			Status:          order.Status,
-			UserID:          order.UserID,
 			UserPhoneNumber: u.PhoneNumber,
 			UserName:        u.Name,
+			UserID:          order.UserID,
+			Items:           order.Items,
+			ShippingAddress: order.ShippingAddress,
 			SubtotalAmount:  order.SubtotalAmount,
+			ShippingAmount:  order.ShippingAmount,
 			FinalAmount:     order.FinalAmount,
+			Status:          order.Status,
+			CreatedAt:       order.CreatedAt,
+			UpdatedAt:       order.UpdatedAt,
+			Shipping:        order.Shipping,
 		})
 	}
 

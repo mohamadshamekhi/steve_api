@@ -1,6 +1,8 @@
 package orderparam
 
 import (
+	"time"
+
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 )
@@ -17,12 +19,18 @@ type BackofficeFilterOrder struct {
 
 type BackofficeOrderList struct {
 	ID              string             `json:"id" bson:"_id"`
-	Status          entity.OrderStatus `json:"status" bson:"status"`
-	UserID          string             `json:"user_id" bson:"user_id"`
 	UserPhoneNumber string             `json:"user_phone_number" bson:"user_phone_number"`
 	UserName        string             `json:"user_name" bson:"user_name"`
-	SubtotalAmount  uint               `bson:"subtotal_amount"`
-	FinalAmount     uint               `bson:"final_amount"`
+	UserID          string             `json:"user_id"`
+	Items           []entity.OrderItem `json:"items"`
+	ShippingAddress entity.Address     `json:"shipping_address"`
+	SubtotalAmount  uint               `json:"subtotal_amount"`
+	ShippingAmount  uint               `json:"shipping_amount"`
+	FinalAmount     uint               `json:"final_amount"`
+	Shipping        entity.Shipping    `json:"shipping,omitempty"`
+	Status          entity.OrderStatus `json:"status"`
+	CreatedAt       time.Time          `json:"created_at"`
+	UpdatedAt       time.Time          `json:"updated_at"`
 }
 
 type GetAllOrderResponse struct {
