@@ -28,6 +28,7 @@ type BackofficeOrderList struct {
 	ShippingAmount  uint               `json:"shipping_amount"`
 	FinalAmount     uint               `json:"final_amount"`
 	Shipping        entity.Shipping    `json:"shipping,omitempty"`
+	Payments        []entity.Payment   `json:"payments,omitempty"`
 	Status          entity.OrderStatus `json:"status"`
 	CreatedAt       time.Time          `json:"created_at"`
 	UpdatedAt       time.Time          `json:"updated_at"`
