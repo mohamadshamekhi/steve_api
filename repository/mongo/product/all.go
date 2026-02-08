@@ -22,7 +22,6 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 	}
 	for _, filterItem := range f.Filter {
 		for key, value := range filterItem {
-
 			valueStr := fmt.Sprintf("%v", value)
 
 			if valueStr == "" {
@@ -35,11 +34,11 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 
 			case "is_published", "is_second_hand":
 				if boolValue, err := strconv.ParseBool(valueStr); err == nil {
+					fmt.Println(key, boolValue)
 					filter[key] = boolValue
 				}
 
 			case "brand_id", "category_id":
-				// برای شناسه‌ها، از برابری دقیق استفاده می‌کنیم.
 				filter[key] = valueStr
 
 			default:
@@ -138,14 +137,12 @@ func (d DB) GetFilteredProducts(ctx context.Context, filter *productparam.Storef
 	}
 	fullPipeline = append(fullPipeline, facetPipeline)
 
-	// ۴. اجرای پایپ‌لاین
 	cursor, err := d.collection.Aggregate(ctx, fullPipeline)
 	if err != nil {
 		return productservice.ListResult{}, richerror.New(op).WithWarpError(err)
 	}
 	defer cursor.Close(ctx)
 
-	// ۵. دیکد کردن نتایج (بدون تغییر)
 	var facetResults []struct {
 		Count []struct {
 			TotalCount int64 `bson:"total_count"`
@@ -157,7 +154,6 @@ func (d DB) GetFilteredProducts(ctx context.Context, filter *productparam.Storef
 		return productservice.ListResult{}, richerror.New(op).WithWarpError(err)
 	}
 
-	// ممکن است هیچ نتیجه‌ای وجود نداشته باشد
 	if len(facetResults) == 0 {
 		return productservice.ListResult{Products: []entity.Product{}, TotalCount: 0}, nil
 	}

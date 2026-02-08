@@ -102,6 +102,10 @@ func (h Handler) StorefrontGetFilterableProduct(c echo.Context) error {
 	if orderBy != "" {
 		req.Filter.OrderBy = &orderBy
 	}
+	isSecondHand := c.QueryParam("is_second_hand")
+	if isSecondHand != "" {
+		req.Filter.Filter = map[string]any{"is_second_hand": isSecondHand}
+	}
 
 	if minPriceStr := c.QueryParam("min_price"); minPriceStr != "" {
 		if minPrice, err := strconv.ParseUint(minPriceStr, 10, 64); err == nil {
