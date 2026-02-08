@@ -21,6 +21,7 @@ type StoreFrontOrderInfo struct {
 	FinalAmount     uint               `json:"final_amount"`
 	Shipping        entity.Shipping    `json:"shipping,omitempty"`
 	Status          entity.OrderStatus `json:"status"`
+	Payments        []entity.Payment   `json:"payments"`
 	CreatedAt       time.Time          `json:"created_at"`
 	UpdatedAt       time.Time          `json:"updated_at"`
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	orderparam "github.com/abolfazlnorzad/steve/param/order"
+	paymentparam "github.com/abolfazlnorzad/steve/param/payment"
 	userparam "github.com/abolfazlnorzad/steve/param/user"
 )
 
@@ -38,4 +39,8 @@ type OrderReadWriter interface {
 
 type UserProvider interface {
 	GetUsersByIDs(ctx context.Context, req userparam.GetUsersByIDsRequest) (userparam.GetUsersByIDsResponse, error)
+}
+
+type PaymentProvider interface {
+	GetPaymentsByOrderID(ctx context.Context, req paymentparam.GetPaymentsByOrderIDRequest) (paymentparam.GetPaymentsByOrderIDResponse, error)
 }
