@@ -81,68 +81,78 @@ func (h Handler) GetProductsWithSpecialDiscount(c echo.Context) error {
 
 func (h Handler) StorefrontGetFilterableProduct(c echo.Context) error {
 	const op = "productservice.StorefrontGetFilterableProduct"
-	req := productparam.StorefrontGetAllProductRequest{}
-
-	brandID := c.QueryParam("brand_id")
-	if brandID != "" {
-		req.Filter.BrandID = &brandID
+	req := productparam.StorefrontGetAllProductRequest{
+		Filter: productparam.StorefrontFilterProduct{
+			Filter: make(map[string]any),
+		},
 	}
 
-	categoryID := c.QueryParam("category_id")
-	if categoryID != "" {
-		req.Filter.CategoryID = &categoryID
+	queryParams := c.QueryParams()
+
+	if v := queryParams.Get("brand_id"); v != "" {
+		req.Filter.BrandID = &v
+	}
+	if v := queryParams.Get("category_id"); v != "" {
+		req.Filter.CategoryID = &v
+	}
+	if v := queryParams.Get("color"); v != "" {
+		req.Filter.Color = &v
+	}
+	if v := queryParams.Get("order_by"); v != "" {
+		req.Filter.OrderBy = &v
 	}
 
-	color := c.QueryParam("color")
-	if color != "" {
-		req.Filter.Color = &color
+	if v := queryParams.Get("is_second_hand"); v != "" {
+		if b, err := strconv.ParseBool(v); err == nil {
+			req.Filter.IsSecondHand = &b
+		}
 	}
-
-	orderBy := c.QueryParam("order_by")
-	if orderBy != "" {
-		req.Filter.OrderBy = &orderBy
+	if v := queryParams.Get("is_exist"); v != "" {
+		if b, err := strconv.ParseBool(v); err == nil {
+			req.Filter.IsExist = &b
+		}
 	}
-	isSecondHand := c.QueryParam("is_second_hand")
-	if isSecondHand != "" {
-		req.Filter.Filter = map[string]any{"is_second_hand": isSecondHand}
+	if v := queryParams.Get("min_price"); v != "" {
+		if p, err := strconv.ParseUint(v, 10, 64); err == nil {
+			req.Filter.MinPrice = &p
+		}
 	}
-
-	if minPriceStr := c.QueryParam("min_price"); minPriceStr != "" {
-		if minPrice, err := strconv.ParseUint(minPriceStr, 10, 64); err == nil {
-			req.Filter.MinPrice = &minPrice
-		} else {
-			return err
+	if v := queryParams.Get("max_price"); v != "" {
+		if p, err := strconv.ParseUint(v, 10, 64); err == nil {
+			req.Filter.MaxPrice = &p
 		}
 	}
 
-	if maxPriceStr := c.QueryParam("max_price"); maxPriceStr != "" {
-		if maxPrice, err := strconv.ParseUint(maxPriceStr, 10, 64); err == nil {
-			req.Filter.MaxPrice = &maxPrice
-		} else {
-			return err
-		}
-	}
-
-	if isExistStr := c.QueryParam("is_exist"); isExistStr != "" {
-		if isExist, err := strconv.ParseBool(isExistStr); err == nil {
-			req.Filter.IsExist = &isExist
-		} else {
-
-			return err
-		}
-	}
-	pageNumber, nErr := strconv.ParseUint(c.QueryParam("page_number"), 10, 64)
-	if nErr != nil {
+	// ۳. مدیریت صفحه‌بندی
+	pageNumber, _ := strconv.ParseUint(queryParams.Get("page_number"), 10, 64)
+	if pageNumber == 0 {
 		pageNumber = commonparam.DefaultPageNumber
 	}
-
-	pageSize, sErr := strconv.ParseUint(c.QueryParam("page_size"), 10, 64)
-	if sErr != nil {
+	pageSize, _ := strconv.ParseUint(queryParams.Get("page_size"), 10, 64)
+	if pageSize == 0 {
 		pageSize = commonparam.DefaultPageSize
 	}
-
 	req.Pagination.PageSize = uint(pageSize)
 	req.Pagination.PageNumber = uint(pageNumber)
+
+	reservedKeys := map[string]bool{
+		"brand_id":       true,
+		"category_id":    true,
+		"color":          true,
+		"order_by":       true,
+		"is_second_hand": true,
+		"is_exist":       true,
+		"min_price":      true,
+		"max_price":      true,
+		"page_number":    true,
+		"page_size":      true,
+	}
+
+	for key, values := range queryParams {
+		if !reservedKeys[key] && len(values) > 0 {
+			req.Filter.Filter[key] = values[0]
+		}
+	}
 
 	resp, err := h.storefrontProductSvc.GetFilteredProduct(c.Request().Context(), req)
 	if err != nil {

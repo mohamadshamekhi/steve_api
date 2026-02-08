@@ -34,7 +34,6 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 
 			case "is_published", "is_second_hand":
 				if boolValue, err := strconv.ParseBool(valueStr); err == nil {
-					fmt.Println(key, boolValue)
 					filter[key] = boolValue
 				}
 
@@ -80,39 +79,42 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 func (d DB) GetFilteredProducts(ctx context.Context, filter *productparam.StorefrontFilterProduct, p commonparam.PaginationRequest) (productservice.ListResult, error) {
 	const op = "mongodbproduct.GetFilteredProducts"
 
-	basePipeline, err := d.buildBasePipeline(*filter)
+	pipeline, err := d.buildBasePipeline(*filter)
 	if err != nil {
 		return productservice.ListResult{}, err
 	}
-
-	fullPipeline := basePipeline
 
 	sortStage := bson.D{}
 	if filter.OrderBy != nil {
 		switch *filter.OrderBy {
 		case "newest":
-			sortStage = bson.D{{"doc.created_at", -1}}
+			sortStage = bson.D{{"created_at", -1}, {"_id", -1}}
 		case "oldest":
-			sortStage = bson.D{{"doc.created_at", 1}}
+			sortStage = bson.D{{"created_at", 1}, {"_id", 1}}
 		case "most_expensive":
-			sortStage = bson.D{{"min_price_variant", -1}}
+			// مرتب‌سازی بر اساس گران‌ترین واریانت محصول
+			sortStage = bson.D{{"calculated_max_price", -1}, {"created_at", -1}, {"_id", -1}}
 		case "least_expensive":
-			sortStage = bson.D{{"min_price_variant", 1}}
+			// مرتب‌سازی بر اساس ارزان‌ترین واریانت محصول
+			sortStage = bson.D{{"calculated_min_price", 1}, {"created_at", -1}, {"_id", -1}}
 		case "most_sold":
-			sortStage = bson.D{{"doc.sales_count", -1}}
+			sortStage = bson.D{{"sales_count", -1}, {"created_at", -1}, {"_id", -1}}
 		default:
-			sortStage = bson.D{{"doc.created_at", -1}}
+			sortStage = bson.D{{"created_at", -1}, {"_id", -1}}
 		}
 	} else {
-		sortStage = bson.D{{"doc.created_at", -1}}
-	}
-	if len(sortStage) > 0 {
-		fullPipeline = append(fullPipeline, bson.D{{"$sort", sortStage}})
+		sortStage = bson.D{{"created_at", -1}, {"_id", -1}}
 	}
 
+	if len(sortStage) > 0 {
+		pipeline = append(pipeline, bson.D{{"$sort", sortStage}})
+	}
+
+	// ۳. افزودن مرحله صفحه‌بندی و Facet
 	offset := p.GetOffset()
 	limit := p.GetPageSize()
-	facetPipeline := bson.D{
+
+	facetStage := bson.D{
 		{"$facet", bson.M{
 			"count": bson.A{
 				bson.D{{"$count", "total_count"}},
@@ -120,29 +122,19 @@ func (d DB) GetFilteredProducts(ctx context.Context, filter *productparam.Storef
 			"data": bson.A{
 				bson.D{{"$skip", offset}},
 				bson.D{{"$limit", limit}},
-
-				bson.D{{"$replaceRoot", bson.D{
-					{"newRoot", bson.D{
-						{"$mergeObjects", bson.A{
-							"$doc",
-							bson.M{
-								"_id":      "$_id",
-								"variants": "$filtered_variants",
-							},
-						}},
-					}},
-				}}},
 			},
 		}},
 	}
-	fullPipeline = append(fullPipeline, facetPipeline)
+	pipeline = append(pipeline, facetStage)
 
-	cursor, err := d.collection.Aggregate(ctx, fullPipeline)
+	// ۴. اجرای پایپ‌لاین
+	cursor, err := d.collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return productservice.ListResult{}, richerror.New(op).WithWarpError(err)
 	}
 	defer cursor.Close(ctx)
 
+	// ۵. دیکود کردن نتایج
 	var facetResults []struct {
 		Count []struct {
 			TotalCount int64 `bson:"total_count"`
@@ -158,56 +150,40 @@ func (d DB) GetFilteredProducts(ctx context.Context, filter *productparam.Storef
 		return productservice.ListResult{Products: []entity.Product{}, TotalCount: 0}, nil
 	}
 
-	response := productservice.ListResult{
-		Products: facetResults[0].Data,
-	}
+	totalCount := int64(0)
 	if len(facetResults[0].Count) > 0 {
-		response.TotalCount = facetResults[0].Count[0].TotalCount
+		totalCount = facetResults[0].Count[0].TotalCount
 	}
 
-	return response, nil
+	return productservice.ListResult{
+		Products:   facetResults[0].Data,
+		TotalCount: totalCount,
+	}, nil
 }
 
 func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bson.D, error) {
 	pipeline := []bson.D{}
 
-	initialMatch := bson.D{{"is_published", true}}
+	pipeline = append(pipeline, bson.D{
+		{"$addFields", bson.M{
+			"calculated_min_price": bson.M{"$min": "$variants.price"},
+			"calculated_max_price": bson.M{"$max": "$variants.price"},
+			"sales_count":          bson.M{"$ifNull": bson.A{"$sales_count", 0}},
+		}},
+	})
+
+	initialMatch := bson.D{
+		{"is_published", true},
+		{"deleted_at", bson.M{"$exists": false}},
+	}
 	if filter.BrandID != nil && *filter.BrandID != "" {
 		initialMatch = append(initialMatch, bson.E{"brand_id", *filter.BrandID})
 	}
 	if filter.CategoryID != nil && *filter.CategoryID != "" {
 		initialMatch = append(initialMatch, bson.E{"category_id", *filter.CategoryID})
 	}
-	pipeline = append(pipeline, bson.D{{"$match", initialMatch}})
-
-	// ========== مرحله ۲: فیلتر کردن بر اساس Variants ==========
-	pipeline = append(pipeline, bson.D{{"$unwind", "$variants"}})
-
-	variantMatch := bson.D{}
-	priceMatch := bson.A{}
-	if filter.MinPrice != nil {
-		priceMatch = append(priceMatch, bson.D{{"variants.price", bson.D{{"$gte", *filter.MinPrice}}}})
-	}
-	if filter.MaxPrice != nil {
-		priceMatch = append(priceMatch, bson.D{{"variants.price", bson.D{{"$lte", *filter.MaxPrice}}}})
-	}
-	if len(priceMatch) > 0 {
-		variantMatch = append(variantMatch, bson.E{"$and", priceMatch})
-	}
-	if filter.IsExist != nil {
-		if *filter.IsExist {
-			variantMatch = append(variantMatch, bson.E{"variants.quantity", bson.D{{"$gt", 0}}})
-		} else {
-			variantMatch = append(variantMatch, bson.E{"variants.quantity", 0})
-		}
-	}
-	if filter.Color != nil && *filter.Color != "" {
-		variantMatch = append(variantMatch, bson.E{"variants.variant_attribute", bson.D{
-			{"$elemMatch", bson.D{{"value", *filter.Color}}},
-		}})
-	}
-	if len(variantMatch) > 0 {
-		pipeline = append(pipeline, bson.D{{"$match", variantMatch}})
+	if filter.IsSecondHand != nil {
+		initialMatch = append(initialMatch, bson.E{"is_second_hand", *filter.IsSecondHand})
 	}
 
 	if len(filter.Filter) > 0 {
@@ -219,31 +195,71 @@ func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bs
 				}},
 			})
 		}
-		pipeline = append(pipeline, bson.D{{"$match", bson.D{{"$and", specMatches}}}})
+		initialMatch = append(initialMatch, bson.E{"$and", specMatches})
 	}
 
-	pipeline = append(pipeline, bson.D{{"$group", bson.D{
-		{"_id", "$_id"},
-		{"filtered_variants", bson.D{{"$push", "$variants"}}},
-		{"min_price_variant", bson.D{{"$min", "$variants.price"}}},
-		{"doc", bson.D{{"$first", bson.M{
-			"name":           "$name",
-			"en_title":       "$en_title",
-			"slug":           "$slug",
-			"brand_id":       "$brand_id",
-			"category_id":    "$category_id",
-			"gallery":        "$gallery",
-			"is_published":   "$is_published",
-			"is_second_hand": "$is_second_hand",
-			"description":    "$description",
-			"specifications": "$specifications",
-			"rating":         "$rating",
-			"sales_count":    "$sales_count",
-			"created_at":     "$created_at",
-			"updated_at":     "$updated_at",
-			"deleted_at":     "$deleted_at",
-		}}}},
-	}}})
+	pipeline = append(pipeline, bson.D{{"$match", initialMatch}})
+
+	hasVariantFilter := (filter.MinPrice != nil) ||
+		(filter.MaxPrice != nil) ||
+		(filter.IsExist != nil) ||
+		(filter.Color != nil && *filter.Color != "")
+
+	if hasVariantFilter {
+		pipeline = append(pipeline, bson.D{{"$unwind", "$variants"}})
+
+		variantMatch := bson.D{}
+
+		if filter.MinPrice != nil {
+			variantMatch = append(variantMatch, bson.E{"variants.price", bson.D{{"$gte", *filter.MinPrice}}})
+		}
+		if filter.MaxPrice != nil {
+			variantMatch = append(variantMatch, bson.E{"variants.price", bson.D{{"$lte", *filter.MaxPrice}}})
+		}
+
+		if filter.IsExist != nil {
+			if *filter.IsExist {
+				variantMatch = append(variantMatch, bson.E{"variants.quantity", bson.D{{"$gt", 0}}})
+			}
+		}
+
+		if filter.Color != nil && *filter.Color != "" {
+			variantMatch = append(variantMatch, bson.E{"variants.variant_attribute", bson.D{
+				{"$elemMatch", bson.D{{"value", *filter.Color}}},
+			}})
+		}
+
+		if len(variantMatch) > 0 {
+			pipeline = append(pipeline, bson.D{{"$match", variantMatch}})
+		}
+
+		pipeline = append(pipeline, bson.D{{"$group", bson.D{
+			{"_id", "$_id"},
+			{"filtered_variants", bson.D{{"$push", "$variants"}}},
+
+			{"calculated_min_price", bson.D{{"$first", "$calculated_min_price"}}},
+			{"calculated_max_price", bson.D{{"$first", "$calculated_max_price"}}},
+			{"sales_count", bson.D{{"$first", "$sales_count"}}},
+			{"created_at", bson.D{{"$first", "$created_at"}}},
+
+			{"doc_root", bson.D{{"$first", "$$ROOT"}}},
+		}}})
+
+		pipeline = append(pipeline, bson.D{
+			{"$replaceRoot", bson.D{
+				{"newRoot", bson.D{
+					{"$mergeObjects", bson.A{
+						"$doc_root",
+						bson.M{
+							"variants":             "$filtered_variants",
+							"calculated_min_price": "$calculated_min_price",
+							"calculated_max_price": "$calculated_max_price",
+						},
+					}},
+				}},
+			}},
+		})
+	}
 
 	now := time.Now()
 	pipeline = append(pipeline, bson.D{
@@ -251,7 +267,7 @@ func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bs
 			"from": "discounts",
 			"let": bson.M{
 				"product_id":  "$_id",
-				"category_id": "$doc.category_id",
+				"category_id": "$category_id",
 			},
 			"pipeline": bson.A{
 				bson.M{"$match": bson.M{

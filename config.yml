@@ -72,7 +72,7 @@ mellipayamak:
     from_number: "50002710070797"
 
 payment:
-  callback_url: "http://stevemobile/payment"
+  callback_url: "http://localhost:3000/payment"
   gateway: "zarinpal"
 
 

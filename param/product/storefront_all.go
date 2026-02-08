@@ -7,14 +7,15 @@ type StorefrontGetAllProductRequest struct {
 	Filter     StorefrontFilterProduct
 }
 type StorefrontFilterProduct struct {
-	BrandID    *string        `json:"brand_id"`
-	CategoryID *string        `json:"category_id"`
-	MinPrice   *uint64        `json:"min_price"`
-	MaxPrice   *uint64        `json:"max_price"`
-	Color      *string        `json:"color"`
-	IsExist    *bool          `json:"is_exist"`
-	Filter     map[string]any `json:"filter"`
-	OrderBy    *string        `json:"order_by"`
+	BrandID      *string        `json:"brand_id"`
+	CategoryID   *string        `json:"category_id"`
+	MinPrice     *uint64        `json:"min_price"`
+	MaxPrice     *uint64        `json:"max_price"`
+	Color        *string        `json:"color"`
+	IsExist      *bool          `json:"is_exist"`
+	IsSecondHand *bool          `json:"is_second_hand"`
+	Filter       map[string]any `json:"filter"`
+	OrderBy      *string        `json:"order_by"`
 }
 
 type StorefrontGetAllProductResponse struct {
