@@ -103,3 +103,27 @@ func (s BackofficeService) GetAll(ctx context.Context, req orderparam.GetAllOrde
 		}{PageSize: req.Pagination.PageSize, PageNumber: req.Pagination.GetPageNumber(), Total: uint(resp.TotalCount)},
 	}, nil
 }
+
+func (s BackofficeService) UpdateStatus(ctx context.Context, req orderparam.UpdateStatusOrderRequest) (orderparam.UpdateStatusOrderResponse, error) {
+	const op = "backofficeService.UpdateStatus"
+
+	order, err := s.repo.GetOrderByID(ctx, req.OrderID)
+	if err != nil {
+		return orderparam.UpdateStatusOrderResponse{}, nil
+
+	}
+	if !entity.CanTransitionOrderStatus(order.Status, req.Status) {
+		return orderparam.UpdateStatusOrderResponse{}, richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("order.invalid_status_transition").
+			WithMeta(map[string]any{
+				"from": order.Status,
+				"to":   req.Status,
+			})
+	}
+
+	if err := s.repo.UpdateOrderStatus(ctx, req.OrderID, req.Status); err != nil {
+		return orderparam.UpdateStatusOrderResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return orderparam.UpdateStatusOrderResponse{}, nil
+}

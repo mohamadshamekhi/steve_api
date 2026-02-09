@@ -73,3 +73,30 @@ type AppliedDiscount struct {
 	DiscountCode string `bson:"discount_code,omitempty" json:"discount_code,omitempty"`
 	Amount       int64  `bson:"amount" json:"amount"`
 }
+
+func CanTransitionOrderStatus(from, to OrderStatus) bool {
+	allowed := map[OrderStatus][]OrderStatus{
+		OrderStatusProcessing: {
+			OrderStatusShipped,
+			OrderStatusCancelled,
+			OrderStatusDelivered,
+		},
+
+		OrderStatusShipped: {
+			OrderStatusDelivered,
+			OrderStatusProcessing,
+		},
+		OrderStatusPendingPayment: {},
+		OrderStatusDelivered:      {},
+		OrderStatusCancelled:      {},
+		OrderStatusRefunded:       {},
+	}
+
+	for _, st := range allowed[from] {
+		if st == to {
+			return true
+		}
+	}
+
+	return false
+}
