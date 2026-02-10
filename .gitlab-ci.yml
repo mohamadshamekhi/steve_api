@@ -13,6 +13,9 @@ variables:
 
   # تنظیمات داکر
   IMAGE_TAG: "steve-app:latest"
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""           # 👈 این خط حیاتی است!
+  DOCKER_DRIVER: overlay2
 
 stages:
   - deploy
@@ -21,7 +24,9 @@ deploy_job:
   stage: deploy
   image: docker:24.0.5
   services:
-    - docker:24.0.5-dind
+    - name: docker:24.0.5-dind
+      alias: docker                # 👈 شبکه رو وصل میکنه
+      command: ["--tls=false"]
 
   before_script:
     - apk add --no-cache openssh-client curl unzip
