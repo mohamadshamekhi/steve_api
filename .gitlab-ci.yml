@@ -1,107 +1,107 @@
 image: docker:24.0.5
 
 variables:
-  # تنظیمات کلی
-  REGISTRY_URL: "5.78.55.0:5051"
-  IMAGE_NAME: "5.78.55.0:5051/steve/backend/steve-go"
+  # تنظیمات سرور
   SERVER_IP: "37.32.4.62"
   SERVER_USER: "ubuntu"
   SERVER_PATH: "/home/ubuntu/projects/steve-app"
   SSH_PORT: "2222"
+  ARVAN_ACCESS_KEY: "1c6b005e-9152-4b7e-9fff-31e24810ce0a"
+  ARVAN_SECRET_KEY: "9211504b291a61243e8499610de4b1a8e12163a0c42091fcdd92cdda0626d7bf"
+  ARVAN_ENDPOINT: "http://s3.ir-thr-at1.arvanstorage.ir"
+  ARVAN_BUCKET: "soraa"
+
+
+  # تنظیمات داکر
+  IMAGE_TAG: "steve-app:latest"
 
 stages:
-#  - build
   - deploy
 
-## -----------------------------------------------------------
-## مرحله ۱: بیلد و پوش (با Kaniko - این مرحله سالم است)
-## -----------------------------------------------------------
-#build_job:
-#  stage: build
-#  image:
-#    name: gcr.io/kaniko-project/executor:v1.14.0-debug
-#    entrypoint: [ "" ]
-#  script:
-#    - echo "🏗️ Building & Pushing Steve App..."
-#    - echo "nameserver 8.8.8.8" > /etc/resolv.conf
-#    - echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-#
-#    # تنظیمات Kaniko
-#    - mkdir -p /kaniko/.docker
-#    - echo "{\"auths\":{\"${REGISTRY_URL}\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-#
-#    # اجرای بیلد و پوش
-#    - /kaniko/executor
-#      --context "${CI_PROJECT_DIR}"
-#      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-#      --destination "${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
-#      --destination "${IMAGE_NAME}:latest"
-#      --insecure
-#      --skip-tls-verify
-#      --cache=true
-#  rules:
-#    - if: $CI_COMMIT_BRANCH == "main"
-
-# -----------------------------------------------------------
-# مرحله ۲: دیپلوی (فقط دستور به سرور - روش ضد فیلتر)
-# -----------------------------------------------------------
 deploy_job:
   stage: deploy
-  image: alpine:latest
-
-  variables:
-    SERVER_IP: "37.32.4.62"
-    SERVER_USER: "ubuntu"
-    SERVER_PATH: "/home/ubuntu/projects/steve-app"
-    SSH_PORT: "2222"
-    REGISTRY_URL: "5.78.55.0:5051"
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
 
   before_script:
-    # 1. تنظیم میرورهای ایران (برای نصب پکیج‌ها)
-    - sed -i 's|dl-cdn.alpinelinux.org|mirror-linux.runflare.com|g' /etc/apk/repositories
-    - sed -i 's|uk.alpinelinux.org|mirror-linux.runflare.com|g' /etc/apk/repositories
+    # 1. نصب ابزارهای ضروری (Rclone برای آپلود، SSH برای دستور به سرور)
+    - apk add --no-cache openssh-client curl unzip
 
-    # 2. نصب پکیج‌های ضروری
-    - apk update --no-cache && apk add --no-cache openssh-client coreutils
+    # 2. نصب سریع Rclone
+    - curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
+    - unzip rclone-current-linux-amd64.zip
+    - cp rclone-*-linux-amd64/rclone /usr/bin/
+    - chmod 755 /usr/bin/rclone
 
-    # 3. تنظیم کلید SSH
+    # 3. تنظیم SSH Key
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\tPort 2222\n\n" > ~/.ssh/config
 
   script:
-    - echo "🚀 Preparing Credentials & Payload..."
+    # ---------------------------------------------------------
+    # بخش ۱: آماده‌سازی و آپلود به آروان (در خارج)
+    # ---------------------------------------------------------
+    - echo "🏗️ Building Docker Image..."
+    - docker build -t $IMAGE_TAG .
 
-    # 🔥 قدم ۱: ساخت دستی فایل لاگین داکر (config.json) در رانر
-    # این کار باعث میشه دیگه نیازی به اجرای دستور docker login روی سرور نباشه
-    - AUTH_STR=$(echo -n "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" | base64)
-    - DOCKER_CONFIG_JSON="{\"auths\":{\"${REGISTRY_URL}\":{\"auth\":\"$AUTH_STR\"}}}"
+    - echo "📦 Compressing Image..."
+    # تبدیل ایمیج به فایل فشرده (برای انتقال راحت‌تر)
+    - docker save $IMAGE_TAG | gzip > image.tar.gz
 
-    # تبدیل فایل‌ها به Base64 برای انتقال امن
-    - DOCKER_CONFIG_B64=$(echo -n "$DOCKER_CONFIG_JSON" | base64 -w 0)
-    - COMPOSE_B64=$(base64 -w 0 docker-compose.yml)
+    - echo "☁️ Configuring ArvanCloud S3..."
+    # ساخت کانفیگ Rclone برای اتصال به آروان
+    - |
+      mkdir -p ~/.config/rclone
+      cat > ~/.config/rclone/rclone.conf <<EOF
+      [arvan]
+      type = s3
+      provider = arvan
+      env_auth = false
+      access_key_id = $ARVAN_ACCESS_KEY
+      secret_access_key = $ARVAN_SECRET_KEY
+      endpoint = $ARVAN_ENDPOINT
+      acl = public-read
+      EOF
 
-    - echo "🚀 Executing Deployment..."
+    - echo "🚀 Uploading Files to Arvan S3..."
+    # آپلود همزمان ایمیج و فایل کامپوز
+    - rclone copy image.tar.gz arvan:$ARVAN_BUCKET/
+    - rclone copy docker-compose.yml arvan:$ARVAN_BUCKET/
 
-    # 🔥 قدم ۲: تزریق فایل‌ها به سرور و اجرا
+    # ---------------------------------------------------------
+    # بخش ۲: دانلود و اجرا روی سرور (در ایران)
+    # ---------------------------------------------------------
+    - echo "📡 Connecting to Server for Deployment..."
+
+    # لینک دانلود فایل‌ها (چون باکت عمومی است، لینک مستقیم کار میکند)
+    - IMAGE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/image.tar.gz"
+    - COMPOSE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker-compose.yml"
+
+    # اجرای تمام دستورات در یک کانکشن SSH (روش پایدار)
     - ssh $SERVER_USER@$SERVER_IP "
+      # 1. آماده‌سازی دایرکتوری
       mkdir -p $SERVER_PATH &&
-      mkdir -p ~/.docker &&
       cd $SERVER_PATH &&
       
-      echo '1. Injecting Docker Credentials (Bypassing Network Login)...' &&
-      echo '$DOCKER_CONFIG_B64' | base64 -d > ~/.docker/config.json &&
+      echo '⬇️ Downloading Files from Arvan (Internal Network)...' &&
+      # دانلود فایل‌ها (آپشن -O برای ذخیره روی فایل موجود)
+      wget -q -O image.tar.gz '$IMAGE_URL' &&
+      wget -q -O docker-compose.yml '$COMPOSE_URL' &&
       
-      echo '2. Writing Config Files...' &&
+      echo '⚙️ Writing Configs...' &&
       echo 'ST_MONGO__HOST=steve_db' > .env &&
-      echo '$COMPOSE_B64' | base64 -d > docker-compose.yml &&
       
-      echo '3. Pulling Image...' &&
-      export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
-      docker compose pull &&
+      echo '🐳 Loading Docker Image...' &&
+      # لود کردن ایمیج از فایل فشرده به داکر
+      gunzip -c image.tar.gz | docker load &&
       
-      echo '4. Starting Services...' &&
+      echo '🔥 Restarting Services...' &&
+      # اجرای نهایی
       docker compose up -d --remove-orphans &&
-      docker image prune -f
+      docker image prune -f &&
+      
+      echo '✅ Deployment Successful!'
       "
