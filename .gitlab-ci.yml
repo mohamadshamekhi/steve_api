@@ -22,6 +22,7 @@ stages:
 deploy_job:
   stage: deploy
   before_script:
+    - sed -i 's/dl-cdn.alpinelinux.org/uk.alpinelinux.org/g' /etc/apk/repositories
     # نصب ابزارها
     - apk add --no-cache openssh-client curl unzip
 
