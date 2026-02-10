@@ -15,6 +15,7 @@ variables:
   DOCKER_HOST: "tcp://docker:2375"
   DOCKER_TLS_CERTDIR: ""
   DOCKER_DRIVER: overlay2
+  IMAGE_TAG: "steve-app:$CI_COMMIT_SHORT_SHA"
 
 stages:
   - deploy
