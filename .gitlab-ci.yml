@@ -65,27 +65,25 @@ deploy_job:
       wget -q -O docker-compose.yml '$COMPOSE_URL' &&
       
       echo '⚙️ Writing Environment Variables...' &&
+      - echo "📝 Generating .env file locally..."
+      # فایل .env را همینجا میسازیم (خیلی امن‌تر و راحت‌تر)
+      - |
       cat > .env <<EOF
       ST_MELLIPAYAMAK__USERNAME=$ST_MELLIPAYAMAK__USERNAME
       ST_MELLIPAYAMAK__PASSWORD=$ST_MELLIPAYAMAK__PASSWORD
-      
       ST_MONGO__HOST=steve_db
       ST_MONGO__PORT=27017
       ST_MONGO__USERNAME=$ST_MONGO__USERNAME
       ST_MONGO__PASSWORD=$ST_MONGO__PASSWORD
       ST_MONGO__DB_NAME=$ST_MONGO__DB_NAME
-      
       MONGO_INITDB_ROOT_USERNAME=$ST_MONGO__USERNAME
       MONGO_INITDB_ROOT_PASSWORD=$ST_MONGO__PASSWORD
-      
       ST_OBJECT_STORAGE__AWS_ACCESS_KEY_ID=$ST_OBJECT_STORAGE__AWS_ACCESS_KEY_ID
       ST_OBJECT_STORAGE__AWS_SECRET_ACCESS_KEY=$ST_OBJECT_STORAGE__AWS_SECRET_ACCESS_KEY
       ST_OBJECT_STORAGE__ENDPOINT=$ST_OBJECT_STORAGE__ENDPOINT
       ST_OBJECT_STORAGE__PUBLIC_BUCKET_NAME=steve
-      
       ST_REDIS__HOST=redis
       ST_REDIS__PORT=6379
-      
       ST_ZARINPAL__MERCHANT_ID=$ST_ZARINPAL__MERCHANT_ID
       EOF
       
