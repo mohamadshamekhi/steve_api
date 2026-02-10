@@ -10,86 +10,94 @@ variables:
   SSH_PORT: "2222"
 
 stages:
-  - build
+#  - build
   - deploy
 
-# -----------------------------------------------------------
-# مرحله ۱: بیلد و پوش (با Kaniko - این مرحله سالم است)
-# -----------------------------------------------------------
-build_job:
-  stage: build
-  image:
-    name: gcr.io/kaniko-project/executor:v1.14.0-debug
-    entrypoint: [ "" ]
-  script:
-    - echo "🏗️ Building & Pushing Steve App..."
-    - echo "nameserver 8.8.8.8" > /etc/resolv.conf
-    - echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-
-    # تنظیمات Kaniko
-    - mkdir -p /kaniko/.docker
-    - echo "{\"auths\":{\"${REGISTRY_URL}\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-
-    # اجرای بیلد و پوش
-    - /kaniko/executor
-      --context "${CI_PROJECT_DIR}"
-      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
-      --destination "${IMAGE_NAME}:latest"
-      --insecure
-      --skip-tls-verify
-      --cache=true
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+## -----------------------------------------------------------
+## مرحله ۱: بیلد و پوش (با Kaniko - این مرحله سالم است)
+## -----------------------------------------------------------
+#build_job:
+#  stage: build
+#  image:
+#    name: gcr.io/kaniko-project/executor:v1.14.0-debug
+#    entrypoint: [ "" ]
+#  script:
+#    - echo "🏗️ Building & Pushing Steve App..."
+#    - echo "nameserver 8.8.8.8" > /etc/resolv.conf
+#    - echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+#
+#    # تنظیمات Kaniko
+#    - mkdir -p /kaniko/.docker
+#    - echo "{\"auths\":{\"${REGISTRY_URL}\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+#
+#    # اجرای بیلد و پوش
+#    - /kaniko/executor
+#      --context "${CI_PROJECT_DIR}"
+#      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+#      --destination "${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
+#      --destination "${IMAGE_NAME}:latest"
+#      --insecure
+#      --skip-tls-verify
+#      --cache=true
+#  rules:
+#    - if: $CI_COMMIT_BRANCH == "main"
 
 # -----------------------------------------------------------
 # مرحله ۲: دیپلوی (فقط دستور به سرور - روش ضد فیلتر)
 # -----------------------------------------------------------
 deploy_job:
   stage: deploy
-  image: alpine:latest  # استفاده از ایمیج سبک (چون فقط SSH می‌خواهیم)
+  image: alpine:latest
+
+  variables:
+    # تنظیمات سرور
+    SERVER_IP: "37.32.4.62"
+    SERVER_USER: "ubuntu"
+    SERVER_PATH: "/home/ubuntu/projects/steve-app"
+    SSH_PORT: "2222"
+    REGISTRY_URL: "5.78.55.0:5051"
 
   before_script:
-    # 1. تغییر میرورهای آلپاین به Runflare (برای حل مشکل TLS Error)
+    # 1. تنظیم میرورهای ایران (برای حل مشکل دانلود پکیج)
     - sed -i 's|dl-cdn.alpinelinux.org|mirror-linux.runflare.com|g' /etc/apk/repositories
     - sed -i 's|uk.alpinelinux.org|mirror-linux.runflare.com|g' /etc/apk/repositories
 
-    # 2. نصب SSH Client
-    - apk update --no-cache && apk add --no-cache openssh-client
+    # 2. نصب ابزارها (openssh و coreutils برای base64)
+    - apk update --no-cache && apk add --no-cache openssh-client coreutils
 
     # 3. تنظیم کلید SSH
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-
-    # 4. تنظیم کانفیگ SSH (پورت 2222)
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\tPort 2222\n\n" > ~/.ssh/config
 
   script:
-    - echo "🚀 Triggering Server..."
+    - echo "🚀 Preparing Payload..."
 
-    # 1. ساخت دایرکتوری در سرور (مطمئن شو این خط "-" دارد)
-    - ssh $SERVER_USER@$SERVER_IP "mkdir -p $SERVER_PATH"
+    # 🔥 ترفند طلایی: تبدیل فایل کامپوز به یک رشته متنی Base64
+    # این کار باعث میشه بتونیم فایل رو "داخل" دستور SSH بفرستیم نه با SCP جداگانه
+    - COMPOSE_B64=$(base64 -w 0 docker-compose.yml)
 
-    # 2. انتقال فایل .env (بدون scp - روش اکو کردن)
-    - ssh $SERVER_USER@$SERVER_IP "echo 'ST_MONGO__HOST=steve_db' > $SERVER_PATH/.env"
+    - echo "🚀 Executing ONE-SHOT Deployment..."
 
-    # 3. انتقال docker-compose.yml (بدون scp - روش پایپ لاین)
-    # این دستور فایل را می‌خواند و از توی تونل SSH هل میده توی فایل سرور
-    - cat docker-compose.yml | ssh $SERVER_USER@$SERVER_IP "cat > $SERVER_PATH/docker-compose.yml"
-
-    # 4. اتصال به سرور و اجرای دستورات نهایی
-    # دقت کن این خط تیره "-" اولش خیلی مهمه
+    # 🔥 تمام عملیات فقط در "یک" اتصال SSH انجام می‌شود
+    # دیگر قطع و وصلی وجود ندارد که فایروال حساس شود
     - ssh $SERVER_USER@$SERVER_IP "
+      mkdir -p $SERVER_PATH &&
       cd $SERVER_PATH &&
       
+      echo '1. Writing Config Files...' &&
+      echo 'ST_MONGO__HOST=steve_db' > .env &&
+      echo '$COMPOSE_B64' | base64 -d > docker-compose.yml &&
+      
+      echo '2. Docker Login...' &&
       echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin http://${REGISTRY_URL} &&
       
-      echo '⬇️ Pulling Image...' &&
+      echo '3. Pulling Image via Server Proxy...' &&
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
       docker compose pull &&
       
-      echo '🔥 Up and Running...' &&
+      echo '4. Starting Application...' &&
       docker compose up -d --remove-orphans &&
       docker image prune -f
       "
