@@ -81,22 +81,4 @@ deploy_job:
     - COMPOSE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker/docker-compose.yml"
     - ENV_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker/.env"
 
-    - ssh $SERVER_USER@$SERVER_IP "
-      mkdir -p $SERVER_PATH &&
-      cd $SERVER_PATH &&
-      
-      echo '⬇️ Downloading Files...' &&
-      wget -T 60 -t 3 -q -O image.tar.gz '$IMAGE_URL' &&
-      wget -T 30 -t 3 -q -O docker-compose.yml '$COMPOSE_URL' &&
-      wget -T 30 -t 3 -q -O .env '$ENV_URL' &&
-      
-      echo '🐳 Loading Docker Image (Silent Mode)...' &&
-      gunzip -c image.tar.gz | docker load -q &&
-      
-      echo '🔥 Updating Services...' &&
-      docker compose up -d --remove-orphans &&
-      
-      docker image prune -f &&
-      
-      echo '✅ Deployment Successful!'
-      "
+    - ssh $SERVER_USER@$SERVER_IP "nohup /home/ubuntu/projects/steve-app/deploy.sh > /dev/null 2>&1 &"
