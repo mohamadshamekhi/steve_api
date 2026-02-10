@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   app:
-    image: 5.78.55.0:5051/steve/backend/steve-go:${IMAGE_TAG:-latest}
+    image: steve-app:latest
     container_name: steve_app
     restart: unless-stopped
     ports:

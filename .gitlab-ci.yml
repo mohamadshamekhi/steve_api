@@ -98,9 +98,15 @@ deploy_job:
 
         echo '🐳 Loading Docker Image...'
         gunzip -c image.tar.gz | docker load
-
+        echo '🐳 Loading Docker Image...'
+        gunzip -c image.tar.gz | docker load
+  
+        echo '🏷️ Retagging image...'
+        docker tag $IMAGE_TAG steve-app:latest
+  
         echo '🔥 Restarting Services...'
-        docker compose up -d --remove-orphans
+        docker compose up -d --remove-orphans --pull never        
+
         docker image prune -f
 
         echo '✅ Deployment Successful!'
