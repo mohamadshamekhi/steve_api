@@ -83,7 +83,7 @@ deploy_job:
     # فرض می‌کنیم یوزر سرور ubuntu است. اگر چیز دیگری است، دستی بنویسید /home/username
     - REMOTE_DIR="/home/$SERVER_USER/projects/steve-app"
 
-    - echo "📂 Creating Directory: $REMOTE_DIR"
+
     - ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "mkdir -p $REMOTE_DIR"
 
     - echo "📤 Uploading (Optimized SCP)..."
