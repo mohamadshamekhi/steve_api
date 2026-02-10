@@ -37,72 +37,67 @@ build_job:
 
 deploy_job:
   stage: deploy
-  image: docker:24.0.5 # تغییر ایمیج به داکر (چون نیاز به دستورات داکر داریم)
+  image: docker:24.0.5
   services:
     - name: docker:24.0.5-dind
-      # این دستور به داکر می‌گوید که به این آدرس با پروتکل HTTP اعتماد کن
-      command: [ "--insecure-registry=5.78.55.0:5051" ]
+      # چون ریجیستری شما HTTP است، این خط برای رانر ضروری است
+      command: ["--insecure-registry=5.78.55.0:5051"]
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
-    SSH_PORT: "2222"
+    SSH_PORT: "2222" # پورت جدید SSH شما
+
   before_script:
-  # 1. میرورها
-    - sed -i 's|dl-cdn.alpinelinux.org|mirror-linux.runflare.com|g' /etc/apk/repositories
-    - sed -i 's|uk.alpinelinux.org|mirror-linux.runflare.com|g' /etc/apk/repositories
+    # نصب SSH Client روی رانر
+    - apk update --no-cache && apk add --no-cache openssh-client
 
-    # 2. نصب پکیج‌ها
-    - apk update --no-cache
-    - apk add --no-cache openssh-client gzip
-
-    # 3. تنظیم کلید SSH
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
+    # تنظیم کلید SSH
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - eval $(ssh-agent -s)
-
-    # ✅ تغییر مهم: اضافه کردن یک خط جدید به انتهای کلید برای اطمینان
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | sed '$a\' | ssh-add -
-
-    # 4. غیرفعال کردن چک اثر انگشت
-    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\tPort 2222\n\n" > ~/.ssh/config
 
   script:
-    - ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "echo '✅ Connection OK!'"
+    # ---------------------------------------------------------
+    # بخش ۱: عملیات روی Runner (بیلد و آپلود به ریجیستری)
+    # ---------------------------------------------------------
+    - echo "🏗 Building & Pushing to Registry..."
 
-    - echo "🚀 Pulling image..."
+    # لاگین به ریجیستری (از سمت رانر)
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://${REGISTRY_URL}
-    - docker pull ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}
 
-    - echo "📦 Zipping..."
-    - docker save ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA} | gzip > image.tar.gz
+    # پول کردن (برای کش)، بیلد و پوش
+    - docker pull ${IMAGE_NAME}:latest || true
+    - docker build --cache-from ${IMAGE_NAME}:latest -t ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA} -t ${IMAGE_NAME}:latest .
+    - docker push ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}
+    - docker push ${IMAGE_NAME}:latest
 
-    # مسیر ریموت
+    # ---------------------------------------------------------
+    # بخش ۲: عملیات روی Server (دستور دانلود و اجرا)
+    # ---------------------------------------------------------
+    - echo "🚀 Triggering Server to Pull & Run..."
+
+    # انتقال فایل‌های سبک کانفیگ (هنوز لازمه)
     - REMOTE_DIR="/home/$SERVER_USER/projects/steve-app"
-    - ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "mkdir -p $REMOTE_DIR"
+    - ssh $SERVER_USER@$SERVER_IP "mkdir -p $REMOTE_DIR"
+    - echo "ST_MONGO__HOST=steve_db" > .env
+    - scp .env $SERVER_USER@$SERVER_IP:$REMOTE_DIR/.env
+    - scp docker-compose.yml $SERVER_USER@$SERVER_IP:$REMOTE_DIR/docker-compose.yml
 
-    # 🔥🔥🔥 بخش جادویی (Firewall Bypass) 🔥🔥🔥
-    # به جای SCP از پایپ مستقیم استفاده می‌کنیم.
-    # این دستور فایل را می‌خواند -> کد می‌کند -> از تو تونل SSH رد می‌کند -> در سرور دیکد می‌کند
-    - echo "📤 Uploading using SSH Stream (Bypassing SCP)..."
-    - cat image.tar.gz | base64 | ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "base64 -d > $REMOTE_DIR/image.tar.gz"
-
-    # چک کردن اینکه فایل سالم رسیده یا نه
-    - ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "ls -lh $REMOTE_DIR/image.tar.gz"
-
-    # آپلود فایل‌های کانفیگ (این‌ها کوچک هستند، با همان روش اکو می‌فرستیم که SCP کلا حذف شود)
-    - echo "📄 Uploading configs..."
-    - ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "echo 'ST_MONGO__HOST=steve_db' > $REMOTE_DIR/.env"
-    # برای فایل‌های چند خطی مثل docker-compose، باز هم از روش base64 استفاده می‌کنیم
-    - cat docker-compose.yml | base64 | ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "base64 -d > $REMOTE_DIR/docker-compose.yml"
-
-    # اجرا
-    - echo "🚢 Running..."
-    - ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "
+    # دستور نهایی به سرور
+    - ssh $SERVER_USER@$SERVER_IP "
       cd $REMOTE_DIR &&
-      echo 'Loading Docker Image...' &&
-      gunzip -c image.tar.gz | docker load &&
-      rm image.tar.gz &&
+      
+      # لاگین در سمت سرور (خیلی مهم)
+      echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin http://${REGISTRY_URL} &&
+      
+      # دانلود ایمیج (اینجاست که اون پروکسی به دادمون میرسه)
+      echo '⬇️ Pulling Image...' &&
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
+      docker compose pull &&
+      
+      # اجرا
+      echo '🔥 Up and Running...' &&
       docker compose up -d --remove-orphans &&
       docker image prune -f
       "
