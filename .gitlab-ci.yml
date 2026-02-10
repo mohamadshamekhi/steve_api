@@ -46,52 +46,49 @@ deploy_job:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   before_script:
-    # ✅ تغییر میرور به Runflare (مخصوص Alpine)
-    # نکته ۱: از آدرس /alpine استفاده کردیم نه /ubuntu
-    # نکته ۲: از جداکننده | استفاده کردیم تا اسلش‌های آدرس قاطی نشوند
+  # 1. میرورها
     - sed -i 's|dl-cdn.alpinelinux.org|mirror-linux.runflare.com|g' /etc/apk/repositories
     - sed -i 's|uk.alpinelinux.org|mirror-linux.runflare.com|g' /etc/apk/repositories
-    # اگر باز هم ارور DNS دادید، این خط را آنکامنت کنید (IP ران‌فلر را باید پینگ بگیرید و جایگزین کنید)
-    # فعلا نیازی نیست چون ران‌فلر معمولا خوب ریزالو می‌شود.
 
-    # نصب پکیج‌ها
+    # 2. نصب پکیج‌ها
     - apk update --no-cache
     - apk add --no-cache openssh-client gzip
 
-    # تنظیمات SSH
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    # 3. تنظیم کلید SSH
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
+    - eval $(ssh-agent -s)
+
+    # ✅ تغییر مهم: اضافه کردن یک خط جدید به انتهای کلید برای اطمینان
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | sed '$a\' | ssh-add -
+
+    # 4. غیرفعال کردن چک اثر انگشت
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+
   script:
-    - echo "🚀 Pulling image on Runner..."
+    - ssh -T $SERVER_USER@$SERVER_IP "echo '✅ SSH Connection Successful!'"
+
+    - echo "🚀 Pulling image..."
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://${REGISTRY_URL}
     - docker pull ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}
 
-    # ✅ گام ۱: ذخیره و فشرده‌سازی روی دیسک خود رانر (امن‌تر از پایپ مستقیم)
-    - echo "📦 Saving & Zipping locally..."
+    - echo "📦 Zipping locally..."
     - docker save ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA} | gzip > image.tar.gz
 
-    # ✅ گام ۲: ایجاد دایرکتوری در سرور مقصد
-    - ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=5 $SERVER_USER@$SERVER_IP "mkdir -p ${SERVER_PATH}"
-
-    # ✅ گام ۳: آپلود فایل با تنظیمات ضد قطعی (KeepAlive)
-    # آپشن ServerAliveInterval=60 باعث می‌شود هر ۶۰ ثانیه یک سیگنال بفرستد تا کانکشن قطع نشود
-    - echo "📤 Uploading to Iran Server (This may take a while)..."
-    - scp -o ServerAliveInterval=60 -o ServerAliveCountMax=10 image.tar.gz $SERVER_USER@$SERVER_IP:${SERVER_PATH}/image.tar.gz
+    - echo "📤 Uploading..."
+    # استفاده از SCP با تنظیمات پایدار
+    - scp -o ServerAliveInterval=60 image.tar.gz $SERVER_USER@$SERVER_IP:${SERVER_PATH}/image.tar.gz
 
     # انتقال فایل‌های کانفیگ
     - echo "ST_MONGO__HOST=steve_db" > .env
-    # ... (بقیه متغیرهای محیطی که داشتید) ...
+    # ... بقیه متغیرها ...
     - scp -o ServerAliveInterval=60 .env $SERVER_USER@$SERVER_IP:${SERVER_PATH}/.env
     - scp -o ServerAliveInterval=60 docker-compose.yml $SERVER_USER@$SERVER_IP:${SERVER_PATH}/docker-compose.yml
 
-    # ✅ گام ۴: لود کردن و اجرا در سرور
-    - echo "🚢 Loading & Running on Server..."
+    # اجرا
+    - echo "🚢 Running..."
     - ssh -o ServerAliveInterval=60 $SERVER_USER@$SERVER_IP "
       cd ${SERVER_PATH} &&
-      echo 'Unzipping and Loading Docker Image...' &&
       gunzip -c image.tar.gz | docker load &&
       rm image.tar.gz &&
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
