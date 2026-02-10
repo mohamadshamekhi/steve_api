@@ -21,38 +21,25 @@ stages:
 
 deploy_job:
   stage: deploy
-  image: docker:24.0.5
-  services:
-    - docker:24.0.5-dind
-
   before_script:
-    # 1. تغییر مخازن به میرورهای Cloudflare (بسیار پایدار و سریع در همه جا)
-    # این دستور مخازن پیش‌فرض را که گاهی مشکل دارند با میرور کلادفلر عوض می‌کند
-    - echo "https://dl-cdn.alpinelinux.org/alpine/v3.18/main" > /etc/apk/repositories
-    - echo "https://dl-cdn.alpinelinux.org/alpine/v3.18/community" >> /etc/apk/repositories
+    # نصب ابزارها
+    - apk add --no-cache openssh-client curl unzip
 
-    # تنظیم DNS برای اطمینان از رفع تحریم‌ها/محدودیت‌ها در کانتینر
-    - echo "nameserver 1.1.1.1" > /etc/resolv.conf
-    - echo "nameserver 8.8.8.8" >> /etc/resolv.conf
-
-    # 2. نصب ابزارها (الان باید بدون خطا نصب شوند)
-    - apk update --no-cache && apk add --no-cache openssh-client curl unzip
-
-    # 3. نصب Rclone
+    # نصب Rclone
     - curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
-    - unzip rclone-current-linux-amd64.zip
+    - unzip -q rclone-current-linux-amd64.zip
     - cp rclone-*-linux-amd64/rclone /usr/bin/
     - chmod 755 /usr/bin/rclone
 
-    # 4. تنظیم SSH Key
+    # تنظیم SSH
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-    - echo -e "Host *\n\tStrictHostKeyChecking no\n\tPort 2222\n\n" > ~/.ssh/config
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\tPort $SSH_PORT\n\n" > ~/.ssh/config
 
   script:
     # ---------------------------------------------------------
-    # بخش ۱: بیلد و آپلود (خارج از ایران)
+    # 1. بیلد و فشرده‌سازی
     # ---------------------------------------------------------
     - echo "🏗️ Building Docker Image..."
     - docker build -t $IMAGE_TAG .
@@ -60,44 +47,57 @@ deploy_job:
     - echo "📦 Compressing Image..."
     - docker save $IMAGE_TAG | gzip > image.tar.gz
 
-    - echo "☁️ Configuring ArvanCloud S3..."
-    - mkdir -p ~/.config/rclone
-    # استفاده از printf برای ساخت امن فایل کانفیگ
-    - printf "[arvan]\ntype = s3\nprovider = Other\nenv_auth = false\naccess_key_id = %s\nsecret_access_key = %s\nendpoint = %s\nacl = public-read\n" "$ARVAN_ACCESS_KEY" "$ARVAN_SECRET_KEY" "$ARVAN_ENDPOINT" > ~/.config/rclone/rclone.conf
+    # ---------------------------------------------------------
+    # 2. آپلود به آروان (Rclone)
+    # ---------------------------------------------------------
+    - echo "☁️ Configuring Rclone..."
+    - |
+      mkdir -p ~/.config/rclone
+      cat > ~/.config/rclone/rclone.conf <<EOF
+      [arvan]
+      type = s3
+      provider = Other
+      env_auth = false
+      access_key_id = $ARVAN_ACCESS_KEY
+      secret_access_key = $ARVAN_SECRET_KEY
+      endpoint = $ARVAN_ENDPOINT
+      acl = public-read
+      EOF
 
     - echo "🚀 Uploading Files to Arvan S3..."
-    - rclone copy image.tar.gz arvan:$ARVAN_BUCKET/
-    - rclone copy docker-compose.yml arvan:$ARVAN_BUCKET/
+    - rclone copy image.tar.gz arvan:$ARVAN_BUCKET/ --progress
+    - rclone copy docker-compose.yml arvan:$ARVAN_BUCKET/ --progress
 
     # ---------------------------------------------------------
-    # بخش ۲: دانلود و اجرا روی سرور (در ایران)
+    # 3. اتصال به سرور و اجرا (SSH)
     # ---------------------------------------------------------
-    - echo "📡 Connecting to Server for Deployment..."
+    - echo "📡 Deploying to Server..."
+    - |
+      ssh $SERVER_USER@$SERVER_IP "
+        set -e # توقف اسکریپت در صورت بروز خطا
 
-    # لینک‌های دانلود
-    - IMAGE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/image.tar.gz"
-    - COMPOSE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker-compose.yml"
+        # تعریف متغیرها داخل سرور
+        REMOTE_DIR='$SERVER_PATH'
+        IMG_URL='$ARVAN_ENDPOINT/$ARVAN_BUCKET/image.tar.gz'
+        COMPOSE_URL='$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker-compose.yml'
 
-    # اجرای دستورات روی سرور
-    - ssh $SERVER_USER@$SERVER_IP "
-      # ساخت دایرکتوری
-      mkdir -p $SERVER_PATH &&
-      cd $SERVER_PATH &&
-      
-      echo '⬇️ Downloading Files from Arvan...' &&
-      # استفاده از -O برای بازنویسی فایل‌ها
-      wget -q -O image.tar.gz '$IMAGE_URL' &&
-      wget -q -O docker-compose.yml '$COMPOSE_URL' &&
-      
-      echo '⚙️ Writing Configs...' &&
-      echo 'ST_MONGO__HOST=steve_db' > .env &&
-      
-      echo '🐳 Loading Docker Image...' &&
-      gunzip -c image.tar.gz | docker load &&
-      
-      echo '🔥 Restarting Services...' &&
-      docker compose up -d --remove-orphans &&
-      docker image prune -f &&
-      
-      echo '✅ Deployment Successful!'
+        echo '📂 Ensuring directory exists at: \$REMOTE_DIR'
+        mkdir -p \$REMOTE_DIR
+        cd \$REMOTE_DIR
+
+        echo '⬇️ Downloading files...'
+        wget -q -O image.tar.gz \$IMG_URL
+        wget -q -O docker-compose.yml \$COMPOSE_URL
+
+        echo '⚙️ Writing .env file...'
+        echo 'ST_MONGO__HOST=steve_db' > .env
+
+        echo '🐳 Loading Docker Image...'
+        gunzip -c image.tar.gz | docker load
+
+        echo '🔥 Restarting Services...'
+        docker compose up -d --remove-orphans
+        docker image prune -f
+
+        echo '✅ Deployment Successful!'
       "
