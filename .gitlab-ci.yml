@@ -6,14 +6,16 @@ variables:
   IMAGE_NAME: "5.78.55.0:5051/steve/backend/steve-go"
   SERVER_IP: "37.32.4.62"
   SERVER_USER: "ubuntu"
-  SERVER_PATH: "~/projects/steve-app"
+  SERVER_PATH: "/home/ubuntu/projects/steve-app" # مسیر کامل (بدون ~) برای اطمینان
   SSH_PORT: "2222"
 
 stages:
   - build
   - deploy
 
-
+# -----------------------------------------------------------
+# مرحله ۱: بیلد و پوش (با Kaniko - این مرحله سالم است)
+# -----------------------------------------------------------
 build_job:
   stage: build
   image:
@@ -21,15 +23,14 @@ build_job:
     entrypoint: [ "" ]
   script:
     - echo "🏗️ Building & Pushing Steve App..."
-    # تنظیم DNS برای اطمینان از دسترسی به اینترنت
     - echo "nameserver 8.8.8.8" > /etc/resolv.conf
     - echo "nameserver 1.1.1.1" >> /etc/resolv.conf
 
-    # تنظیمات Kaniko برای لاگین
+    # تنظیمات Kaniko
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"${REGISTRY_URL}\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
 
-    # اجرای بیلد و پوش (Kaniko خودش فلگ insecure داره و مشکلی نداره)
+    # اجرای بیلد و پوش
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
@@ -46,8 +47,7 @@ build_job:
 # -----------------------------------------------------------
 deploy_job:
   stage: deploy
-  image: alpine:latest  # استفاده از ایمیج سبک‌تر چون فقط SSH می‌خواهیم
-  # ❌ سرویس dind حذف شد (چون اینجا بیلد نمی‌کنیم)
+  image: alpine:latest  # استفاده از ایمیج سبک (چون فقط SSH می‌خواهیم)
 
   before_script:
     # نصب SSH Client
@@ -64,30 +64,24 @@ deploy_job:
   script:
     - echo "🚀 Triggering Server to Pull & Run..."
 
-    # متغیر مسیر
-    - REMOTE_DIR="/home/$SERVER_USER/projects/steve-app"
-
-    # ساخت دایرکتوری در سرور
-    - ssh $SERVER_USER@$SERVER_IP "mkdir -p $REMOTE_DIR"
+    # ساخت دایرکتوری در سرور (با استفاده از متغیر SERVER_PATH)
+    - ssh $SERVER_USER@$SERVER_IP "mkdir -p $SERVER_PATH"
 
     # ساخت فایل env و ارسال فایل‌های کانفیگ
     - echo "ST_MONGO__HOST=steve_db" > .env
-    - scp .env $SERVER_USER@$SERVER_IP:$REMOTE_DIR/.env
-    - scp docker-compose.yml $SERVER_USER@$SERVER_IP:$REMOTE_DIR/docker-compose.yml
+    - scp .env $SERVER_USER@$SERVER_IP:$SERVER_PATH/.env
+    - scp docker-compose.yml $SERVER_USER@$SERVER_IP:$SERVER_PATH/docker-compose.yml
 
     # اتصال به سرور و اجرای دستورات نهایی
     - ssh $SERVER_USER@$SERVER_IP "
-      cd $REMOTE_DIR &&
+      cd $SERVER_PATH &&
       
-      # 1. لاگین در سمت سرور (به ریجیستری HTTP شما)
       echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin http://${REGISTRY_URL} &&
       
-      # 2. دانلود ایمیج (سرور از طریق پروکسی که ست کردیم وصل میشه)
       echo '⬇️ Pulling Image...' &&
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
       docker compose pull &&
       
-      # 3. اجرا
       echo '🔥 Up and Running...' &&
       docker compose up -d --remove-orphans &&
       docker image prune -f
