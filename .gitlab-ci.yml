@@ -67,7 +67,7 @@ deploy_job:
       echo '⚙️ Writing Environment Variables...' &&
       - echo "📝 Generating .env file locally..."
       # فایل .env را همینجا میسازیم (خیلی امن‌تر و راحت‌تر)
-      - |
+     |
       cat > .env <<EOF
       ST_MELLIPAYAMAK__USERNAME=$ST_MELLIPAYAMAK__USERNAME
       ST_MELLIPAYAMAK__PASSWORD=$ST_MELLIPAYAMAK__PASSWORD
