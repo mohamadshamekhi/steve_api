@@ -1,6 +1,7 @@
 package articlevalidator
 
 import (
+	"context"
 	"errors"
 
 	articleparam "github.com/abolfazlnorzad/steve/param/article"
@@ -26,7 +27,7 @@ func (v Validator) ValidateUpdateArticleRequest(req articleparam.UpdateArticleRe
 		validation.Field(&req.Slug,
 			validation.When(req.Slug != nil,
 				validation.Required.Error("validation.required"),
-				validation.By(v.SlugIsUnique),
+				validation.By(v.SlugIsUniqueForUpdate(req.ID)),
 			),
 		),
 		validation.Field(&req.MediaID,
@@ -60,4 +61,42 @@ func (v Validator) ValidateUpdateArticleRequest(req articleparam.UpdateArticleRe
 
 	//nolint
 	return nil
+}
+
+func (v Validator) SlugIsUniqueForUpdate(id string) validation.RuleFunc {
+	return func(value any) error {
+		var slug string
+		switch v := value.(type) {
+		case string:
+			slug = v
+		case *string:
+			if v == nil {
+				return nil
+			}
+			slug = *v
+		default:
+			return richerror.New("articlevalidator.SlugIsUnique.type_assertion").
+				WithKind(richerror.KindUnexpected).
+				WithWarpError(errors.New("unexpected type for slug"))
+		}
+
+		if slug == "" {
+			return nil
+		}
+
+		article, err := v.aRepo.FindBySlug(context.Background(), slug)
+		if err != nil {
+			var rErr *richerror.RichError
+			if errors.As(err, &rErr) && rErr.Kind() == richerror.KindNotFound {
+				return nil
+			}
+			return err
+		}
+
+		if article.ID == id {
+			return nil
+		}
+
+		return errors.New("validation.slug_already_exists")
+	}
 }
