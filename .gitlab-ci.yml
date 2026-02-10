@@ -90,7 +90,7 @@ deploy_job:
         cd \$REMOTE_DIR
 
         echo '⬇️ Downloading files...'
-        wget -q -O image.tar.gz \$IMG_URL
+        wget --progress=dot:giga -O image.tar.gz '$ARVAN_ENDPOINT/$ARVAN_BUCKET/image.tar.gz'
         wget -q -O docker-compose.yml \$COMPOSE_URL
 
         echo '⚙️ Writing .env file...'
