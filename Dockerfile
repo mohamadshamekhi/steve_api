@@ -9,7 +9,7 @@ WORKDIR /app
 
 # کپی فایل‌های وابسته و دانلود آن‌ها
 COPY go.mod go.sum ./
-ENV GOPROXY=https://goproxy.io,direct
+ENV GOPROXY=https://mirror-go.runflare.com,direct
 RUN go mod download
 
 # کپی تمام کدهای پروژه

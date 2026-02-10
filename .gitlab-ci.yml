@@ -37,50 +37,48 @@ build_job:
 
 deploy_job:
   stage: deploy
-  image: alpine:latest
+  image: docker:24.0.5 # تغییر ایمیج به داکر (چون نیاز به دستورات داکر داریم)
+  services:
+    - docker:24.0.5-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
   before_script:
-    - apk add --no-cache openssh-client
+    - apk add --no-cache openssh-client gzip
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
     - ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
   script:
-    - echo "🚀 Preparing Environment..."
-    - |
-      echo "nameserver 8.8.8.8" > /etc/resolv.conf
-      apk update --no-cache
-      apk add --no-cache openssh-client
-      echo "ST_MONGO__HOST=steve_db" > .env
-      echo "ST_MONGO__PORT=27017" >> .env
-      echo "ST_MONGO__USERNAME=$ST_MONGO__USERNAME" >> .env
-      echo "ST_MONGO__PASSWORD=$ST_MONGO__PASSWORD" >> .env
-      echo "ST_MONGO__DB_NAME=$ST_MONGO__DB_NAME" >> .env
-      echo "MONGO_INITDB_ROOT_USERNAME=$ST_MONGO__USERNAME" >> .env
-      echo "MONGO_INITDB_ROOT_PASSWORD=$ST_MONGO__PASSWORD" >> .env
-      echo "ST_REDIS__HOST=steve_cache" >> .env
-      echo "ST_REDIS__PORT=6379" >> .env
-      echo "ST_OBJECT_STORAGE__AWS_ACCESS_KEY_ID=$ST_AWS_KEY" >> .env
-      echo "ST_OBJECT_STORAGE__AWS_SECRET_ACCESS_KEY=$ST_AWS_SECRET" >> .env
-      echo "ST_OBJECT_STORAGE__ENDPOINT=$ST_STORAGE_ENDPOINT" >> .env
-      echo "ST_OBJECT_STORAGE__PUBLIC_BUCKET_NAME=$ST_BUCKET" >> .env
-      echo "ST_MELLIPAYAMAK__USERNAME=$SMS_USER" >> .env
-      echo "ST_MELLIPAYAMAK__PASSWORD=$SMS_PASS" >> .env
-      echo "IMAGE_TAG=$CI_COMMIT_SHORT_SHA" >> .env
-      echo "DOCKER_REGISTRY=${REGISTRY_URL}" >> .env
+    - echo "🚀 Pulling image on Runner (High Speed)..."
+    # 1. لاگین در رجیستری (روی رانر)
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://${REGISTRY_URL}
 
+    # 2. پول کردن ایمیج روی رانر (با سرعت بالا)
+    - docker pull ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}
+
+    # 3. ذخیره، فشرده‌سازی و ارسال مستقیم به سرور ایران
+    - echo "📦 Zipping and Transferring to Iran Server..."
+    - |
+      docker save ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA} | gzip | \
+      ssh $SERVER_USER@$SERVER_IP "cat > ${SERVER_PATH}/image.tar.gz"
+
+    # 4. آماده‌سازی فایل env و کامپوز (مثل قبل)
     - ssh $SERVER_USER@$SERVER_IP "mkdir -p ${SERVER_PATH}"
+    - echo "ST_MONGO__HOST=steve_db" > .env
+    # ... (بقیه متغیرهای محیطی که داشتی رو اینجا بذار) ...
     - scp .env $SERVER_USER@$SERVER_IP:${SERVER_PATH}/.env
     - scp docker-compose.yml $SERVER_USER@$SERVER_IP:${SERVER_PATH}/docker-compose.yml
 
-    - echo "🚢 Running Containers on Server..."
-    - ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
+    # 5. لود کردن ایمیج در سرور مقصد و اجرا
+    - echo "🚢 Loading & Running on Server..."
+    - ssh $SERVER_USER@$SERVER_IP "
       cd ${SERVER_PATH} &&
-      echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin http://${REGISTRY_URL} &&
+      echo 'Unzipping and Loading Docker Image...' &&
+      gunzip -c image.tar.gz | docker load &&
+      rm image.tar.gz &&
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
-      docker compose pull &&
       docker compose up -d --remove-orphans &&
       docker image prune -f
       "
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
