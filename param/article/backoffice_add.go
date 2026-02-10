@@ -10,6 +10,7 @@ type AddArticleRequest struct {
 	Tags            []string `json:"tags"`
 	MetaDescription string   `json:"meta_description"`
 	MediaID         string   `json:"media_id"`
+	Alt             string   `json:"alt"`
 }
 
 type ArticleInfo struct {
@@ -23,6 +24,7 @@ type ArticleInfo struct {
 	BackOfficeID    string    `json:"back_office_id"`
 	BackOfficeName  string    `json:"back_office_name"`
 	MediaUrl        string    `json:"media_url"`
+	Alt             string    `json:"alt"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }

@@ -9,6 +9,7 @@ type UpdateArticleRequest struct {
 	IsPublished     *bool     `json:"is_published"`
 	Tags            *[]string `json:"tags"`
 	MetaDescription *string   `json:"meta_description"`
+	Alt             *string   `json:"alt"`
 }
 
 type UpdateArticleResponse struct {

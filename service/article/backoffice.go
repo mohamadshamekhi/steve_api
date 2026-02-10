@@ -37,6 +37,7 @@ func (s BackofficeService) Create(ctx context.Context, req articleparam.AddArtic
 		BackOfficeID:    backOfficeID,
 		MetaDescription: req.MetaDescription,
 		MediaID:         req.MediaID,
+		Alt:             req.Alt,
 	}
 
 	a.BeforeCreate()
@@ -63,6 +64,7 @@ func (s BackofficeService) Create(ctx context.Context, req articleparam.AddArtic
 		BackOfficeID:    a.BackOfficeID,
 		BackOfficeName:  backOfficeInfo.Name,
 		MediaUrl:        res.URL,
+		Alt:             req.Alt,
 		CreatedAt:       a.CreatedAt,
 		UpdatedAt:       a.UpdatedAt,
 	}
@@ -103,6 +105,10 @@ func (s BackofficeService) Update(ctx context.Context, req articleparam.UpdateAr
 
 	if req.MetaDescription != nil {
 		article.MetaDescription = *req.MetaDescription
+	}
+
+	if req.Alt != nil {
+		article.Alt = *req.Alt
 	}
 
 	if req.MediaID != nil && *req.MediaID != article.MediaID {
@@ -160,6 +166,7 @@ func (s BackofficeService) Update(ctx context.Context, req articleparam.UpdateAr
 		BackOfficeID:    article.BackOfficeID,
 		BackOfficeName:  backOfficeInfo.Name,
 		MediaUrl:        res.URL,
+		Alt:             article.Alt,
 		CreatedAt:       article.CreatedAt,
 		UpdatedAt:       article.UpdatedAt,
 	}
@@ -219,6 +226,7 @@ func (s BackofficeService) GetArticle(ctx context.Context, req articleparam.GetA
 		BackOfficeID:    article.BackOfficeID,
 		BackOfficeName:  backOfficeInfo.Name,
 		MediaUrl:        res.URL,
+		Alt:             article.Alt,
 		CreatedAt:       article.CreatedAt,
 		UpdatedAt:       article.UpdatedAt,
 	}
@@ -270,6 +278,7 @@ func (s BackofficeService) GetAll(ctx context.Context, req articleparam.AllArtic
 			BackOfficeID:    a.BackOfficeID,
 			BackOfficeName:  backOfficeInfo.Name,
 			MediaUrl:        urlMap.URLs[a.MediaID],
+			Alt:             a.Alt,
 			CreatedAt:       a.CreatedAt,
 			UpdatedAt:       a.UpdatedAt,
 		})
