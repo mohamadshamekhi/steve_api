@@ -50,15 +50,19 @@ deploy_job:
   image: alpine:latest  # استفاده از ایمیج سبک (چون فقط SSH می‌خواهیم)
 
   before_script:
-    # نصب SSH Client
+    # 1. تغییر میرورهای آلپاین به Runflare (برای حل مشکل TLS Error)
+    - sed -i 's|dl-cdn.alpinelinux.org|mirror-linux.runflare.com|g' /etc/apk/repositories
+    - sed -i 's|uk.alpinelinux.org|mirror-linux.runflare.com|g' /etc/apk/repositories
+
+    # 2. نصب SSH Client
     - apk update --no-cache && apk add --no-cache openssh-client
 
-    # تنظیم کلید SSH
+    # 3. تنظیم کلید SSH
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
 
-    # تنظیم کانفیگ SSH (پورت 2222)
+    # 4. تنظیم کانفیگ SSH (پورت 2222)
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\tPort 2222\n\n" > ~/.ssh/config
 
   script:
