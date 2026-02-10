@@ -1,113 +1,96 @@
 image: docker:24.0.5
-services:
-  - name: docker:24.0.5-dind
-    alias: docker
+
 variables:
-  # تنظیمات سرور
   SERVER_IP: "37.32.4.62"
   SERVER_USER: "ubuntu"
   SERVER_PATH: "/home/ubuntu/projects/steve-app"
   SSH_PORT: "2222"
 
-  # تنظیمات آروان
   ARVAN_ACCESS_KEY: "1c6b005e-9152-4b7e-9fff-31e24810ce0a"
   ARVAN_SECRET_KEY: "9211504b291a61243e8499610de4b1a8e12163a0c42091fcdd92cdda0626d7bf"
   ARVAN_ENDPOINT: "https://s3.ir-thr-at1.arvanstorage.ir"
   ARVAN_BUCKET: "soraa"
-  DOCKER_HOST: "tcp://docker:2375"
-  DOCKER_TLS_CERTDIR: ""
-  DOCKER_DRIVER: overlay2
-  IMAGE_TAG: "steve-app:$CI_COMMIT_SHORT_SHA"
+
+  # تنظیمات داکر
+  IMAGE_TAG: "steve-app:latest"
 
 stages:
   - deploy
 
 deploy_job:
   stage: deploy
-  before_script:
-    - sed -i 's/dl-cdn.alpinelinux.org/uk.alpinelinux.org/g' /etc/apk/repositories
-    # نصب ابزارها
-    - apk add --no-cache openssh-client curl unzip
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
 
-    # نصب Rclone
+  before_script:
+    - apk add --no-cache openssh-client curl unzip
     - curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
-    - unzip -q rclone-current-linux-amd64.zip
+    - unzip rclone-current-linux-amd64.zip
     - cp rclone-*-linux-amd64/rclone /usr/bin/
     - chmod 755 /usr/bin/rclone
-
-    # تنظیم SSH
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-    - echo -e "Host *\n\tStrictHostKeyChecking no\n\tPort $SSH_PORT\n\n" > ~/.ssh/config
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\tPort 2222\n\n" > ~/.ssh/config
 
   script:
-    # ---------------------------------------------------------
-    # 1. بیلد و فشرده‌سازی
-    # ---------------------------------------------------------
     - echo "🏗️ Building Docker Image..."
     - docker build -t $IMAGE_TAG .
-
-    - echo "📦 Compressing Image..."
     - docker save $IMAGE_TAG | gzip > image.tar.gz
 
-    # ---------------------------------------------------------
-    # 2. آپلود به آروان (Rclone)
-    # ---------------------------------------------------------
-    - echo "☁️ Configuring Rclone..."
-    - |
-      mkdir -p ~/.config/rclone
-      cat > ~/.config/rclone/rclone.conf <<EOF
-      [arvan]
-      type = s3
-      provider = Other
-      env_auth = false
-      access_key_id = $ARVAN_ACCESS_KEY
-      secret_access_key = $ARVAN_SECRET_KEY
-      endpoint = $ARVAN_ENDPOINT
-      acl = public-read
-      EOF
+    - echo "☁️ Configuring ArvanCloud S3..."
+    - mkdir -p ~/.config/rclone
+    - printf "[arvan]\ntype = s3\nprovider = Other\nenv_auth = false\naccess_key_id = %s\nsecret_access_key = %s\nendpoint = %s\nacl = public-read\n" "$ARVAN_ACCESS_KEY" "$ARVAN_SECRET_KEY" "$ARVAN_ENDPOINT" > ~/.config/rclone/rclone.conf
 
     - echo "🚀 Uploading Files to Arvan S3..."
-    - rclone copy image.tar.gz arvan:$ARVAN_BUCKET/ --progress
-    - rclone copy docker-compose.yml arvan:$ARVAN_BUCKET/ --progress
+    - rclone copy image.tar.gz arvan:$ARVAN_BUCKET/docker
+    - rclone copy docker-compose.yml arvan:$ARVAN_BUCKET/docker
 
-    # ---------------------------------------------------------
-    # 3. اتصال به سرور و اجرا (SSH)
-    # ---------------------------------------------------------
-    - echo "📡 Deploying to Server..."
-    - |
-      ssh $SERVER_USER@$SERVER_IP "
-        set -e # توقف اسکریپت در صورت بروز خطا
+    - echo "📡 Connecting to Server..."
+    - IMAGE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker/image.tar.gz"
+    - COMPOSE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker/docker-compose.yml"
 
-        # تعریف متغیرها داخل سرور
-        REMOTE_DIR='$SERVER_PATH'
-        IMG_URL='$ARVAN_ENDPOINT/$ARVAN_BUCKET/image.tar.gz'
-        COMPOSE_URL='$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker-compose.yml'
-
-        echo '📂 Ensuring directory exists at: \$REMOTE_DIR'
-        mkdir -p \$REMOTE_DIR
-        cd \$REMOTE_DIR
-
-        echo '⬇️ Downloading files...'
-        wget --progress=dot:giga -O image.tar.gz '$ARVAN_ENDPOINT/$ARVAN_BUCKET/image.tar.gz'
-        wget -q -O docker-compose.yml \$COMPOSE_URL
-
-        echo '⚙️ Writing .env file...'
-        echo 'ST_MONGO__HOST=steve_db' > .env
-
-        echo '🐳 Loading Docker Image...'
-        gunzip -c image.tar.gz | docker load
-        echo '🐳 Loading Docker Image...'
-        gunzip -c image.tar.gz | docker load
-  
-        echo '🏷️ Retagging image...'
-        docker tag $IMAGE_TAG steve-app:latest
-  
-        echo '🔥 Restarting Services...'
-        docker compose up -d --remove-orphans --pull never        
-
-        docker image prune -f
-
-        echo '✅ Deployment Successful!'
+    - ssh $SERVER_USER@$SERVER_IP "
+      mkdir -p $SERVER_PATH &&
+      cd $SERVER_PATH &&
+      
+      echo '⬇️ Downloading...' &&
+      wget -q -O image.tar.gz '$IMAGE_URL' &&
+      wget -q -O docker-compose.yml '$COMPOSE_URL' &&
+      
+      echo '⚙️ Writing Environment Variables...' &&
+      cat > .env <<EOF
+      ST_MELLIPAYAMAK__USERNAME=$ST_MELLIPAYAMAK__USERNAME
+      ST_MELLIPAYAMAK__PASSWORD=$ST_MELLIPAYAMAK__PASSWORD
+      
+      ST_MONGO__HOST=steve_db
+      ST_MONGO__PORT=27017
+      ST_MONGO__USERNAME=$ST_MONGO__USERNAME
+      ST_MONGO__PASSWORD=$ST_MONGO__PASSWORD
+      ST_MONGO__DB_NAME=$ST_MONGO__DB_NAME
+      
+      MONGO_INITDB_ROOT_USERNAME=$ST_MONGO__USERNAME
+      MONGO_INITDB_ROOT_PASSWORD=$ST_MONGO__PASSWORD
+      
+      ST_OBJECT_STORAGE__AWS_ACCESS_KEY_ID=$ST_OBJECT_STORAGE__AWS_ACCESS_KEY_ID
+      ST_OBJECT_STORAGE__AWS_SECRET_ACCESS_KEY=$ST_OBJECT_STORAGE__AWS_SECRET_ACCESS_KEY
+      ST_OBJECT_STORAGE__ENDPOINT=$ST_OBJECT_STORAGE__ENDPOINT
+      ST_OBJECT_STORAGE__PUBLIC_BUCKET_NAME=steve
+      
+      ST_REDIS__HOST=redis
+      ST_REDIS__PORT=6379
+      
+      ST_ZARINPAL__MERCHANT_ID=$ST_ZARINPAL__MERCHANT_ID
+      EOF
+      
+      echo '🐳 Loading Docker Image...' &&
+      gunzip -c image.tar.gz | docker load &&
+      
+      echo '🔥 Updating Services...' &&
+      docker compose up -d --remove-orphans &&
+      
+      docker image prune -f &&
+      
+      echo '✅ Deployment Successful!'
       "
