@@ -6,7 +6,7 @@ variables:
   IMAGE_NAME: "5.78.55.0:5051/steve/backend/steve-go"
   SERVER_IP: "37.32.4.62"
   SERVER_USER: "ubuntu"
-  SERVER_PATH: "/home/ubuntu/projects/steve-app" # مسیر کامل (بدون ~) برای اطمینان
+  SERVER_PATH: "/home/ubuntu/projects/steve-app"
   SSH_PORT: "2222"
 
 stages:
@@ -43,59 +43,49 @@ build_job:
     - if: $CI_COMMIT_BRANCH == "main"
 
 # -----------------------------------------------------------
-# مرحله ۲: دیپلوی (فقط دستور به سرور - بدون بیلد مجدد)
+# مرحله ۲: دیپلوی (فقط دستور به سرور - روش ضد فیلتر)
 # -----------------------------------------------------------
 deploy_job:
   stage: deploy
-  image: alpine:latest
-
-  variables:
-    # تنظیمات سرور
-    SERVER_IP: "37.32.4.62"
-    SERVER_USER: "ubuntu"
-    SERVER_PATH: "/home/ubuntu/projects/steve-app"
-    SSH_PORT: "2222"
-    REGISTRY_URL: "5.78.55.0:5051"
+  image: alpine:latest  # استفاده از ایمیج سبک (چون فقط SSH می‌خواهیم)
 
   before_script:
-    # نصب ابزارها
+    # نصب SSH Client
     - apk update --no-cache && apk add --no-cache openssh-client
 
-    # تنظیم SSH Key
+    # تنظیم کلید SSH
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+
+    # تنظیم کانفیگ SSH (پورت 2222)
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\tPort 2222\n\n" > ~/.ssh/config
 
   script:
+    - echo "🚀 Triggering Server..."
 
-    # 1. ساخت دایرکتوری در سرور
+    # 1. ساخت دایرکتوری در سرور (مطمئن شو این خط "-" دارد)
     - ssh $SERVER_USER@$SERVER_IP "mkdir -p $SERVER_PATH"
 
-    # 2. انتقال فایل .env (بدون استفاده از SCP)
-    # ما محتوا را اکو میکنیم و مستقیم در فایل سرور می‌نویسیم
-    - echo "📄 Sending .env..."
+    # 2. انتقال فایل .env (بدون scp - روش اکو کردن)
     - ssh $SERVER_USER@$SERVER_IP "echo 'ST_MONGO__HOST=steve_db' > $SERVER_PATH/.env"
 
-    # 3. انتقال docker-compose.yml (روش جادویی Piping) 🪄
-    # این دستور فایل را می‌خواند و از طریق تونل SSH در سرور می‌ریزد. فایروال نمی‌تواند این را ببندد.
-    - echo "📄 Sending docker-compose.yml..."
+    # 3. انتقال docker-compose.yml (بدون scp - روش پایپ لاین)
+    # این دستور فایل را می‌خواند و از توی تونل SSH هل میده توی فایل سرور
     - cat docker-compose.yml | ssh $SERVER_USER@$SERVER_IP "cat > $SERVER_PATH/docker-compose.yml"
 
-    # 4. اجرای دستورات نهایی روی سرور
-    - echo "🔥 Executing Commands on Server..."
+    # 4. اتصال به سرور و اجرای دستورات نهایی
+    # دقت کن این خط تیره "-" اولش خیلی مهمه
     - ssh $SERVER_USER@$SERVER_IP "
       cd $SERVER_PATH &&
       
-      # لاگین به ریجیستری (اینجا سرور از اینترنت خودش استفاده میکنه)
       echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin http://${REGISTRY_URL} &&
       
-      # دانلود و اجرا (اینجاست که اون VPN سرور به کار میاد!)
       echo '⬇️ Pulling Image...' &&
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
       docker compose pull &&
       
-      echo '🚀 Starting Services...' &&
+      echo '🔥 Up and Running...' &&
       docker compose up -d --remove-orphans &&
       docker image prune -f
       "
