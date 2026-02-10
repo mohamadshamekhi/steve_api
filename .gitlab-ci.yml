@@ -11,10 +11,9 @@ variables:
   ARVAN_ENDPOINT: $ST_OBJECT_STORAGE__ENDPOINT
   ARVAN_BUCKET: "steve"
 
-  # تنظیمات داکر
   IMAGE_TAG: "steve-app:latest"
   DOCKER_HOST: tcp://docker:2375
-  DOCKER_TLS_CERTDIR: ""           # 👈 این خط حیاتی است!
+  DOCKER_TLS_CERTDIR: ""
   DOCKER_DRIVER: overlay2
 
 stages:
@@ -25,7 +24,7 @@ deploy_job:
   image: docker:24.0.5
   services:
     - name: docker:24.0.5-dind
-      alias: docker                # 👈 شبکه رو وصل میکنه
+      alias: docker
       command: ["--tls=false"]
 
   before_script:
@@ -44,30 +43,9 @@ deploy_job:
     - docker build -t $IMAGE_TAG .
     - docker save $IMAGE_TAG | gzip > image.tar.gz
 
-    - echo "☁️ Configuring ArvanCloud S3..."
-    - mkdir -p ~/.config/rclone
-    - printf "[arvan]\ntype = s3\nprovider = Other\nenv_auth = false\naccess_key_id = %s\nsecret_access_key = %s\nendpoint = %s\nacl = public-read\n" "$ARVAN_ACCESS_KEY" "$ARVAN_SECRET_KEY" "$ARVAN_ENDPOINT" > ~/.config/rclone/rclone.conf
-
-    - echo "🚀 Uploading Files to Arvan S3..."
-    - rclone copy image.tar.gz arvan:$ARVAN_BUCKET/docker
-    - rclone copy docker-compose.yml arvan:$ARVAN_BUCKET/docker
-
-    - echo "📡 Connecting to Server..."
-    - IMAGE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker/image.tar.gz"
-    - COMPOSE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker/docker-compose.yml"
-
-    - ssh $SERVER_USER@$SERVER_IP "
-      mkdir -p $SERVER_PATH &&
-      cd $SERVER_PATH &&
-      
-      echo '⬇️ Downloading...' &&
-      wget -q -O image.tar.gz '$IMAGE_URL' &&
-      wget -q -O docker-compose.yml '$COMPOSE_URL' &&
-      
-      echo '⚙️ Writing Environment Variables...' &&
-      - echo "📝 Generating .env file locally..."
-      # فایل .env را همینجا میسازیم (خیلی امن‌تر و راحت‌تر)
-     |
+    - echo "📝 Generating .env file locally..."
+    # ساخت فایل env قبل از SSH و آپلود آن
+    - |
       cat > .env <<EOF
       ST_MELLIPAYAMAK__USERNAME=$ST_MELLIPAYAMAK__USERNAME
       ST_MELLIPAYAMAK__PASSWORD=$ST_MELLIPAYAMAK__PASSWORD
@@ -86,6 +64,29 @@ deploy_job:
       ST_REDIS__PORT=6379
       ST_ZARINPAL__MERCHANT_ID=$ST_ZARINPAL__MERCHANT_ID
       EOF
+
+    - echo "☁️ Configuring ArvanCloud S3..."
+    - mkdir -p ~/.config/rclone
+    - printf "[arvan]\ntype = s3\nprovider = Other\nenv_auth = false\naccess_key_id = %s\nsecret_access_key = %s\nendpoint = %s\nacl = public-read\n" "$ARVAN_ACCESS_KEY" "$ARVAN_SECRET_KEY" "$ARVAN_ENDPOINT" > ~/.config/rclone/rclone.conf
+
+    - echo "🚀 Uploading Files to Arvan S3..."
+    - rclone copy image.tar.gz arvan:$ARVAN_BUCKET/docker/
+    - rclone copy docker-compose.yml arvan:$ARVAN_BUCKET/docker/
+    - rclone copy .env arvan:$ARVAN_BUCKET/docker/
+
+    - echo "📡 Connecting to Server..."
+    - IMAGE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker/image.tar.gz"
+    - COMPOSE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker/docker-compose.yml"
+    - ENV_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker/.env"
+
+    - ssh $SERVER_USER@$SERVER_IP "
+      mkdir -p $SERVER_PATH &&
+      cd $SERVER_PATH &&
+      
+      echo '⬇️ Downloading Files...' &&
+      wget -q -O image.tar.gz '$IMAGE_URL' &&
+      wget -q -O docker-compose.yml '$COMPOSE_URL' &&
+      wget -q -O .env '$ENV_URL' &&
       
       echo '🐳 Loading Docker Image...' &&
       gunzip -c image.tar.gz | docker load &&
