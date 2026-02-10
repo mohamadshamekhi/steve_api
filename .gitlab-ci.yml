@@ -67,28 +67,29 @@ deploy_job:
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
 
   script:
-    - ssh -T $SERVER_USER@$SERVER_IP "echo '✅ SSH Connection Successful!'"
+    - echo "🔍 Debug: Testing Connection on Port $SSH_PORT..."
+    # تست اتصال با پورت جدید
+    - ssh -p $SSH_PORT -T $SERVER_USER@$SERVER_IP "echo '✅ Connection OK!'"
 
     - echo "🚀 Pulling image..."
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://${REGISTRY_URL}
     - docker pull ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}
 
-    - echo "📦 Zipping locally..."
+    - echo "📦 Zipping..."
     - docker save ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA} | gzip > image.tar.gz
 
-    - echo "📤 Uploading..."
-    # استفاده از SCP با تنظیمات پایدار
-    - scp -o ServerAliveInterval=60 image.tar.gz $SERVER_USER@$SERVER_IP:${SERVER_PATH}/image.tar.gz
+    - echo "📤 Uploading (SCP)..."
+    # نکته: scp از پورت -P (بزرگ) استفاده می‌کند
+    - scp -P $SSH_PORT -o ServerAliveInterval=60 image.tar.gz $SERVER_USER@$SERVER_IP:${SERVER_PATH}/image.tar.gz
 
     # انتقال فایل‌های کانفیگ
     - echo "ST_MONGO__HOST=steve_db" > .env
-    # ... بقیه متغیرها ...
-    - scp -o ServerAliveInterval=60 .env $SERVER_USER@$SERVER_IP:${SERVER_PATH}/.env
-    - scp -o ServerAliveInterval=60 docker-compose.yml $SERVER_USER@$SERVER_IP:${SERVER_PATH}/docker-compose.yml
+    - scp -P $SSH_PORT .env $SERVER_USER@$SERVER_IP:${SERVER_PATH}/.env
+    - scp -P $SSH_PORT docker-compose.yml $SERVER_USER@$SERVER_IP:${SERVER_PATH}/docker-compose.yml
 
     # اجرا
     - echo "🚢 Running..."
-    - ssh -o ServerAliveInterval=60 $SERVER_USER@$SERVER_IP "
+    - ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "
       cd ${SERVER_PATH} &&
       gunzip -c image.tar.gz | docker load &&
       rm image.tar.gz &&
