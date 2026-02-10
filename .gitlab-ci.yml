@@ -7,7 +7,7 @@ variables:
   SERVER_PATH: "/home/ubuntu/projects/steve-app"
   SSH_PORT: "2222"
 
-  # تنظیمات آروان (اطلاعات شما)
+  # تنظیمات آروان
   ARVAN_ACCESS_KEY: "1c6b005e-9152-4b7e-9fff-31e24810ce0a"
   ARVAN_SECRET_KEY: "9211504b291a61243e8499610de4b1a8e12163a0c42091fcdd92cdda0626d7bf"
   ARVAN_ENDPOINT: "https://s3.ir-thr-at1.arvanstorage.ir"
@@ -26,16 +26,25 @@ deploy_job:
     - docker:24.0.5-dind
 
   before_script:
-    # 1. نصب ابزارها
-    - apk add --no-cache openssh-client curl unzip
+    # 1. تغییر مخازن به میرورهای Cloudflare (بسیار پایدار و سریع در همه جا)
+    # این دستور مخازن پیش‌فرض را که گاهی مشکل دارند با میرور کلادفلر عوض می‌کند
+    - echo "https://dl-cdn.alpinelinux.org/alpine/v3.18/main" > /etc/apk/repositories
+    - echo "https://dl-cdn.alpinelinux.org/alpine/v3.18/community" >> /etc/apk/repositories
 
-    # 2. نصب Rclone
+    # تنظیم DNS برای اطمینان از رفع تحریم‌ها/محدودیت‌ها در کانتینر
+    - echo "nameserver 1.1.1.1" > /etc/resolv.conf
+    - echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+
+    # 2. نصب ابزارها (الان باید بدون خطا نصب شوند)
+    - apk update --no-cache && apk add --no-cache openssh-client curl unzip
+
+    # 3. نصب Rclone
     - curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
     - unzip rclone-current-linux-amd64.zip
     - cp rclone-*-linux-amd64/rclone /usr/bin/
     - chmod 755 /usr/bin/rclone
 
-    # 3. تنظیم SSH Key
+    # 4. تنظیم SSH Key
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
@@ -43,7 +52,7 @@ deploy_job:
 
   script:
     # ---------------------------------------------------------
-    # بخش ۱: آماده‌سازی و آپلود به آروان (در خارج)
+    # بخش ۱: بیلد و آپلود (خارج از ایران)
     # ---------------------------------------------------------
     - echo "🏗️ Building Docker Image..."
     - docker build -t $IMAGE_TAG .
@@ -52,11 +61,8 @@ deploy_job:
     - docker save $IMAGE_TAG | gzip > image.tar.gz
 
     - echo "☁️ Configuring ArvanCloud S3..."
-    # ساخت دایرکتوری کانفیگ
     - mkdir -p ~/.config/rclone
-
-    # 🔥 اصلاحیه مهم: استفاده از printf برای جلوگیری از ارور YAML
-    # این دستور فایل کانفیگ را بدون نگرانی از فاصله گذاری میسازد
+    # استفاده از printf برای ساخت امن فایل کانفیگ
     - printf "[arvan]\ntype = s3\nprovider = Other\nenv_auth = false\naccess_key_id = %s\nsecret_access_key = %s\nendpoint = %s\nacl = public-read\n" "$ARVAN_ACCESS_KEY" "$ARVAN_SECRET_KEY" "$ARVAN_ENDPOINT" > ~/.config/rclone/rclone.conf
 
     - echo "🚀 Uploading Files to Arvan S3..."
@@ -68,16 +74,18 @@ deploy_job:
     # ---------------------------------------------------------
     - echo "📡 Connecting to Server for Deployment..."
 
-    # لینک دانلود فایل‌ها
+    # لینک‌های دانلود
     - IMAGE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/image.tar.gz"
     - COMPOSE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker-compose.yml"
 
     # اجرای دستورات روی سرور
     - ssh $SERVER_USER@$SERVER_IP "
+      # ساخت دایرکتوری
       mkdir -p $SERVER_PATH &&
       cd $SERVER_PATH &&
       
       echo '⬇️ Downloading Files from Arvan...' &&
+      # استفاده از -O برای بازنویسی فایل‌ها
       wget -q -O image.tar.gz '$IMAGE_URL' &&
       wget -q -O docker-compose.yml '$COMPOSE_URL' &&
       
