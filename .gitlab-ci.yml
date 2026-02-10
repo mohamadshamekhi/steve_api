@@ -78,9 +78,8 @@ deploy_job:
     - IMAGE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker/image.tar.gz"
     - COMPOSE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker/docker-compose.yml"
     - ENV_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker/.env"
-      
-      # 🔥 تغییر مهم ۲: استفاده از کانفیگ ساخته شده و سایلنت کردن دستورات
-      - ssh $SERVER_USER@$SERVER_IP "
+
+    - ssh $SERVER_USER@$SERVER_IP "
       mkdir -p $SERVER_PATH &&
       cd $SERVER_PATH &&
       
