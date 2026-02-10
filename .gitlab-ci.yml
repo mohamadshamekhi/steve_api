@@ -84,13 +84,11 @@ deploy_job:
       cd $SERVER_PATH &&
       
       echo '⬇️ Downloading Files...' &&
-      # اضافه کردن تایم‌اوت برای اینکه اگر دانلود گیر کرد، متوجه شویم
       wget -T 60 -t 3 -q -O image.tar.gz '$IMAGE_URL' &&
       wget -T 30 -t 3 -q -O docker-compose.yml '$COMPOSE_URL' &&
       wget -T 30 -t 3 -q -O .env '$ENV_URL' &&
       
       echo '🐳 Loading Docker Image (Silent Mode)...' &&
-      # سویچ -q حیاتی است! از چاپ هزاران خط لاگ جلوگیری می‌کند که باعث هنگ SSH می‌شود
       gunzip -c image.tar.gz | docker load -q &&
       
       echo '🔥 Updating Services...' &&
