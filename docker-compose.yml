@@ -11,7 +11,6 @@ services:
       - mongodb
       - redis
     environment:
-      - ST_MONGO__HOST=mongodb
       - ST_MONGO__PORT=27017
       - ST_MONGO__USERNAME=${ST_MONGO__USERNAME}
       - ST_MONGO__PASSWORD=${ST_MONGO__PASSWORD}
@@ -22,7 +21,6 @@ services:
       - ST_OBJECT_STORAGE__PUBLIC_BUCKET_NAME=${ST_OBJECT_STORAGE__PUBLIC_BUCKET_NAME}
       - ST_MELLIPAYAMAK__USERNAME=${ST_MELLIPAYAMAK__USERNAME}
       - ST_MELLIPAYAMAK__PASSWORD=${ST_MELLIPAYAMAK__PASSWORD}
-      - ST_REDIS__HOST=redis
       - ST_REDIS__PORT=6379
     networks:
       - steve_network
