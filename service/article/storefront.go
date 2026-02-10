@@ -54,6 +54,7 @@ func (s StorefrontService) GetSingleStorefrontArticle(ctx context.Context, req a
 		BackOfficeID:    article.BackOfficeID,
 		BackOfficeName:  backOfficeInfo.Name,
 		MediaUrl:        res.URL,
+		Alt:             article.Alt,
 		CreatedAt:       article.CreatedAt,
 		UpdatedAt:       article.UpdatedAt,
 	}
@@ -92,6 +93,7 @@ func (s StorefrontService) GetSingleBySlugStorefrontArticle(ctx context.Context,
 		BackOfficeID:    article.BackOfficeID,
 		BackOfficeName:  backOfficeInfo.Name,
 		MediaUrl:        res.URL,
+		Alt:             article.Alt,
 		CreatedAt:       article.CreatedAt,
 		UpdatedAt:       article.UpdatedAt,
 	}
@@ -141,6 +143,7 @@ func (s StorefrontService) GetAllStorefrontArticles(ctx context.Context, req art
 			BackOfficeID:   a.BackOfficeID,
 			BackOfficeName: backOfficeInfo.Name,
 			MediaUrl:       urlMap.URLs[a.MediaID],
+			Alt:            a.Alt,
 			CreatedAt:      a.CreatedAt,
 			UpdatedAt:      a.UpdatedAt,
 		})

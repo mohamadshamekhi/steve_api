@@ -16,6 +16,7 @@ type Article struct {
 	MetaDescription string    `bson:"meta_description"`
 	BackOfficeID    string    `bson:"back_office_id"`
 	MediaID         string    `bson:"media_id"`
+	Alt             string    `bson:"alt"`
 	CreatedAt       time.Time `bson:"created_at"`
 	UpdatedAt       time.Time `bson:"updated_at"`
 	DeletedAt       time.Time `bson:"deleted_at,omitempty"`

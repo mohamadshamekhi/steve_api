@@ -24,6 +24,7 @@ type StorefrontArticle struct {
 	BackOfficeID   string    `json:"back_office_id"`
 	BackOfficeName string    `json:"back_office_name"`
 	MediaUrl       string    `json:"media_url"`
+	Alt            string    `json:"alt"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 }
@@ -39,6 +40,7 @@ type StorefrontArticleDetail struct {
 	BackOfficeID    string    `json:"back_office_id"`
 	BackOfficeName  string    `json:"back_office_name"`
 	MediaUrl        string    `json:"media_url"`
+	Alt             string    `json:"alt"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
