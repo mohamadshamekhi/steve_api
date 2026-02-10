@@ -1,7 +1,8 @@
 # Stage 1: Build the application
 FROM golang:1.23-alpine AS builder
 
-# ✅ برای CGO ما حتماً به build-base (شامل gcc و libc-dev) نیاز داریم
+RUN sed -i 's/dl-cdn.alpinelinux.org/uk.alpinelinux.org/g' /etc/apk/repositories
+
 RUN apk add --no-cache git build-base
 
 # تنظیم دایرکتوری کاری
