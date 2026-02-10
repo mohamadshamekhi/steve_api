@@ -1,17 +1,18 @@
 image: docker:24.0.5
 
 variables:
-  DOCKER_HOST: tcp://docker:2375
-  DOCKER_DRIVER: overlay2
+  # تنظیمات کلی
   REGISTRY_URL: "5.78.55.0:5051"
   IMAGE_NAME: "5.78.55.0:5051/steve/backend/steve-go"
   SERVER_IP: "37.32.4.62"
   SERVER_USER: "ubuntu"
   SERVER_PATH: "~/projects/steve-app"
+  SSH_PORT: "2222"
 
 stages:
   - build
   - deploy
+
 
 build_job:
   stage: build
@@ -20,10 +21,15 @@ build_job:
     entrypoint: [ "" ]
   script:
     - echo "🏗️ Building & Pushing Steve App..."
+    # تنظیم DNS برای اطمینان از دسترسی به اینترنت
     - echo "nameserver 8.8.8.8" > /etc/resolv.conf
     - echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+
+    # تنظیمات Kaniko برای لاگین
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"${REGISTRY_URL}\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+
+    # اجرای بیلد و پوش (Kaniko خودش فلگ insecure داره و مشکلی نداره)
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
@@ -31,76 +37,57 @@ build_job:
       --destination "${IMAGE_NAME}:latest"
       --insecure
       --skip-tls-verify
+      --cache=true
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
 
-
+# -----------------------------------------------------------
+# مرحله ۲: دیپلوی (فقط دستور به سرور - بدون بیلد مجدد)
+# -----------------------------------------------------------
 deploy_job:
   stage: deploy
-  image: docker:24.0.5
-  services:
-    - name: docker:24.0.5-dind
-      alias: docker   # ✅ این خط برای اطمینان از اتصال درست ضروری است
-      command:
-        - "--insecure-registry=5.78.55.0:5051"
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
-    SSH_PORT: "2222"  # ✅ پورت جدید SSH شما
+  image: alpine:latest  # استفاده از ایمیج سبک‌تر چون فقط SSH می‌خواهیم
+  # ❌ سرویس dind حذف شد (چون اینجا بیلد نمی‌کنیم)
 
   before_script:
-    # نصب ابزارهای اولیه روی رانر
+    # نصب SSH Client
     - apk update --no-cache && apk add --no-cache openssh-client
 
     # تنظیم کلید SSH
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-    # تنظیم کانفیگ SSH
+
+    # تنظیم کانفیگ SSH (پورت 2222)
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\tPort 2222\n\n" > ~/.ssh/config
 
   script:
-    # -----------------------------------------------
-    # بخش ۱: عملیات روی Runner (بیلد و پوش)
-    # -----------------------------------------------
-    - echo "🏗 Building & Pushing to Registry..."
-
-    # لاگین به ریجیستری
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://${REGISTRY_URL}
-
-    # استفاده از کش برای سرعت بیشتر
-    - docker pull ${IMAGE_NAME}:latest || true
-    - docker build --cache-from ${IMAGE_NAME}:latest -t ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA} -t ${IMAGE_NAME}:latest .
-
-    # آپلود ایمیج به ریجیستری
-    - docker push ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}
-    - docker push ${IMAGE_NAME}:latest
-
-    # -----------------------------------------------
-    # بخش ۲: دستور به سرور (دانلود و اجرا)
-    # -----------------------------------------------
     - echo "🚀 Triggering Server to Pull & Run..."
 
     # متغیر مسیر
     - REMOTE_DIR="/home/$SERVER_USER/projects/steve-app"
 
-    # ساخت دایرکتوری
+    # ساخت دایرکتوری در سرور
     - ssh $SERVER_USER@$SERVER_IP "mkdir -p $REMOTE_DIR"
 
-    # ساخت فایل env
+    # ساخت فایل env و ارسال فایل‌های کانفیگ
     - echo "ST_MONGO__HOST=steve_db" > .env
-
-    # آپلود فایل‌های سبک (کانفیگ‌ها)
     - scp .env $SERVER_USER@$SERVER_IP:$REMOTE_DIR/.env
     - scp docker-compose.yml $SERVER_USER@$SERVER_IP:$REMOTE_DIR/docker-compose.yml
 
-    # اتصال به سرور و اجرای دستورات (دقت کنید این خط حتما "-" دارد)
+    # اتصال به سرور و اجرای دستورات نهایی
     - ssh $SERVER_USER@$SERVER_IP "
       cd $REMOTE_DIR &&
+      
+      # 1. لاگین در سمت سرور (به ریجیستری HTTP شما)
       echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin http://${REGISTRY_URL} &&
+      
+      # 2. دانلود ایمیج (سرور از طریق پروکسی که ست کردیم وصل میشه)
       echo '⬇️ Pulling Image...' &&
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
       docker compose pull &&
+      
+      # 3. اجرا
       echo '🔥 Up and Running...' &&
       docker compose up -d --remove-orphans &&
       docker image prune -f
