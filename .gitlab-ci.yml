@@ -39,7 +39,9 @@ deploy_job:
   stage: deploy
   image: docker:24.0.5 # تغییر ایمیج به داکر (چون نیاز به دستورات داکر داریم)
   services:
-    - docker:24.0.5-dind
+    - name: docker:24.0.5-dind
+      # این دستور به داکر می‌گوید که به این آدرس با پروتکل HTTP اعتماد کن
+      command: [ "--insecure-registry=5.78.55.0:5051" ]
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
