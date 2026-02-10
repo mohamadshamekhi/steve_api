@@ -67,8 +67,7 @@ deploy_job:
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
 
   script:
-    # تست اتصال با پورت جدید
-    - ssh -p $SSH_PORT -T $SERVER_USER@$SERVER_IP "echo '✅ Connection OK!'"
+    - ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "echo '✅ Connection OK!'"
 
     - echo "🚀 Pulling image..."
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://${REGISTRY_URL}
@@ -76,22 +75,34 @@ deploy_job:
 
     - echo "📦 Zipping..."
     - docker save ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA} | gzip > image.tar.gz
-    - echo "Bn Creating Directory on Server..."
-    - ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "mkdir -p ${SERVER_PATH}"
 
-    - echo "📤 Uploading (SCP)..."
-    # نکته: scp از پورت -P (بزرگ) استفاده می‌کند
-    - scp -P $SSH_PORT -o ServerAliveInterval=60 image.tar.gz $SERVER_USER@$SERVER_IP:${SERVER_PATH}/image.tar.gz
+    # بررسی حجم فایل (فقط جهت اطمینان در لاگ)
+    - ls -lh image.tar.gz
 
-    # انتقال فایل‌های کانفیگ
+    # 🔥 تعیین مسیر مطلق (Absolute Path) برای جلوگیری از خطای آدرس
+    # فرض می‌کنیم یوزر سرور ubuntu است. اگر چیز دیگری است، دستی بنویسید /home/username
+    - REMOTE_DIR="/home/$SERVER_USER/projects/steve-app"
+
+    - echo "📂 Creating Directory: $REMOTE_DIR"
+    - ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "mkdir -p $REMOTE_DIR"
+
+    - echo "📤 Uploading (Optimized SCP)..."
+    # آپشن‌ها:
+    # -C: خاموش کردن فشرده‌سازی (چون فایل خودش زیپ است)
+    # -c aes128-ctr: رمزنگاری سبک‌تر و سریع‌تر
+    - scp -P $SSH_PORT -o Compression=no -o Ciphers=aes128-ctr -o ServerAliveInterval=60 image.tar.gz $SERVER_USER@$SERVER_IP:$REMOTE_DIR/image.tar.gz
+
+    - echo "📄 Uploading configs..."
     - echo "ST_MONGO__HOST=steve_db" > .env
-    - scp -P $SSH_PORT .env $SERVER_USER@$SERVER_IP:${SERVER_PATH}/.env
-    - scp -P $SSH_PORT docker-compose.yml $SERVER_USER@$SERVER_IP:${SERVER_PATH}/docker-compose.yml
+    # ... بقیه متغیرها ...
+    - scp -P $SSH_PORT .env $SERVER_USER@$SERVER_IP:$REMOTE_DIR/.env
+    - scp -P $SSH_PORT docker-compose.yml $SERVER_USER@$SERVER_IP:$REMOTE_DIR/docker-compose.yml
 
     # اجرا
     - echo "🚢 Running..."
     - ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "
-      cd ${SERVER_PATH} &&
+      cd $REMOTE_DIR &&
+      echo 'Loading Docker Image...' &&
       gunzip -c image.tar.gz | docker load &&
       rm image.tar.gz &&
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
