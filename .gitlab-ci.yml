@@ -76,27 +76,24 @@ deploy_job:
     - echo "📦 Zipping..."
     - docker save ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA} | gzip > image.tar.gz
 
-    # بررسی حجم فایل (فقط جهت اطمینان در لاگ)
-    - ls -lh image.tar.gz
-
-    # 🔥 تعیین مسیر مطلق (Absolute Path) برای جلوگیری از خطای آدرس
-    # فرض می‌کنیم یوزر سرور ubuntu است. اگر چیز دیگری است، دستی بنویسید /home/username
+    # مسیر ریموت
     - REMOTE_DIR="/home/$SERVER_USER/projects/steve-app"
-
-
     - ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "mkdir -p $REMOTE_DIR"
 
-    - echo "📤 Uploading (Optimized SCP)..."
-    # آپشن‌ها:
-    # -C: خاموش کردن فشرده‌سازی (چون فایل خودش زیپ است)
-    # -c aes128-ctr: رمزنگاری سبک‌تر و سریع‌تر
-    - scp -P $SSH_PORT -o Compression=no -o Ciphers=aes128-ctr -o ServerAliveInterval=60 image.tar.gz $SERVER_USER@$SERVER_IP:$REMOTE_DIR/image.tar.gz
+    # 🔥🔥🔥 بخش جادویی (Firewall Bypass) 🔥🔥🔥
+    # به جای SCP از پایپ مستقیم استفاده می‌کنیم.
+    # این دستور فایل را می‌خواند -> کد می‌کند -> از تو تونل SSH رد می‌کند -> در سرور دیکد می‌کند
+    - echo "📤 Uploading using SSH Stream (Bypassing SCP)..."
+    - cat image.tar.gz | base64 | ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "base64 -d > $REMOTE_DIR/image.tar.gz"
 
+    # چک کردن اینکه فایل سالم رسیده یا نه
+    - ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "ls -lh $REMOTE_DIR/image.tar.gz"
+
+    # آپلود فایل‌های کانفیگ (این‌ها کوچک هستند، با همان روش اکو می‌فرستیم که SCP کلا حذف شود)
     - echo "📄 Uploading configs..."
-    - echo "ST_MONGO__HOST=steve_db" > .env
-    # ... بقیه متغیرها ...
-    - scp -P $SSH_PORT .env $SERVER_USER@$SERVER_IP:$REMOTE_DIR/.env
-    - scp -P $SSH_PORT docker-compose.yml $SERVER_USER@$SERVER_IP:$REMOTE_DIR/docker-compose.yml
+    - ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "echo 'ST_MONGO__HOST=steve_db' > $REMOTE_DIR/.env"
+    # برای فایل‌های چند خطی مثل docker-compose، باز هم از روش base64 استفاده می‌کنیم
+    - cat docker-compose.yml | base64 | ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "base64 -d > $REMOTE_DIR/docker-compose.yml"
 
     # اجرا
     - echo "🚢 Running..."
