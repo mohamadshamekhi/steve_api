@@ -50,7 +50,6 @@ deploy_job:
   image: alpine:latest
 
   variables:
-    # تنظیمات سرور
     SERVER_IP: "37.32.4.62"
     SERVER_USER: "ubuntu"
     SERVER_PATH: "/home/ubuntu/projects/steve-app"
@@ -58,11 +57,11 @@ deploy_job:
     REGISTRY_URL: "5.78.55.0:5051"
 
   before_script:
-    # 1. تنظیم میرورهای ایران (برای حل مشکل دانلود پکیج)
+    # 1. تنظیم میرورهای ایران (برای نصب پکیج‌ها)
     - sed -i 's|dl-cdn.alpinelinux.org|mirror-linux.runflare.com|g' /etc/apk/repositories
     - sed -i 's|uk.alpinelinux.org|mirror-linux.runflare.com|g' /etc/apk/repositories
 
-    # 2. نصب ابزارها (openssh و coreutils برای base64)
+    # 2. نصب پکیج‌های ضروری
     - apk update --no-cache && apk add --no-cache openssh-client coreutils
 
     # 3. تنظیم کلید SSH
@@ -72,32 +71,37 @@ deploy_job:
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\tPort 2222\n\n" > ~/.ssh/config
 
   script:
-    - echo "🚀 Preparing Payload..."
+    - echo "🚀 Preparing Credentials & Payload..."
 
-    # 🔥 ترفند طلایی: تبدیل فایل کامپوز به یک رشته متنی Base64
-    # این کار باعث میشه بتونیم فایل رو "داخل" دستور SSH بفرستیم نه با SCP جداگانه
+    # 🔥 قدم ۱: ساخت دستی فایل لاگین داکر (config.json) در رانر
+    # این کار باعث میشه دیگه نیازی به اجرای دستور docker login روی سرور نباشه
+    - AUTH_STR=$(echo -n "$CI_REGISTRY_USER:$CI_REGISTRY_PASSWORD" | base64)
+    - DOCKER_CONFIG_JSON="{\"auths\":{\"${REGISTRY_URL}\":{\"auth\":\"$AUTH_STR\"}}}"
+
+    # تبدیل فایل‌ها به Base64 برای انتقال امن
+    - DOCKER_CONFIG_B64=$(echo -n "$DOCKER_CONFIG_JSON" | base64 -w 0)
     - COMPOSE_B64=$(base64 -w 0 docker-compose.yml)
 
-    - echo "🚀 Executing ONE-SHOT Deployment..."
+    - echo "🚀 Executing Deployment..."
 
-    # 🔥 تمام عملیات فقط در "یک" اتصال SSH انجام می‌شود
-    # دیگر قطع و وصلی وجود ندارد که فایروال حساس شود
+    # 🔥 قدم ۲: تزریق فایل‌ها به سرور و اجرا
     - ssh $SERVER_USER@$SERVER_IP "
       mkdir -p $SERVER_PATH &&
+      mkdir -p ~/.docker &&
       cd $SERVER_PATH &&
       
-      echo '1. Writing Config Files...' &&
+      echo '1. Injecting Docker Credentials (Bypassing Network Login)...' &&
+      echo '$DOCKER_CONFIG_B64' | base64 -d > ~/.docker/config.json &&
+      
+      echo '2. Writing Config Files...' &&
       echo 'ST_MONGO__HOST=steve_db' > .env &&
       echo '$COMPOSE_B64' | base64 -d > docker-compose.yml &&
       
-      echo '2. Docker Login...' &&
-      echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin http://${REGISTRY_URL} &&
-      
-      echo '3. Pulling Image via Server Proxy...' &&
+      echo '3. Pulling Image...' &&
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
       docker compose pull &&
       
-      echo '4. Starting Application...' &&
+      echo '4. Starting Services...' &&
       docker compose up -d --remove-orphans &&
       docker image prune -f
       "
