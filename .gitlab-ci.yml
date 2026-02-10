@@ -65,29 +65,31 @@ deploy_job:
     - chmod 700 ~/.ssh
     - ssh-keyscan $SERVER_IP >> ~/.ssh/known_hosts
   script:
-    - echo "🚀 Pulling image on Runner (High Speed)..."
-    # 1. لاگین در رجیستری (روی رانر)
+    - echo "🚀 Pulling image on Runner..."
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://${REGISTRY_URL}
-
-    # 2. پول کردن ایمیج روی رانر (با سرعت بالا)
     - docker pull ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}
 
-    # 3. ذخیره، فشرده‌سازی و ارسال مستقیم به سرور ایران
-    - echo "📦 Zipping and Transferring to Iran Server..."
-    - |
-      docker save ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA} | gzip | \
-      ssh $SERVER_USER@$SERVER_IP "cat > ${SERVER_PATH}/image.tar.gz"
+    # ✅ گام ۱: ذخیره و فشرده‌سازی روی دیسک خود رانر (امن‌تر از پایپ مستقیم)
+    - echo "📦 Saving & Zipping locally..."
+    - docker save ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA} | gzip > image.tar.gz
 
-    # 4. آماده‌سازی فایل env و کامپوز (مثل قبل)
-    - ssh $SERVER_USER@$SERVER_IP "mkdir -p ${SERVER_PATH}"
+    # ✅ گام ۲: ایجاد دایرکتوری در سرور مقصد
+    - ssh -o ServerAliveInterval=60 -o ServerAliveCountMax=5 $SERVER_USER@$SERVER_IP "mkdir -p ${SERVER_PATH}"
+
+    # ✅ گام ۳: آپلود فایل با تنظیمات ضد قطعی (KeepAlive)
+    # آپشن ServerAliveInterval=60 باعث می‌شود هر ۶۰ ثانیه یک سیگنال بفرستد تا کانکشن قطع نشود
+    - echo "📤 Uploading to Iran Server (This may take a while)..."
+    - scp -o ServerAliveInterval=60 -o ServerAliveCountMax=10 image.tar.gz $SERVER_USER@$SERVER_IP:${SERVER_PATH}/image.tar.gz
+
+    # انتقال فایل‌های کانفیگ
     - echo "ST_MONGO__HOST=steve_db" > .env
-    # ... (بقیه متغیرهای محیطی که داشتی رو اینجا بذار) ...
-    - scp .env $SERVER_USER@$SERVER_IP:${SERVER_PATH}/.env
-    - scp docker-compose.yml $SERVER_USER@$SERVER_IP:${SERVER_PATH}/docker-compose.yml
+    # ... (بقیه متغیرهای محیطی که داشتید) ...
+    - scp -o ServerAliveInterval=60 .env $SERVER_USER@$SERVER_IP:${SERVER_PATH}/.env
+    - scp -o ServerAliveInterval=60 docker-compose.yml $SERVER_USER@$SERVER_IP:${SERVER_PATH}/docker-compose.yml
 
-    # 5. لود کردن ایمیج در سرور مقصد و اجرا
+    # ✅ گام ۴: لود کردن و اجرا در سرور
     - echo "🚢 Loading & Running on Server..."
-    - ssh $SERVER_USER@$SERVER_IP "
+    - ssh -o ServerAliveInterval=60 $SERVER_USER@$SERVER_IP "
       cd ${SERVER_PATH} &&
       echo 'Unzipping and Loading Docker Image...' &&
       gunzip -c image.tar.gz | docker load &&
