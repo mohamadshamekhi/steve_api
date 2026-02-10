@@ -68,7 +68,6 @@ deploy_job:
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\tPort 2222\n\n" > ~/.ssh/config
 
   script:
-    - echo "🚀 Connecting to Server..."
 
     # 1. ساخت دایرکتوری در سرور
     - ssh $SERVER_USER@$SERVER_IP "mkdir -p $SERVER_PATH"
