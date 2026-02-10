@@ -22,7 +22,7 @@ RUN CGO_ENABLED=1 GOOS=linux go build -o main main.go
 
 # Stage 2: Final lightweight image
 FROM alpine:latest
-
+RUN sed -i 's/dl-cdn.alpinelinux.org/uk.alpinelinux.org/g' /etc/apk/repositories
 # ✅ نصب ca-certificates برای ارتباطات امن و libc6-compat برای اجرای باینری‌های CGO در Alpine
 RUN apk --no-cache add ca-certificates tzdata libc6-compat
 ENV TZ=Asia/Tehran
