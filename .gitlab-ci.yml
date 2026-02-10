@@ -12,8 +12,8 @@ variables:
   ARVAN_SECRET_KEY: "9211504b291a61243e8499610de4b1a8e12163a0c42091fcdd92cdda0626d7bf"
   ARVAN_ENDPOINT: "https://s3.ir-thr-at1.arvanstorage.ir"
   ARVAN_BUCKET: "soraa"
-
-  # تنظیمات داکر
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: "tcp://docker:2375"
   IMAGE_TAG: "steve-app:latest"
 
 stages:
