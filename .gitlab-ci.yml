@@ -79,27 +79,26 @@ deploy_job:
     # -----------------------------------------------
     - echo "🚀 Triggering Server to Pull & Run..."
 
-    # انتقال فایل‌های کانفیگ (Environment Variables)
+    # متغیر مسیر
     - REMOTE_DIR="/home/$SERVER_USER/projects/steve-app"
+
+    # ساخت دایرکتوری
     - ssh $SERVER_USER@$SERVER_IP "mkdir -p $REMOTE_DIR"
 
+    # ساخت فایل env
     - echo "ST_MONGO__HOST=steve_db" > .env
+
+    # آپلود فایل‌های سبک (کانفیگ‌ها)
     - scp .env $SERVER_USER@$SERVER_IP:$REMOTE_DIR/.env
     - scp docker-compose.yml $SERVER_USER@$SERVER_IP:$REMOTE_DIR/docker-compose.yml
 
-    # اتصال به سرور و اجرای دستورات
+    # اتصال به سرور و اجرای دستورات (دقت کنید این خط حتما "-" دارد)
     - ssh $SERVER_USER@$SERVER_IP "
       cd $REMOTE_DIR &&
-      
-      # لاگین در سمت سرور
       echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin http://${REGISTRY_URL} &&
-      
-      # دانلود ایمیج (اینجا داکر از پروکسی استفاده می‌کند)
       echo '⬇️ Pulling Image...' &&
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
       docker compose pull &&
-      
-      # اجرا
       echo '🔥 Up and Running...' &&
       docker compose up -d --remove-orphans &&
       docker image prune -f
