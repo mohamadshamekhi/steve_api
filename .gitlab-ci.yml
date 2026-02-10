@@ -45,6 +45,7 @@ deploy_job:
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
+    SSH_PORT: "2222"
   before_script:
   # 1. میرورها
     - sed -i 's|dl-cdn.alpinelinux.org|mirror-linux.runflare.com|g' /etc/apk/repositories
