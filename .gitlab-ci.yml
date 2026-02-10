@@ -67,7 +67,6 @@ deploy_job:
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
 
   script:
-    - echo "🔍 Debug: Testing Connection on Port $SSH_PORT..."
     # تست اتصال با پورت جدید
     - ssh -p $SSH_PORT -T $SERVER_USER@$SERVER_IP "echo '✅ Connection OK!'"
 
