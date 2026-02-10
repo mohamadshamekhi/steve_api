@@ -44,20 +44,20 @@ deploy_job:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   before_script:
-    # 1. تنظیم DNS (جهت اطمینان برای ریزالو کردن دامنه‌ها)
-    - echo "nameserver 1.1.1.1" > /etc/resolv.conf
-    - echo "nameserver 8.8.8.8" >> /etc/resolv.conf
+    # ✅ تغییر میرور به Runflare (مخصوص Alpine)
+    # نکته ۱: از آدرس /alpine استفاده کردیم نه /ubuntu
+    # نکته ۲: از جداکننده | استفاده کردیم تا اسلش‌های آدرس قاطی نشوند
+    - sed -i 's|dl-cdn.alpinelinux.org|mirror-linux.runflare.com/alpine|g' /etc/apk/repositories
+    - sed -i 's|uk.alpinelinux.org|mirror-linux.runflare.com/alpine|g' /etc/apk/repositories
 
-    # 2. 🔥 تغییر مخزن به میرور ایران (شاتل)
-    # این دستور تمام آدرس‌های خارجی را با آدرس شاتل جایگزین می‌کند
-    - sed -i 's/dl-cdn.alpinelinux.org/repo.shatel.ir/g' /etc/apk/repositories
-    # اگر ایمیج قدیمی باشد ممکن است آدرسش متفاوت باشد، این هم برای محکم‌کاری:
-    - sed -i 's/uk.alpinelinux.org/repo.shatel.ir/g' /etc/apk/repositories
+    # اگر باز هم ارور DNS دادید، این خط را آنکامنت کنید (IP ران‌فلر را باید پینگ بگیرید و جایگزین کنید)
+    # فعلا نیازی نیست چون ران‌فلر معمولا خوب ریزالو می‌شود.
 
+    # نصب پکیج‌ها
     - apk update --no-cache
     - apk add --no-cache openssh-client gzip
 
-    # 4. تنظیمات SSH
+    # تنظیمات SSH
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
