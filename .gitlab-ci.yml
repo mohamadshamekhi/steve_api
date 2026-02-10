@@ -40,58 +40,61 @@ deploy_job:
   image: docker:24.0.5
   services:
     - name: docker:24.0.5-dind
-      # چون ریجیستری شما HTTP است، این خط برای رانر ضروری است
       command: ["--insecure-registry=5.78.55.0:5051"]
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
-    SSH_PORT: "2222" # پورت جدید SSH شما
+    SSH_PORT: "2222"  # ✅ پورت جدید SSH شما
 
   before_script:
-    # نصب SSH Client روی رانر
+    # نصب ابزارهای اولیه روی رانر
     - apk update --no-cache && apk add --no-cache openssh-client
 
     # تنظیم کلید SSH
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    # تنظیم کانفیگ SSH
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\tPort 2222\n\n" > ~/.ssh/config
 
   script:
-    # ---------------------------------------------------------
-    # بخش ۱: عملیات روی Runner (بیلد و آپلود به ریجیستری)
-    # ---------------------------------------------------------
+    # -----------------------------------------------
+    # بخش ۱: عملیات روی Runner (بیلد و پوش)
+    # -----------------------------------------------
     - echo "🏗 Building & Pushing to Registry..."
 
-    # لاگین به ریجیستری (از سمت رانر)
+    # لاگین به ریجیستری
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin http://${REGISTRY_URL}
 
-    # پول کردن (برای کش)، بیلد و پوش
+    # استفاده از کش برای سرعت بیشتر
     - docker pull ${IMAGE_NAME}:latest || true
     - docker build --cache-from ${IMAGE_NAME}:latest -t ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA} -t ${IMAGE_NAME}:latest .
+
+    # آپلود ایمیج به ریجیستری
     - docker push ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}
     - docker push ${IMAGE_NAME}:latest
 
-    # ---------------------------------------------------------
-    # بخش ۲: عملیات روی Server (دستور دانلود و اجرا)
-    # ---------------------------------------------------------
+    # -----------------------------------------------
+    # بخش ۲: دستور به سرور (دانلود و اجرا)
+    # -----------------------------------------------
     - echo "🚀 Triggering Server to Pull & Run..."
 
-    # انتقال فایل‌های سبک کانفیگ (هنوز لازمه)
+    # انتقال فایل‌های کانفیگ (Environment Variables)
     - REMOTE_DIR="/home/$SERVER_USER/projects/steve-app"
     - ssh $SERVER_USER@$SERVER_IP "mkdir -p $REMOTE_DIR"
+
     - echo "ST_MONGO__HOST=steve_db" > .env
     - scp .env $SERVER_USER@$SERVER_IP:$REMOTE_DIR/.env
     - scp docker-compose.yml $SERVER_USER@$SERVER_IP:$REMOTE_DIR/docker-compose.yml
 
-    # دستور نهایی به سرور
+    # اتصال به سرور و اجرای دستورات
     - ssh $SERVER_USER@$SERVER_IP "
       cd $REMOTE_DIR &&
       
-      # لاگین در سمت سرور (خیلی مهم)
+      # لاگین در سمت سرور
       echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin http://${REGISTRY_URL} &&
       
-      # دانلود ایمیج (اینجاست که اون پروکسی به دادمون میرسه)
+      # دانلود ایمیج (اینجا داکر از پروکسی استفاده می‌کند)
       echo '⬇️ Pulling Image...' &&
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
       docker compose pull &&
