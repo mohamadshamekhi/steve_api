@@ -78,18 +78,21 @@ deploy_job:
     - IMAGE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker/image.tar.gz"
     - COMPOSE_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker/docker-compose.yml"
     - ENV_URL="$ARVAN_ENDPOINT/$ARVAN_BUCKET/docker/.env"
-
-    - ssh -p $SSH_PORT -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $SERVER_USER@$SERVER_IP "
+      
+      # 🔥 تغییر مهم ۲: استفاده از کانفیگ ساخته شده و سایلنت کردن دستورات
+      - ssh $SERVER_USER@$SERVER_IP "
       mkdir -p $SERVER_PATH &&
       cd $SERVER_PATH &&
       
       echo '⬇️ Downloading Files...' &&
-      wget -q -O image.tar.gz '$IMAGE_URL' &&
-      wget -q -O docker-compose.yml '$COMPOSE_URL' &&
-      wget -q -O .env '$ENV_URL' &&
+      # اضافه کردن تایم‌اوت برای اینکه اگر دانلود گیر کرد، متوجه شویم
+      wget -T 60 -t 3 -q -O image.tar.gz '$IMAGE_URL' &&
+      wget -T 30 -t 3 -q -O docker-compose.yml '$COMPOSE_URL' &&
+      wget -T 30 -t 3 -q -O .env '$ENV_URL' &&
       
-      echo '🐳 Loading Docker Image...' &&
-      gunzip -c image.tar.gz | docker load &&
+      echo '🐳 Loading Docker Image (Silent Mode)...' &&
+      # سویچ -q حیاتی است! از چاپ هزاران خط لاگ جلوگیری می‌کند که باعث هنگ SSH می‌شود
+      gunzip -c image.tar.gz | docker load -q &&
       
       echo '🔥 Updating Services...' &&
       docker compose up -d --remove-orphans &&
