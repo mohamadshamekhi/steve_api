@@ -76,6 +76,8 @@ deploy_job:
 
     - echo "📦 Zipping..."
     - docker save ${IMAGE_NAME}:${CI_COMMIT_SHORT_SHA} | gzip > image.tar.gz
+    - echo "Bn Creating Directory on Server..."
+    - ssh -p $SSH_PORT $SERVER_USER@$SERVER_IP "mkdir -p ${SERVER_PATH}"
 
     - echo "📤 Uploading (SCP)..."
     # نکته: scp از پورت -P (بزرگ) استفاده می‌کند
