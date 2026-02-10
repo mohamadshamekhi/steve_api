@@ -30,6 +30,7 @@ deploy_job:
   before_script:
     - sed -i 's/dl-cdn.alpinelinux.org/uk.alpinelinux.org/g' /etc/apk/repositories
     - apk add --no-cache openssh-client curl unzip
+    - ip link set eth0 mtu 1300
     - curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
     - unzip rclone-current-linux-amd64.zip
     - cp rclone-*-linux-amd64/rclone /usr/bin/
