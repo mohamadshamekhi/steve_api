@@ -47,42 +47,56 @@ build_job:
 # -----------------------------------------------------------
 deploy_job:
   stage: deploy
-  image: alpine:latest  # استفاده از ایمیج سبک (چون فقط SSH می‌خواهیم)
+  image: alpine:latest
+
+  variables:
+    # تنظیمات سرور
+    SERVER_IP: "37.32.4.62"
+    SERVER_USER: "ubuntu"
+    SERVER_PATH: "/home/ubuntu/projects/steve-app"
+    SSH_PORT: "2222"
+    REGISTRY_URL: "5.78.55.0:5051"
 
   before_script:
-    # نصب SSH Client
+    # نصب ابزارها
     - apk update --no-cache && apk add --no-cache openssh-client
 
-    # تنظیم کلید SSH
+    # تنظیم SSH Key
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-
-    # تنظیم کانفیگ SSH (پورت 2222)
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\tPort 2222\n\n" > ~/.ssh/config
 
   script:
-    - echo "🚀 Triggering Server to Pull & Run..."
+    - echo "🚀 Connecting to Server..."
 
-    # ساخت دایرکتوری در سرور (با استفاده از متغیر SERVER_PATH)
+    # 1. ساخت دایرکتوری در سرور
     - ssh $SERVER_USER@$SERVER_IP "mkdir -p $SERVER_PATH"
 
-    # ساخت فایل env و ارسال فایل‌های کانفیگ
-    - echo "ST_MONGO__HOST=steve_db" > .env
-    - scp .env $SERVER_USER@$SERVER_IP:$SERVER_PATH/.env
-    - scp docker-compose.yml $SERVER_USER@$SERVER_IP:$SERVER_PATH/docker-compose.yml
+    # 2. انتقال فایل .env (بدون استفاده از SCP)
+    # ما محتوا را اکو میکنیم و مستقیم در فایل سرور می‌نویسیم
+    - echo "📄 Sending .env..."
+    - ssh $SERVER_USER@$SERVER_IP "echo 'ST_MONGO__HOST=steve_db' > $SERVER_PATH/.env"
 
-    # اتصال به سرور و اجرای دستورات نهایی
+    # 3. انتقال docker-compose.yml (روش جادویی Piping) 🪄
+    # این دستور فایل را می‌خواند و از طریق تونل SSH در سرور می‌ریزد. فایروال نمی‌تواند این را ببندد.
+    - echo "📄 Sending docker-compose.yml..."
+    - cat docker-compose.yml | ssh $SERVER_USER@$SERVER_IP "cat > $SERVER_PATH/docker-compose.yml"
+
+    # 4. اجرای دستورات نهایی روی سرور
+    - echo "🔥 Executing Commands on Server..."
     - ssh $SERVER_USER@$SERVER_IP "
       cd $SERVER_PATH &&
       
+      # لاگین به ریجیستری (اینجا سرور از اینترنت خودش استفاده میکنه)
       echo '$CI_REGISTRY_PASSWORD' | docker login -u '$CI_REGISTRY_USER' --password-stdin http://${REGISTRY_URL} &&
       
+      # دانلود و اجرا (اینجاست که اون VPN سرور به کار میاد!)
       echo '⬇️ Pulling Image...' &&
       export IMAGE_TAG=$CI_COMMIT_SHORT_SHA &&
       docker compose pull &&
       
-      echo '🔥 Up and Running...' &&
+      echo '🚀 Starting Services...' &&
       docker compose up -d --remove-orphans &&
       docker image prune -f
       "
