@@ -40,7 +40,9 @@ deploy_job:
   image: docker:24.0.5
   services:
     - name: docker:24.0.5-dind
-      command: ["--insecure-registry=5.78.55.0:5051"]
+      alias: docker   # ✅ این خط برای اطمینان از اتصال درست ضروری است
+      command:
+        - "--insecure-registry=5.78.55.0:5051"
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
