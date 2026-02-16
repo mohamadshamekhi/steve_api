@@ -1,10 +1,10 @@
 image: docker:24.0.5
 
 variables:
-  SERVER_IP: "37.32.4.62"
+  SERVER_IP: "185.204.169.23"
   SERVER_USER: "ubuntu"
   SERVER_PATH: "/home/ubuntu/projects/steve-app"
-  SSH_PORT: "2222"
+  SSH_PORT: "22"
 
   ARVAN_ACCESS_KEY: $ST_OBJECT_STORAGE__AWS_ACCESS_KEY_ID
   ARVAN_SECRET_KEY: $ST_OBJECT_STORAGE__AWS_SECRET_ACCESS_KEY
