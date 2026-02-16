@@ -55,6 +55,7 @@ import (
 	mongodbshipping "github.com/abolfazlnorzad/steve/repository/mongo/shipping"
 	mongodbuser "github.com/abolfazlnorzad/steve/repository/mongo/user"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
+	orderscheduler "github.com/abolfazlnorzad/steve/scheduler/order"
 	aclservice "github.com/abolfazlnorzad/steve/service/acl"
 	permissionservice "github.com/abolfazlnorzad/steve/service/acl/permission"
 	roleservice "github.com/abolfazlnorzad/steve/service/acl/role"
@@ -195,7 +196,7 @@ func main() {
 	cartHandler := carthandler.New(cartSvc, cartBackofficeSvc, orderSvc, cartVld, translator, authSvc, cfg.Auth, aclSvc)
 	storefrontCategorySvc := categoryservice.NewStorefrontService(categoryRepo, mediaSvc, attrSvc, productStorefrontSvc)
 	categoryHandler := categoryhandler.New(categorySvc, categoryVld, translator, authSvc, cfg.Auth, aclSvc, storefrontCategorySvc)
-	orderBackofficeSvc := orderservice.NewBackofficeService(orderRepo, backofficeUserSvc)
+	orderBackofficeSvc := orderservice.NewBackofficeService(orderRepo, backofficeUserSvc, productSvc)
 
 	shippingHandler := shippinghandler.New(shippingBakcofficeSvc, shippingStorefrontSvc, shippingVld, translator, authSvc, cfg.Auth, aclSvc)
 
@@ -239,5 +240,12 @@ func main() {
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
 		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler, paymentHandler)
-	server.Serve()
+
+	scheduler := orderscheduler.New(cfg.OrderScheduler, orderBackofficeSvc)
+
+	go scheduler.OrderSchedulerRun()
+
+	go server.Serve()
+
+	server.Shutdown()
 }

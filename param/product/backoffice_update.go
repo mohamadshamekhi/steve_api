@@ -22,3 +22,12 @@ type UpdateProductVariantQuantityAfterRegisterOrderRequest struct {
 
 type UpdateProductVariantQuantityAfterRegisterOrderResponse struct {
 }
+
+type UpdateProductVariantQuantityAfterCancelOrderRequest struct {
+	ProductID string `json:"product_id"`
+	VariantID string `json:"variant_id"`
+	Quantity  uint   `json:"quantity"`
+}
+
+type UpdateProductVariantQuantityAfterCancelOrderResponse struct {
+}

@@ -48,6 +48,7 @@ type ProductWriter interface {
 	UpdateVariant(ctx context.Context, ProductID string, variant entity.Variant) error
 	UpdateQuantity(ctx context.Context, ProductID string, variant entity.Variant, finalQuantity uint) error
 	UpdateProductSalesCount(ctx context.Context, ProductID string, quantity uint) error
+	UpdateVariantQuantity(ctx context.Context, productID string, variantID string, quantity uint) error
 }
 
 type ProductReadWriter interface {

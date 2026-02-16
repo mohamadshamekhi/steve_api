@@ -1,8 +1,13 @@
 package httpserver
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/config"
 	aclhandler "github.com/abolfazlnorzad/steve/delivery/http_server/acl/handler"
@@ -179,5 +184,24 @@ func (s Server) Serve() {
 	fmt.Printf("start echo server on %s\n", address)
 	if err := s.Router.Start(address); err != nil {
 		fmt.Println("router start error", err)
+	}
+}
+
+func (s Server) Shutdown() {
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+
+	<-sig
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	fmt.Println("Stopping HTTP Server...")
+
+	if err := s.Router.Shutdown(shutdownCtx); err != nil {
+		fmt.Println("Server shutdown error:", err)
+	} else {
+		fmt.Println("Server stopped cleanly")
 	}
 }
