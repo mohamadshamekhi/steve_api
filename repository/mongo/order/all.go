@@ -2,6 +2,7 @@ package mongodborder
 
 import (
 	"context"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
@@ -120,4 +121,26 @@ func (d DB) GetUserOrderStatics(ctx context.Context, userID string, status entit
 	}
 
 	return uint64(count), nil
+}
+
+func (d DB) GetExpiredPendingOrders(ctx context.Context, expiredBefore time.Time) ([]entity.Order, error) {
+	const op = "mongodborder.GetExpiredPendingOrders"
+
+	filter := bson.M{
+		"status":     entity.OrderStatusPendingPayment,
+		"created_at": bson.M{"$lte": expiredBefore},
+	}
+
+	cursor, err := d.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+	defer cursor.Close(ctx)
+
+	var orders []entity.Order
+	if err := cursor.All(ctx, &orders); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+
+	return orders, nil
 }

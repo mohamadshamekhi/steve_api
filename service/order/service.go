@@ -2,11 +2,13 @@ package orderservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	orderparam "github.com/abolfazlnorzad/steve/param/order"
 	paymentparam "github.com/abolfazlnorzad/steve/param/payment"
+	productparam "github.com/abolfazlnorzad/steve/param/product"
 	userparam "github.com/abolfazlnorzad/steve/param/user"
 )
 
@@ -25,6 +27,7 @@ type OrderReader interface {
 	GetUserOrderWithDetails(ctx context.Context, UserID string, p commonparam.PaginationRequest) (StorefrontListResult, error)
 	GetUserOrderStatics(ctx context.Context, userID string, status entity.OrderStatus) (uint64, error)
 	GetOrderByID(ctx context.Context, orderID string) (entity.Order, error)
+	GetExpiredPendingOrders(ctx context.Context, expiredBefore time.Time) ([]entity.Order, error)
 }
 
 type OrderWriter interface {
@@ -43,4 +46,8 @@ type UserProvider interface {
 
 type PaymentProvider interface {
 	GetPaymentsByOrderID(ctx context.Context, req paymentparam.GetPaymentsByOrderIDRequest) (paymentparam.GetPaymentsByOrderIDResponse, error)
+}
+
+type ProductProvider interface {
+	UpdateVariantQuantity(ctx context.Context, req productparam.UpdateProductVariantQuantityAfterCancelOrderRequest) (productparam.UpdateProductVariantQuantityAfterCancelOrderResponse, error)
 }

@@ -3,6 +3,7 @@ package mongodbproduct
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -91,6 +92,40 @@ func (d DB) UpdateVariant(ctx context.Context, productID string, variant entity.
 			WithKind(richerror.KindNotFound).
 			WithMessageKey("global.not-found").
 			WithMeta(map[string]any{"product_id": productID, "variant_id": variant.ID})
+	}
+
+	return nil
+
+}
+
+func (d DB) UpdateVariantQuantity(ctx context.Context, productID string, variantID string, quantity uint) error {
+	const op = "mongodbproduct.UpdateVariantQuantity"
+
+	filter := bson.M{
+		"_id":         productID,
+		"variants.id": variantID,
+	}
+
+	update := bson.M{
+		"$inc": bson.M{
+			"variants.$.quantity": int64(quantity),
+		},
+		"$set": bson.M{
+			"updated_at": time.Now(),
+		},
+	}
+
+	result, err := d.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return richerror.New(op).WithWarpError(err).
+			WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
+	}
+
+	if result.MatchedCount == 0 {
+		return richerror.New(op).
+			WithKind(richerror.KindNotFound).
+			WithMessageKey("global.not-found").
+			WithMeta(map[string]any{"product_id": productID, "variant_id": variantID, "quantity": quantity})
 	}
 
 	return nil

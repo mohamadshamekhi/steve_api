@@ -80,3 +80,12 @@ func (s BackofficeService) UpdateVariant(ctx context.Context, req productparam.U
 	}
 	return productparam.UpdateVariantResponse{}, nil
 }
+
+func (s BackofficeService) UpdateVariantQuantity(ctx context.Context, req productparam.UpdateProductVariantQuantityAfterCancelOrderRequest) (productparam.UpdateProductVariantQuantityAfterCancelOrderResponse, error) {
+	const op = "productservice.UpdateVariantQuantity"
+
+	if err := s.repo.UpdateVariantQuantity(ctx, req.ProductID, req.VariantID, req.Quantity); err != nil {
+		return productparam.UpdateProductVariantQuantityAfterCancelOrderResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return productparam.UpdateProductVariantQuantityAfterCancelOrderResponse{}, nil
+}
