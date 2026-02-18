@@ -233,7 +233,7 @@ func main() {
 	bannerHandler := bannerhandler.New(bannerBackofficeSvc, bannerVld, translator, authSvc, cfg.Auth, aclSvc)
 	paymentRepo := mongodbpayment.New(mongoRepo)
 	zarinpal := gateway.NewZarinpalAdapter(cfg.Zarinpal)
-	paymentSvc := paymentservice.NewService(cfg.Payment, paymentRepo, orderSvc, zarinpal, discountbackofficeSvc, productStorefrontSvc)
+	paymentSvc := paymentservice.NewService(cfg.Payment, paymentRepo, orderSvc, zarinpal, discountbackofficeSvc, productStorefrontSvc, mp, userSvc)
 	paymentHandler := paymenthandler.New(paymentSvc, translator, authSvc, cfg.Auth, aclSvc)
 	orderSvc.SetPaymentProvider(paymentSvc)
 	orderBackofficeSvc.SetPaymentProvider(paymentSvc)
