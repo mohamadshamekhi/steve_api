@@ -26,6 +26,7 @@ import (
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
 	ratinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/rating"
 	repairhandler "github.com/abolfazlnorzad/steve/delivery/http_server/repair"
+	searchhandler "github.com/abolfazlnorzad/steve/delivery/http_server/search"
 	sellhandler "github.com/abolfazlnorzad/steve/delivery/http_server/sell"
 	shippinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/shipping"
 	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
@@ -76,6 +77,7 @@ import (
 	productservice "github.com/abolfazlnorzad/steve/service/product"
 	ratingservice "github.com/abolfazlnorzad/steve/service/rating"
 	repairservice "github.com/abolfazlnorzad/steve/service/repair"
+	searchservice "github.com/abolfazlnorzad/steve/service/search"
 	sellservice "github.com/abolfazlnorzad/steve/service/sell"
 	settingservice "github.com/abolfazlnorzad/steve/service/setting"
 	userservice "github.com/abolfazlnorzad/steve/service/user"
@@ -237,9 +239,12 @@ func main() {
 	orderBackofficeSvc.SetPaymentProvider(paymentSvc)
 	orderHandler := orderhandler.New(orderSvc, orderBackofficeSvc, orderVld, translator, authSvc, cfg.Auth, aclSvc)
 
+	searchSvc := searchservice.NewStorefrontService(productStorefrontSvc, storefrontSvc)
+	searchHandler := searchhandler.New(translator, searchSvc)
+
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
-		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler, paymentHandler)
+		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler, paymentHandler,  searchHandler)
 
 	scheduler := orderscheduler.New(cfg.OrderScheduler, orderBackofficeSvc)
 

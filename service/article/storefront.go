@@ -6,6 +6,7 @@ import (
 
 	articleparam "github.com/abolfazlnorzad/steve/param/article"
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
+	searchparam "github.com/abolfazlnorzad/steve/param/search"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 )
@@ -156,6 +157,51 @@ func (s StorefrontService) GetAllStorefrontArticles(ctx context.Context, req art
 			Total      uint `json:"total"`
 		}{PageSize: req.Pagination.GetPageSize(), PageNumber: req.Pagination.GetPageNumber(), Total: uint(resp.TotalCount)},
 		Articles: articlesInfo,
+	}, nil
+
+}
+
+func (s StorefrontService) GetSearchArticles(ctx context.Context, req articleparam.StorefrontGetSearchArticleRequest) (articleparam.StorefrontGetSearchArticleResponse, error) {
+	const op = "ArticleService.GetSearchArticles"
+
+	resp, err := s.aRepo.GetSearchArticles(ctx, req.Search)
+	if err != nil {
+		return articleparam.StorefrontGetSearchArticleResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	var list []searchparam.StorefrontArticleSearchList
+
+	mediaIDs := make([]string, 0, len(resp.Articles))
+	mediaIDSet := make(map[string]struct{})
+	for _, c := range resp.Articles {
+		if c.MediaID != "" {
+			if _, exists := mediaIDSet[c.MediaID]; !exists {
+				mediaIDSet[c.MediaID] = struct{}{}
+				mediaIDs = append(mediaIDs, c.MediaID)
+			}
+		}
+	}
+
+	urlMap, urlErr := s.mediaSvc.GetURLsByMediaIDs(ctx, mediaparam.GetUrlsByIDsRequest{IDs: mediaIDs})
+	if urlErr != nil {
+		logger.L().Error("warning: could not get media urls", "error", urlErr)
+	}
+
+	for _, article := range resp.Articles {
+		list = append(list, searchparam.StorefrontArticleSearchList{
+			ID:          article.ID,
+			Title:       article.Title,
+			Slug:        article.Slug,
+			IsPublished: article.IsPublished,
+			MediaUrl:    urlMap.URLs[article.MediaID],
+			Alt:         article.Alt,
+			CreatedAt:   article.CreatedAt,
+			UpdatedAt:   article.UpdatedAt,
+		})
+	}
+
+	return articleparam.StorefrontGetSearchArticleResponse{
+		Articles: list,
 	}, nil
 
 }

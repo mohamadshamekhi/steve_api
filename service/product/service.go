@@ -32,6 +32,7 @@ type ProductReader interface {
 	UpdateProductAvrRating(ctx context.Context, ProductID string, AverageRating float64) error
 	GetProductIDsByCategories(ctx context.Context, catIDs []string) (map[string][]string, error)
 	GetPricesOfProducts(ctx context.Context, prodIDSlice []string, variantIDSlice []string) (map[string]map[string]float64, error)
+	GetSearchProduct(ctx context.Context, search commonparam.SearchRequest) (ListResult, error)
 }
 
 type ProductWriter interface {

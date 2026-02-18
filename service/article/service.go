@@ -17,6 +17,7 @@ type ArticleReader interface {
 	FindByID(ctx context.Context, id string) (entity.Article, error)
 	FindBySlug(ctx context.Context, slug string) (entity.Article, error)
 	All(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
+	GetSearchArticles(ctx context.Context, search commonparam.SearchRequest) (ListResult, error)
 }
 
 type ArticleWriter interface {
