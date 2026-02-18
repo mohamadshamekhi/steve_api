@@ -2,19 +2,23 @@ package paymentservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	discountparam "github.com/abolfazlnorzad/steve/param/discount"
 	orderparam "github.com/abolfazlnorzad/steve/param/order"
 	paymentparam "github.com/abolfazlnorzad/steve/param/payment"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
+	userparam "github.com/abolfazlnorzad/steve/param/user"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	persian "github.com/yaa110/go-persian-calendar"
 )
 
 type Config struct {
-	CallbackURL string `koanf:"callback_url"`
-	Gateway     string `koanf:"gateway"`
+	CallbackURL                     string        `koanf:"callback_url"`
+	Gateway                         string        `koanf:"gateway"`
+	ExpirationTimePaymentSmsContext time.Duration `koanf:"expiration_time_payment_sms_context"`
 }
 type GatewayAdapter interface {
 	RequestPayment(amount uint64, callbackURL string, description string) (authority string, paymentURL string, err error)
@@ -43,23 +47,35 @@ type ProductProvider interface {
 	IncrementSalesCount(ctx context.Context, req productparam.UpdateProductSalesCountRequest) (productparam.UpdateProductSalesCountResponse, error)
 }
 
-type Service struct {
-	cfg              Config
-	repo             Repository
-	orderProvider    OrderProvider
-	gatewayAdapter   GatewayAdapter
-	discountProvider DiscountProvider
-	productProvider  ProductProvider
+type MelliPayamakProvider interface {
+	SendPayment(ctx context.Context, to string, text []string) error
 }
 
-func NewService(cfg Config, repo Repository, orderProvider OrderProvider, gatewayAdapter GatewayAdapter, discountProvider DiscountProvider, productProvider ProductProvider) Service {
+type UserProvider interface {
+	GetUserByID(ctx context.Context, req userparam.GetUsersRequest) (userparam.GetUsersResponse, error)
+}
+
+type Service struct {
+	cfg                  Config
+	repo                 Repository
+	orderProvider        OrderProvider
+	gatewayAdapter       GatewayAdapter
+	discountProvider     DiscountProvider
+	productProvider      ProductProvider
+	melliPayamakProvider MelliPayamakProvider
+	userProvider         UserProvider
+}
+
+func NewService(cfg Config, repo Repository, orderProvider OrderProvider, gatewayAdapter GatewayAdapter, discountProvider DiscountProvider, productProvider ProductProvider, melliPayamakProvider MelliPayamakProvider, userProvider UserProvider) Service {
 	return Service{
-		cfg:              cfg,
-		repo:             repo,
-		orderProvider:    orderProvider,
-		gatewayAdapter:   gatewayAdapter,
-		discountProvider: discountProvider,
-		productProvider:  productProvider,
+		cfg:                  cfg,
+		repo:                 repo,
+		orderProvider:        orderProvider,
+		gatewayAdapter:       gatewayAdapter,
+		discountProvider:     discountProvider,
+		productProvider:      productProvider,
+		melliPayamakProvider: melliPayamakProvider,
+		userProvider:         userProvider,
 	}
 }
 
@@ -160,6 +176,26 @@ func (s Service) VerifyPayment(ctx context.Context, req paymentparam.VerifyPayme
 			}
 		}
 	}
+
+	user, err := s.userProvider.GetUserByID(ctx, userparam.GetUsersRequest{ID: payment.UserID})
+	if err != nil {
+		logger.L().Error("Failed to get user", "user_id", payment.UserID, "err", err)
+	}
+
+	go func() {
+		otpCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ExpirationTimePaymentSmsContext)
+		defer cancel()
+		loc, _ := time.LoadLocation("Asia/Tehran")
+		now := time.Now().In(loc)
+		pt := persian.New(now)
+		date := pt.Format("yyyy/MM/dd")
+		hour := pt.Format("HH:mm")
+
+		if err := s.melliPayamakProvider.SendPayment(otpCtx, user.User.PhoneNumber, []string{user.User.Name, date, hour, refID}); err != nil {
+			logger.L().Error("Failed to send payment SMS", "err", err)
+		}
+	}()
+
 	return paymentparam.VerifyPaymentResponse{
 		Status:       entity.PaymentStatusSuccessful,
 		TrackingCode: refID,

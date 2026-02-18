@@ -69,11 +69,13 @@ mellipayamak:
     url: "https://api.payamak-panel.com/post/Send.asmx"
     patterns:
       otp : "422053"
+      payment : "428066"
     from_number: "50002710070797"
 
 payment:
   callback_url: "http://localhost:3000/payment"
   gateway: "zarinpal"
+  expiration_time_payment_sms_context: 35s
 
 
 zarinpal:
