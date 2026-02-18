@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
@@ -12,6 +13,7 @@ import (
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	productservice "github.com/abolfazlnorzad/steve/service/product"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -295,4 +297,63 @@ func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bs
 	})
 
 	return pipeline, nil
+}
+
+func (d DB) GetSearchProduct(ctx context.Context, search commonparam.SearchRequest) (productservice.ListResult, error) {
+	const op = "mongodbproduct.GetSearchProduct"
+
+	pipeline := mongo.Pipeline{}
+
+	match := bson.M{
+		"is_published": true,
+	}
+
+	andConditions := bson.A{
+		bson.M{
+			"$or": bson.A{
+				bson.M{"deleted_at": bson.M{"$exists": false}},
+				bson.M{"deleted_at": nil},
+			},
+		},
+	}
+
+	if search.Search != "" {
+		q := strings.TrimSpace(search.Search)
+		andConditions = append(andConditions, bson.M{
+			"$or": bson.A{
+				bson.M{"name": bson.M{"$regex": q, "$options": "i"}},
+				bson.M{"en_title": bson.M{"$regex": q, "$options": "i"}},
+				bson.M{"slug": bson.M{"$regex": q, "$options": "i"}},
+			},
+		})
+	}
+
+	if len(andConditions) > 0 {
+		match["$and"] = andConditions
+	}
+
+	pipeline = append(pipeline, bson.D{{"$match", match}})
+
+	pipeline = append(pipeline, bson.D{
+		{"$sort", bson.D{{"created_at", -1}, {"_id", -1}}},
+	})
+
+	pipeline = append(pipeline, bson.D{
+		{"$limit", 10},
+	})
+
+	cursor, err := d.collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return productservice.ListResult{}, richerror.New(op).WithWarpError(err)
+	}
+	defer cursor.Close(ctx)
+
+	var products []entity.Product
+	if err := cursor.All(ctx, &products); err != nil {
+		return productservice.ListResult{}, richerror.New(op).WithWarpError(err)
+	}
+
+	return productservice.ListResult{
+		Products: products,
+	}, nil
 }
