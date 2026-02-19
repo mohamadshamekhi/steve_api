@@ -2,8 +2,9 @@ package authservice
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-	"math/rand/v2"
+	"math/big"
 
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -17,7 +18,10 @@ func (s Service) GenerateOTPCode(ctx context.Context, phoneNumber string, prefix
 		return richerror.New(op).WithWarpError(cErr)
 	}
 	if !resp {
-		code := fmt.Sprintf("%d", 10000+rand.IntN(99999))
+		code, gErr := s.generate5DigitOTP()
+		if gErr != nil {
+			return richerror.New(op).WithWarpError(gErr)
+		}
 		sErr := s.repo.StoreNewActiveCodeForUser(ctx, key, code, s.cfg.ExpirationTimeOptCode)
 		if sErr != nil {
 			return richerror.New(op).WithWarpError(sErr)
@@ -36,6 +40,18 @@ func (s Service) GenerateOTPCode(ctx context.Context, phoneNumber string, prefix
 	}
 
 	return nil
+}
+func (s Service) generate5DigitOTP() (string, error) {
+	maxNumber := big.NewInt(90000)
+
+	n, err := rand.Int(rand.Reader, maxNumber)
+	if err != nil {
+		return "", err
+	}
+
+	secureCode := n.Int64() + 10000
+
+	return fmt.Sprintf("%d", secureCode), nil
 }
 
 func (s Service) VerifyOTPCode(ctx context.Context, phoneNumber string, code string, prefix string) (bool, error) {
