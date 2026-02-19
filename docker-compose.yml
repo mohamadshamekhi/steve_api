@@ -24,6 +24,7 @@ services:
       - ST_MELLIPAYAMAK__PASSWORD=${ST_MELLIPAYAMAK__PASSWORD}
       - ST_REDIS__PORT=6379
       - ST_REDIS__HOST=steve_cache
+      - ST_ZARINPAL__MERCHANT_ID=${ST_ZARINPAL__MERCHANT_ID}
     networks:
       - steve_network
 
