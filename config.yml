@@ -81,9 +81,9 @@ payment:
 zarinpal:
   currency: "IRT"
   merchant_id:
-  verify_url: https://sandbox.zarinpal.com/pg/v4/payment/verify.json
-  start_pay_url: https://sandbox.zarinpal.com/pg/StartPay
-  request_url: https://sandbox.zarinpal.com/pg/v4/payment/request.json
+  verify_url: https://payment.zarinpal.com/pg/v4/payment/verify.json
+  start_pay_url: https://payment.zarinpal.com/pg/StartPay
+  request_url: https://payment.zarinpal.com/pg/v4/payment/request.json
 
 order_scheduler:
   cancel_expired_pending_orders_time: 15m
