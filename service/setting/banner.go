@@ -91,6 +91,9 @@ func (bs BannerBackofficeService) Update(ctx context.Context, req settingparam.U
 	if req.ExpiresAt != nil {
 		b.ExpiresAt = req.ExpiresAt
 	}
+	if req.Link != nil {
+		b.Link = *req.Link
+	}
 	err = bs.repo.Update(ctx, &b)
 	if err != nil {
 		return settingparam.UpdateBannerResponse{}, richerror.New(op).WithWarpError(err)
