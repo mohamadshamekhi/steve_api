@@ -137,9 +137,9 @@ func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.Reg
 		Items:            buildOrderItems(summary.Items),
 		ShippingAddress:  add.Address,
 		SubtotalAmount:   uint(summary.Subtotal),
-		ShippingAmount:   0,
+		ShippingAmount:   uint(shipping.Shipping.Cost),
 		AppliedDiscounts: summary.AppliedDiscounts,
-		FinalAmount:      uint(summary.FinalPrice),
+		FinalAmount:      uint(summary.FinalPrice) + uint(shipping.Shipping.Cost),
 		Shipping:         shipping.Shipping,
 		Status:           entity.OrderStatusPendingPayment,
 	}
