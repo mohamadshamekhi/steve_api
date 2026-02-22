@@ -76,3 +76,34 @@ func (d DB) DeleteItemFromCart(ctx context.Context, userID string, variantID str
 
 	return nil
 }
+
+func (d DB) ClearCartItemsByCartID(ctx context.Context, cartID string) error {
+	const op = "mongodbcart.ClearCartItemsByCartID"
+
+	filter := bson.M{
+		"_id": cartID,
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"items":      []entity.CartItem{},
+			"updated_at": time.Now(),
+		},
+	}
+
+	res, err := d.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return richerror.New(op).
+			WithWarpError(err).
+			WithKind(richerror.KindUnexpected).
+			WithMessageKey("global.something_wrong")
+	}
+
+	if res.MatchedCount == 0 {
+		return richerror.New(op).
+			WithKind(richerror.KindNotFound).
+			WithMessageKey("global.not-found")
+	}
+
+	return nil
+}

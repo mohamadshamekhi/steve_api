@@ -62,3 +62,36 @@ func (s BackofficeService) GetUsersByIDs(ctx context.Context, req userparam.GetU
 	}
 	return userparam.GetUsersByIDsResponse{Users: userInfos}, nil
 }
+
+func (s BackofficeService) UpsertUser(ctx context.Context, req userparam.UpsertUserRequest) (userparam.UpsertUserResponse, error) {
+	const op = "userservice.UpsertUser"
+
+	user, err := s.repo.GetOrCreateUser(ctx, req.PhoneNumber)
+	if err != nil {
+		return userparam.UpsertUserResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	nUser := userparam.UserInfo{
+		ID:          user.ID,
+		Name:        user.Name,
+		PhoneNumber: user.PhoneNumber,
+		CreatedAt:   user.CreatedAt,
+		Addresses:   user.Addresses,
+	}
+	return userparam.UpsertUserResponse{User: nUser}, nil
+}
+
+func (s BackofficeService) UpdateUser(ctx context.Context, req userparam.UpdateUserBackofficeRequest) (userparam.UpdateUserBackofficeResponse, error) {
+	const op = "userservice.UpdateUser"
+	u, gErr := s.repo.GetUserByID(ctx, req.UserID)
+	if gErr != nil {
+		return userparam.UpdateUserBackofficeResponse{}, richerror.New(op).WithWarpError(gErr)
+	}
+	if req.Name != nil {
+		u.Name = *req.Name
+	}
+	uErr := s.repo.UpdateUser(ctx, u)
+	if uErr != nil {
+		return userparam.UpdateUserBackofficeResponse{}, richerror.New(op).WithWarpError(gErr)
+	}
+	return userparam.UpdateUserBackofficeResponse{}, nil
+}

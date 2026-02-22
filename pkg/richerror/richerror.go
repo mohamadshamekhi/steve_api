@@ -116,3 +116,11 @@ func (r *RichError) TemplateData() map[string]any {
 	}
 	return nil
 }
+
+func GetKind(err error) Kind {
+	var re *RichError
+	if errors.As(err, &re) {
+		return re.Kind()
+	}
+	return KindInvalid
+}

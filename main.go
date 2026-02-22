@@ -1,6 +1,13 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/abolfazlnorzad/steve/adapter/gateway"
 	"github.com/abolfazlnorzad/steve/adapter/mellipayamak"
 	redisadapter "github.com/abolfazlnorzad/steve/adapter/redis"
@@ -32,6 +39,7 @@ import (
 	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
 	"github.com/abolfazlnorzad/steve/internal/seeder"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
+	"github.com/abolfazlnorzad/steve/pkg/logger"
 	mongodb "github.com/abolfazlnorzad/steve/repository/mongo"
 	mongodbpermission "github.com/abolfazlnorzad/steve/repository/mongo/acl/permission"
 	mongodbrole "github.com/abolfazlnorzad/steve/repository/mongo/acl/role"
@@ -56,6 +64,7 @@ import (
 	mongodbshipping "github.com/abolfazlnorzad/steve/repository/mongo/shipping"
 	mongodbuser "github.com/abolfazlnorzad/steve/repository/mongo/user"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
+	cartscheduler "github.com/abolfazlnorzad/steve/scheduler/cart"
 	orderscheduler "github.com/abolfazlnorzad/steve/scheduler/order"
 	aclservice "github.com/abolfazlnorzad/steve/service/acl"
 	permissionservice "github.com/abolfazlnorzad/steve/service/acl/permission"
@@ -100,6 +109,7 @@ import (
 	sellvalidator "github.com/abolfazlnorzad/steve/validator/sell"
 	settingvalidator "github.com/abolfazlnorzad/steve/validator/setting"
 	uservalidator "github.com/abolfazlnorzad/steve/validator/user"
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {
@@ -179,14 +189,14 @@ func main() {
 	discountVld := discountvalidator.New(discountRepo, categoryRepo, productRepo, userRepo)
 
 	cartRepo := mongodbcart.New(mongoRepo)
-	cartVld := cartvalidator.New(productRepo, cartRepo)
+	cartVld := cartvalidator.New(productRepo, cartRepo, userRepo)
 	cartSvc := cartservice.NewStorefrontService(cartRepo, productRepo, userRepo)
 	discountbackofficeSvc := discountservice.NewBackofficeService(discountRepo, &cartSvc, productSvc)
 	productStorefrontSvc := productservice.NewStorefrontService(productRepo, mediaSvc, categorySvc, backofficebrandsvc, discountbackofficeSvc)
 	productHandler := producthandler.NewHandler(translator, authSvc, cfg.Auth, aclSvc, productSvc, productStorefrontSvc, productVld)
 
 	discountHandler := discounthandler.New(discountbackofficeSvc, translator, discountVld, authSvc, cfg.Auth, aclSvc)
-	cartBackofficeSvc := cartservice.NewBackofficeService(cartRepo, userRepo, productRepo)
+	cartBackofficeSvc := cartservice.NewBackofficeService(cartRepo, userRepo, productRepo, productSvc)
 	orderRepo := mongodborder.New(mongoRepo)
 	orderVld := ordervalidator.New(discountbackofficeSvc)
 	shippingRepo := mongodbshipping.New(mongoRepo)
@@ -198,7 +208,7 @@ func main() {
 	cartHandler := carthandler.New(cartSvc, cartBackofficeSvc, orderSvc, cartVld, translator, authSvc, cfg.Auth, aclSvc)
 	storefrontCategorySvc := categoryservice.NewStorefrontService(categoryRepo, mediaSvc, attrSvc, productStorefrontSvc)
 	categoryHandler := categoryhandler.New(categorySvc, categoryVld, translator, authSvc, cfg.Auth, aclSvc, storefrontCategorySvc)
-	orderBackofficeSvc := orderservice.NewBackofficeService(orderRepo, backofficeUserSvc, productSvc)
+	orderBackofficeSvc := orderservice.NewBackofficeService(orderRepo, backofficeUserSvc, productSvc, discountbackofficeSvc)
 
 	shippingHandler := shippinghandler.New(shippingBakcofficeSvc, shippingStorefrontSvc, shippingVld, translator, authSvc, cfg.Auth, aclSvc)
 
@@ -246,11 +256,38 @@ func main() {
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
 		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler, paymentHandler,  searchHandler)
 
-	scheduler := orderscheduler.New(cfg.OrderScheduler, orderBackofficeSvc)
+	orderScheduler := orderscheduler.New(cfg.OrderScheduler, orderBackofficeSvc)
+	cartScheduler := cartscheduler.New(cfg.CartScheduler, cartBackofficeSvc)
 
-	go scheduler.OrderSchedulerRun()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
-	go server.Serve()
+	g, ctx := errgroup.WithContext(ctx)
 
-	server.Shutdown()
+	g.Go(func() error {
+		orderScheduler.OrderSchedulerRun(ctx)
+		return nil
+	})
+
+	g.Go(func() error {
+		cartScheduler.CartSchedulerRun(ctx)
+		return nil
+	})
+
+	g.Go(func() error {
+		server.Serve()
+		return nil
+	})
+
+	<-ctx.Done()
+	fmt.Println("Shutting down gracefully...")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	server.Shutdown(shutdownCtx)
+
+	if err := g.Wait(); err != nil {
+		logger.L().Error("application stopped with error", "error", err)
+	}
 }

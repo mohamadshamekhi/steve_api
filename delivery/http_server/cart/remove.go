@@ -38,3 +38,27 @@ func (h Handler) RemoveItem(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
+
+func (h Handler) RemoveItemBackoffice(c echo.Context) error {
+	const op = "carthandler.RemoveItemBackoffice"
+	var req cartparam.RemoveFromCartBackofficeRequest
+	if bErr := c.Bind(&req); bErr != nil {
+		return richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("validation.invalid_input").
+			WithWarpError(bErr)
+	}
+
+	if err := h.vld.ValidateRemoveFromCartBackofficeRequest(req); err != nil {
+		return err
+	}
+	resp, err := h.backofficeSvc.RemoveFromCartBackoffice(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}

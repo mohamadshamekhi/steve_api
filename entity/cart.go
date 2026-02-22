@@ -50,7 +50,7 @@ func (c *Cart) BeforeCreate() {
 	now := time.Now()
 	c.CreatedAt = now
 	c.UpdatedAt = now
-	c.Status = "active"
+	c.Status = CartActive
 	if c.Items == nil {
 		c.Items = make([]CartItem, 0)
 	}
@@ -79,4 +79,38 @@ type CheckoutSummary struct {
 	FinalPrice         int64                `json:"final_price,omitempty"`
 	IsReady            bool                 `json:"is_ready,omitempty"`
 	DiscountedSubtotal uint                 `json:"discounted_subtotal,omitempty"`
+}
+
+func CanTransitionCartStatus(from, to CartStatus) bool {
+	allowed := map[CartStatus][]CartStatus{
+		CartActive: {
+			CartInactive,
+			CartPaid,
+			CartCanceled,
+			PendingPayment,
+		},
+
+		CartInactive: {
+			CartActive,
+			CartCanceled,
+		},
+
+		PendingPayment: {
+			CartPaid,
+			CartCanceled,
+			CartActive,
+		},
+
+		CartPaid: {},
+
+		CartCanceled: {},
+	}
+
+	for _, st := range allowed[from] {
+		if st == to {
+			return true
+		}
+	}
+
+	return false
 }

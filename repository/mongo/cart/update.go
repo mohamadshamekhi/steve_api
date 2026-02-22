@@ -11,7 +11,7 @@ import (
 )
 
 func (d DB) UpdateStatus(ctx context.Context, cartID string, status entity.CartStatus) error {
-	const op = "mongodbcart.Update"
+	const op = "mongodbcart.UpdateStatus"
 	filter := bson.M{"_id": cartID}
 
 	update := bson.M{

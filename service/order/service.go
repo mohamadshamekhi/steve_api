@@ -6,6 +6,7 @@ import (
 
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
+	discountparam "github.com/abolfazlnorzad/steve/param/discount"
 	orderparam "github.com/abolfazlnorzad/steve/param/order"
 	paymentparam "github.com/abolfazlnorzad/steve/param/payment"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
@@ -50,4 +51,14 @@ type PaymentProvider interface {
 
 type ProductProvider interface {
 	UpdateVariantQuantity(ctx context.Context, req productparam.UpdateProductVariantQuantityAfterCancelOrderRequest) (productparam.UpdateProductVariantQuantityAfterCancelOrderResponse, error)
+	GetVariantsByIDs(ctx context.Context, req productparam.GetVariantsByIDsRequest) (response productparam.GetVariantsByIDsResponse, err error)
+	GetProductCategoriesForCartItems(ctx context.Context, req productparam.GetProductCategoriesForCartItemsRequest) (productparam.GetProductCategoriesForCartItemsResponse, error)
+	UpdateProductVariantQuantityAfterRegisterOrder(ctx context.Context, req productparam.UpdateProductVariantQuantityAfterRegisterOrderRequest) (productparam.UpdateProductVariantQuantityAfterRegisterOrderResponse, error)
+}
+
+type DiscountProvider interface {
+	GetByCode(ctx context.Context, req discountparam.GetSingleDiscountByCodeRequest) (discountparam.GetSingleDiscountByCodeResponse, error)
+	GetValidDiscountsForCart(ctx context.Context, req discountparam.GetValidDiscountsForSpecificCartRequest) (discountparam.GetValidDiscountsForSpecificCartResponse, error)
+	CalculateDiscountAmount(ctx context.Context, d entity.Discount, cart entity.Cart) (int64, error)
+	UpdateDiscountUsageAfterRegisterOrder(ctx context.Context, req discountparam.UpdateDiscountUsageAfterRegisterOrderRequest) (discountparam.UpdateDiscountUsageAfterRegisterOrderResponse, error)
 }

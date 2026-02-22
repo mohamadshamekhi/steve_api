@@ -19,4 +19,10 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.GET("/backoffice/all", h.GetAll, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ListCarts))
 	g.GET("/backoffice/cart/:id", h.GetSingle, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ViewCartDetails))
 
+	g.GET("/backoffice/get-active/:id", h.GetActiveByUserIDBackoffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ViewCartDetails))
+	g.POST("/backoffice/create", h.CreateCart, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.CreateCarts))
+	g.POST("/backoffice/add-item", h.AddItemToCartBachOffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateCarts))
+	g.POST("/backoffice/remove-item", h.RemoveItemBackoffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateCarts))
+	g.POST("/backoffice/delete-item", h.DeleteItemBackoffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateCarts))
+	g.PATCH("/backoffice/update-status/:id", h.UpdateStatus, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateCarts))
 }
