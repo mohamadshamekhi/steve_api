@@ -3,9 +3,6 @@ package orderscheduler
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	orderparam "github.com/abolfazlnorzad/steve/param/order"
@@ -16,7 +13,7 @@ import (
 type OrderScheduler struct {
 	cron          *cron.Cron
 	cfg           Config
-	OrderProvider OrderSvcProvider
+	orderProvider OrderSvcProvider
 }
 
 type Config struct {
@@ -32,11 +29,11 @@ func New(cfg Config, orderProvider OrderSvcProvider) *OrderScheduler {
 	return &OrderScheduler{
 		cron:          cron.New(),
 		cfg:           cfg,
-		OrderProvider: orderProvider,
+		orderProvider: orderProvider,
 	}
 }
 
-func (s *OrderScheduler) OrderSchedulerRun() {
+func (s *OrderScheduler) OrderSchedulerRun(ctx context.Context) {
 	_, err := s.cron.AddFunc(
 		"@every "+s.cfg.OrderSchedulerCycleTime.String(),
 		s.cancelExpiredOrders,
@@ -45,12 +42,9 @@ func (s *OrderScheduler) OrderSchedulerRun() {
 		logger.L().Error("failed to register order scheduler", "error", err)
 	}
 
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
-
 	s.cron.Start()
 
-	<-sig
+	<-ctx.Done()
 
 	fmt.Println("Stopping Order Scheduler...")
 
@@ -59,11 +53,11 @@ func (s *OrderScheduler) OrderSchedulerRun() {
 	fmt.Println("Order Scheduler stopped cleanly")
 }
 
-func (s OrderScheduler) cancelExpiredOrders() {
+func (s *OrderScheduler) cancelExpiredOrders() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	_, err := s.OrderProvider.CancelExpiredPendingOrders(ctx, orderparam.CancelExpiredPendingOrdersRequest{CanselExpiredPendingOrders: s.cfg.CanselExpiredPendingOrdersTime})
+	_, err := s.orderProvider.CancelExpiredPendingOrders(ctx, orderparam.CancelExpiredPendingOrdersRequest{CanselExpiredPendingOrders: s.cfg.CanselExpiredPendingOrdersTime})
 	if err != nil {
 		logger.L().Error("failed to cancel expired pending orders", "error", err)
 	}

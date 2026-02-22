@@ -6,6 +6,7 @@ import (
 	redisadapter "github.com/abolfazlnorzad/steve/adapter/redis"
 	liarastorage "github.com/abolfazlnorzad/steve/adapter/storage/liara"
 	mongodb "github.com/abolfazlnorzad/steve/repository/mongo"
+	cartscheduler "github.com/abolfazlnorzad/steve/scheduler/cart"
 	"github.com/abolfazlnorzad/steve/scheduler/order"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
@@ -31,4 +32,5 @@ type Config struct {
 	Payment        paymentservice.Config    `koanf:"payment"`
 	Zarinpal       gateway.Config           `koanf:"zarinpal"`
 	OrderScheduler orderscheduler.Config    `koanf:"order_scheduler"`
+	CartScheduler  cartscheduler.Config     `koanf:"cart_scheduler"`
 }

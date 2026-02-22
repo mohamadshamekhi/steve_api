@@ -2,6 +2,7 @@ package mongodbcart
 
 import (
 	"context"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	cartparam "github.com/abolfazlnorzad/steve/param/cart"
@@ -50,4 +51,26 @@ func (d DB) GetAll(ctx context.Context, f cartparam.BackofficeFilterCart, p comm
 		Carts:      carts,
 		TotalCount: totalCount,
 	}, nil
+}
+
+func (d DB) GetExpiredPendingCart(ctx context.Context, expiredBefore time.Time) ([]entity.Cart, error) {
+	const op = "mongodbcart.GetExpiredPendingCart"
+
+	filter := bson.M{
+		"status":     entity.PendingPayment,
+		"created_at": bson.M{"$lte": expiredBefore},
+	}
+
+	cursor, err := d.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+	defer cursor.Close(ctx)
+
+	var carts []entity.Cart
+	if err := cursor.All(ctx, &carts); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+
+	return carts, nil
 }

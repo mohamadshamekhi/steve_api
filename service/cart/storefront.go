@@ -57,7 +57,7 @@ func (s *StoreFrontService) AddItemToCart(ctx context.Context, req cartparam.Add
 }
 
 func (s *StoreFrontService) RemoveFromCart(ctx context.Context, req cartparam.RemoveFromCartRequest) (cartparam.RemoveFromCartResponse, error) {
-	const op = "cartservice.AddItemToCart"
+	const op = "cartservice.RemoveFromCart"
 	userID, _ := ctx.Value("user_id").(string)
 	if err := s.repo.RemoveFromCart(ctx, userID, req.ProductID, req.VariantID); err != nil {
 		return cartparam.RemoveFromCartResponse{}, richerror.New(op).WithWarpError(err)
@@ -70,10 +70,10 @@ func (s *StoreFrontService) GetMyActiveCart(ctx context.Context, req cartparam.M
 	const op = "cartservice.GetMyActiveCart"
 	cart, err := s.repo.GetUserActiveCart(ctx, req.UserID)
 	if err != nil {
+		if richerror.GetKind(err) == richerror.KindNotFound {
+			return cartparam.MyActiveCartResponse{}, nil
+		}
 		return cartparam.MyActiveCartResponse{}, richerror.New(op).WithWarpError(err)
-	}
-	if cart == nil {
-		return cartparam.MyActiveCartResponse{}, nil
 	}
 	ids := []string{req.UserID}
 	user, err := s.uRepo.FindManyByIDs(ctx, ids)

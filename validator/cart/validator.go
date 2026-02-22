@@ -12,6 +12,7 @@ import (
 type Validator struct {
 	productRepo PRepository
 	repo        Repository
+	userRepo    URepository
 }
 
 type Repository interface {
@@ -22,10 +23,15 @@ type PRepository interface {
 	FindByID(ctx context.Context, id string) (entity.Product, error)
 }
 
-func New(pr PRepository, repo Repository) Validator {
+type URepository interface {
+	GetUserByID(ctx context.Context, id string) (entity.User, error)
+}
+
+func New(pr PRepository, repo Repository, uRepo URepository) Validator {
 	return Validator{
 		productRepo: pr,
 		repo:        repo,
+		userRepo:    uRepo,
 	}
 }
 

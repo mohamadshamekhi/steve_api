@@ -38,3 +38,27 @@ func (h Handler) AddItemToCart(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
+
+func (h Handler) AddItemToCartBachOffice(c echo.Context) error {
+	const op = "carthandler.AddItemToCartBachOffice"
+	var req cartparam.AddItemToCartBackOfficeRequest
+	if bErr := c.Bind(&req); bErr != nil {
+		return richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("validation.invalid_input").
+			WithWarpError(bErr)
+	}
+
+	if err := h.vld.ValidateAddItemToCartBackOfficeRequest(req); err != nil {
+		return err
+	}
+	resp, err := h.backofficeSvc.AddItemToCartBackoffice(c.Request().Context(), req)
+	if err != nil {
+		return nil
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}

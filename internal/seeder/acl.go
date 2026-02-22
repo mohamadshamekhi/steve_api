@@ -54,6 +54,8 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.UpdateOrderStatus, Description: "تغییر وضعیت سفارش"},
 	{Name: key.ListCarts, Description: "مشاهده لیست سبدهای خرید"},
 	{Name: key.ViewCartDetails, Description: "مشاهده جزئیات سبد خرید"},
+	{Name: key.UpdateCarts, Description: "ویرایش سبد خرید"},
+	{Name: key.CreateCarts, Description: "ایجاد سبد خرید"},
 	{Name: key.ListDiscounts, Description: "مشاهده لیست تخفیف‌ها"},
 	{Name: key.CreateDiscount, Description: "ایجاد تخفیف جدید"},
 	{Name: key.UpdateDiscount, Description: "ویرایش تخفیف"},
@@ -132,7 +134,7 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 			key.ListUsers, key.ViewUserDetails,
 			key.ListProducts, key.ViewProduct,
 			key.ListOrders, key.ViewOrderDetails, key.UpdateOrderStatus,
-			key.ListCarts, key.ViewCartDetails,
+			key.ListCarts, key.ViewCartDetails, key.UpdateCarts, key.CreateCarts,
 			key.ListPayments, key.ViewPaymentDetails,
 			key.ListDiscounts,
 		},
@@ -154,7 +156,7 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 			key.AccessAdminPanel,
 			key.ListUsers, key.ViewUserDetails, key.UpdateUser, key.BanUser,
 			key.ListOrders, key.ViewOrderDetails, key.UpdateOrderStatus,
-			key.ListCarts, key.ViewCartDetails,
+			key.ListCarts, key.ViewCartDetails, key.UpdateCarts, key.CreateCarts,
 		},
 
 		key.CustomerSupportAgent: {

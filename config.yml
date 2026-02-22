@@ -89,3 +89,7 @@ order_scheduler:
   cancel_expired_pending_orders_time: 15m
   order_scheduler_cycle_time : 1m
 
+cart_scheduler:
+  cancel_expired_pending_carts_time: 168h
+  cart_scheduler_cycle_time: 10m
+

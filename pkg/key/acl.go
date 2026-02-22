@@ -77,6 +77,8 @@ const (
 
 	ListCarts       = "cart:list"
 	ViewCartDetails = "cart:view_details"
+	UpdateCarts     = "cart:update"
+	CreateCarts     = "cart:create"
 
 	ListDiscounts  = "discount:list"
 	CreateDiscount = "discount:create"
