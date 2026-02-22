@@ -36,6 +36,7 @@ type requestPayload struct {
 	CallbackURL string   `json:"callback_url"`
 	Description string   `json:"description"`
 	Metadata    metadata `json:"metadata,omitempty"`
+	Currency    string   `json:"currency"`
 }
 
 type metadata struct {
@@ -59,11 +60,11 @@ func (z *ZarinpalAdapter) RequestPayment(amount uint64, callbackURL string, desc
 		Amount:      amount,
 		CallbackURL: callbackURL,
 		Description: "test",
+		Currency:    z.cfg.Currency,
 	}
 
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
-		fmt.Println("111")
 		return "", "", richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
 	}
 
@@ -76,7 +77,6 @@ func (z *ZarinpalAdapter) RequestPayment(amount uint64, callbackURL string, desc
 
 	resp, err := z.client.Do(req)
 	if err != nil {
-		fmt.Println("222")
 		return "", "", richerror.New(op).
 			WithWarpError(err).
 			WithKind(richerror.KindUnexpected).
@@ -91,7 +91,6 @@ func (z *ZarinpalAdapter) RequestPayment(amount uint64, callbackURL string, desc
 	}
 
 	if result.Data.Code != 100 {
-		fmt.Println("444")
 		return "", "", richerror.New(op).
 			WithKind(richerror.KindUnexpected).
 			WithMessageKey("gateway.request_failed").
