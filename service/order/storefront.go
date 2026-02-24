@@ -337,11 +337,13 @@ func (s *StoreFrontService) calculateFinalPrice(ctx context.Context, cart *entit
 			appliedDiscountsMap[bestAutoDiscount.ID] = ad
 		}
 
-		if coupon != nil {
+		if coupon != nil && coupon.ApplicableTo == entity.ApplicableToProducts {
 			if s.isDiscountApplicableToItem(*coupon, item.CartItem, productCategories.CategoryIDs[item.ProductID], cart.UserID) {
 				priceForItemCoupon := itemBasePrice - itemTotalDiscount
 				couponAmountOnItem := coupon.CalculateAmount(uint(priceForItemCoupon), item.VariantID)
-
+				if coupon.Type == entity.FixedAmountDiscount {
+					couponAmountOnItem = couponAmountOnItem * uint(item.Quantity)
+				}
 				itemTotalDiscount += int64(couponAmountOnItem)
 				ad := appliedDiscountsMap[coupon.ID]
 				ad.DiscountID = coupon.ID
@@ -356,6 +358,23 @@ func (s *StoreFrontService) calculateFinalPrice(ctx context.Context, cart *entit
 		}
 		summary.Items[i].DiscountAmount = uint(itemTotalDiscount)
 		totalDiscountAmount += itemTotalDiscount
+	}
+	currentSubtotal := summary.Subtotal - totalDiscountAmount
+
+	if coupon != nil && coupon.ApplicableTo == entity.ApplicableToUsers {
+		cartLevelDiscountAmount := int64(coupon.CalculateAmount(uint(currentSubtotal), ""))
+
+		if cartLevelDiscountAmount > currentSubtotal {
+			cartLevelDiscountAmount = currentSubtotal
+		}
+
+		ad := appliedDiscountsMap[coupon.ID]
+		ad.DiscountID = coupon.ID
+		ad.DiscountCode = coupon.Code
+		ad.Amount += cartLevelDiscountAmount
+		appliedDiscountsMap[coupon.ID] = ad
+
+		totalDiscountAmount += cartLevelDiscountAmount
 	}
 
 	summary.DiscountedSubtotal = uint(summary.Subtotal - totalDiscountAmount)
@@ -375,7 +394,6 @@ func (s *StoreFrontService) isDiscountApplicableToItem(
 	itemCategoryIDs []string,
 	userID string,
 ) bool {
-	// 1) فیلتر بر اساس یوزر (اگر محدود شده باشد)
 	if len(d.ApplicableUserIDs) > 0 {
 		userIsAllowed := false
 		for _, allowedUserID := range d.ApplicableUserIDs {
@@ -389,11 +407,9 @@ func (s *StoreFrontService) isDiscountApplicableToItem(
 		}
 	}
 
-	// 2) تصمیم‌گیری بر اساس ApplicableTo
 	switch d.ApplicableTo {
 
 	case entity.ApplicableToProducts:
-		// باید با SpecialDiscountItems چک کنیم
 		if len(d.ApplicableProductIDs) == 0 {
 			return false
 		}
@@ -402,13 +418,10 @@ func (s *StoreFrontService) isDiscountApplicableToItem(
 			if sdi.ProductID != item.ProductID {
 				continue
 			}
-
-			// اگر VariantID در تخفیف مشخص نشده باشد، یعنی برای همه ورینت‌های این محصول معتبر است
 			if sdi.VariantID == nil {
 				return true
 			}
 
-			// اگر VariantID مشخص شده، باید دقیقاً با Variant آیتم برابر باشد
 			if *sdi.VariantID == item.VariantID {
 				return true
 			}
@@ -417,7 +430,6 @@ func (s *StoreFrontService) isDiscountApplicableToItem(
 		return false
 
 	case entity.ApplicableToCategories:
-		// اگر دسته‌ای تنظیم نشده، در این مود عملاً تخفیف قابل اعمال نیست
 		if len(d.ApplicableCategoryIDs) == 0 {
 			return false
 		}
