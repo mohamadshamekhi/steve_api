@@ -76,7 +76,9 @@ payment:
   callback_url: "https://stevemobile.com/payment"
   gateway: "zarinpal"
   expiration_time_payment_sms_context: 35s
-
+  expiration_time_payment_msg_telegram_context: 35s
+  retry_count : 2
+  retry_delay_time : 5s
 
 zarinpal:
   currency: "IRT"
@@ -93,3 +95,6 @@ cart_scheduler:
   cancel_expired_pending_carts_time: 168h
   cart_scheduler_cycle_time: 10m
 
+telegram_bot:
+  admin_chat_id : 81390028
+  developer_chat_id : 81390028

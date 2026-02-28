@@ -5,6 +5,7 @@ import (
 	"github.com/abolfazlnorzad/steve/adapter/mellipayamak"
 	redisadapter "github.com/abolfazlnorzad/steve/adapter/redis"
 	liarastorage "github.com/abolfazlnorzad/steve/adapter/storage/liara"
+	"github.com/abolfazlnorzad/steve/adapter/telegrambot"
 	mongodb "github.com/abolfazlnorzad/steve/repository/mongo"
 	cartscheduler "github.com/abolfazlnorzad/steve/scheduler/cart"
 	"github.com/abolfazlnorzad/steve/scheduler/order"
@@ -33,4 +34,5 @@ type Config struct {
 	Zarinpal       gateway.Config           `koanf:"zarinpal"`
 	OrderScheduler orderscheduler.Config    `koanf:"order_scheduler"`
 	CartScheduler  cartscheduler.Config     `koanf:"cart_scheduler"`
+	TelegramBot    telegrambot.Config       `koanf:"telegram_bot"`
 }
