@@ -10,6 +10,7 @@ require (
 	github.com/chai2010/webp v1.4.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
+	github.com/go-telegram/bot v1.19.0
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/knadh/koanf/parsers/yaml v1.1.0
 	github.com/knadh/koanf/providers/env v1.1.0
@@ -22,6 +23,7 @@ require (
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/redis/go-redis/v9 v9.11.0
+	github.com/robfig/cron/v3 v3.0.0
 	go.mongodb.org/mongo-driver v1.17.4
 	golang.org/x/net v0.42.0
 	golang.org/x/sync v0.16.0
@@ -62,7 +64,6 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
-	github.com/robfig/cron/v3 v3.0.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect

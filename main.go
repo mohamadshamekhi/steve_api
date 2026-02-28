@@ -12,6 +12,7 @@ import (
 	"github.com/abolfazlnorzad/steve/adapter/mellipayamak"
 	redisadapter "github.com/abolfazlnorzad/steve/adapter/redis"
 	liarastorage "github.com/abolfazlnorzad/steve/adapter/storage/liara"
+	"github.com/abolfazlnorzad/steve/adapter/telegrambot"
 	"github.com/abolfazlnorzad/steve/config"
 	httpserver "github.com/abolfazlnorzad/steve/delivery/http_server"
 	aclhandler "github.com/abolfazlnorzad/steve/delivery/http_server/acl/handler"
@@ -115,6 +116,8 @@ import (
 func main() {
 	cfg := config.C()
 	mp := mellipayamak.New(cfg.MelliPayamak)
+	adminTelegramBot := telegrambot.NewAdmin(cfg.TelegramBot)
+	developerTelegramBot := telegrambot.NewDeveloper(cfg.TelegramBot)
 	redisRepo := redisadapter.New(cfg.Redis)
 	redisotp := redisotp.New(redisRepo)
 	authSvc := authservice.New(cfg.Auth, redisotp, mp)
@@ -243,7 +246,7 @@ func main() {
 	bannerHandler := bannerhandler.New(bannerBackofficeSvc, bannerVld, translator, authSvc, cfg.Auth, aclSvc)
 	paymentRepo := mongodbpayment.New(mongoRepo)
 	zarinpal := gateway.NewZarinpalAdapter(cfg.Zarinpal)
-	paymentSvc := paymentservice.NewService(cfg.Payment, paymentRepo, orderSvc, zarinpal, discountbackofficeSvc, productStorefrontSvc, mp, userSvc)
+	paymentSvc := paymentservice.NewService(cfg.Payment, paymentRepo, orderSvc, zarinpal, discountbackofficeSvc, productStorefrontSvc, mp, userSvc, adminTelegramBot, developerTelegramBot)
 	paymentHandler := paymenthandler.New(paymentSvc, translator, authSvc, cfg.Auth, aclSvc)
 	orderSvc.SetPaymentProvider(paymentSvc)
 	orderBackofficeSvc.SetPaymentProvider(paymentSvc)
