@@ -23,7 +23,7 @@ func (v Validator) ValidateAddDiscountRequest(req discountparam.AddDiscountReque
 		),
 		validation.Field(&req.MinimumPurchaseAmount,
 			validation.When(req.MinimumPurchaseAmount != 0,
-				validation.Min(0).Error("validation.must_be_positive_number"),
+				validation.Min(uint(0)).Error("validation.must_be_positive_number"),
 			),
 		),
 		validation.Field(&req.Type, validation.Required.Error("validation.required"), validation.In(string(entity.PercentageDiscount), string(entity.FixedAmountDiscount))),

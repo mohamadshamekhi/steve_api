@@ -31,3 +31,9 @@ type UpdateProductVariantQuantityAfterCancelOrderRequest struct {
 
 type UpdateProductVariantQuantityAfterCancelOrderResponse struct {
 }
+
+type UpdateProductSalesCountAfterRegisterOrderRequest struct {
+	Order entity.Order
+}
+
+type UpdateProductSalesCountAfterRegisterOrderResponse struct{}

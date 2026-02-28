@@ -74,6 +74,7 @@ const (
 	ListOrders        = "order:list"
 	ViewOrderDetails  = "order:view_details"
 	UpdateOrderStatus = "order:update_status"
+	CreateOrder       = "order:create"
 
 	ListCarts       = "cart:list"
 	ViewCartDetails = "cart:view_details"

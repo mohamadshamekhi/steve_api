@@ -3,7 +3,6 @@ package mongodbcart
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/errmsg"
@@ -31,7 +30,6 @@ func (d DB) GetUserActiveCart(ctx context.Context, userID string) (*entity.Cart,
 	filter := bson.M{"user_id": userID, "status": string(entity.CartActive)}
 	var cart *entity.Cart
 
-	fmt.Println("filter", filter)
 	if err := d.collection.FindOne(ctx, filter).Decode(&cart); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return cart, richerror.New(op).WithWarpError(err).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")

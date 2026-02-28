@@ -43,7 +43,7 @@ type Discount struct {
 
 	IsSpecial bool `bson:"is_special,omitempty" json:"is_special,omitempty"`
 
-	ApplicableTo ApplicableTo `json:"applicable_to,omitempty"` // product , category , user
+	ApplicableTo ApplicableTo `bson:"applicable_to,omitempty" json:"applicable_to,omitempty"` // product , category , user
 
 	ApplicableProductIDs []SpecialDiscountItem `bson:"applicable_product_ids,omitempty" json:"applicable_product_ids,omitempty"`
 

@@ -38,3 +38,47 @@ func (h Handler) Register(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
+
+func (h Handler) RegisterBackoffice(c echo.Context) error {
+	const op = "orderhandler.RegisterBackoffice"
+	var req orderparam.RegisterOrderBackofficeRequest
+	if bErr := c.Bind(&req); bErr != nil {
+		return richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("validation.invalid_input").
+			WithWarpError(bErr)
+	}
+
+	if err := h.vld.RegisterOrderBackofficeValidator(c.Request().Context(), req); err != nil {
+		return err
+	}
+	resp, err := h.backofficeSvc.RegisterOrderBackoffice(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}
+
+func (h Handler) CompleteOrderBackoffice(c echo.Context) error {
+	const op = "orderhandler.CompleteOrderBackoffice"
+	var req orderparam.CompletedOrderBackofficeRequest
+	if bErr := c.Bind(&req); bErr != nil {
+		return richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("validation.invalid_input").
+			WithWarpError(bErr)
+	}
+	resp, err := h.backofficeSvc.CompleteOrderBackoffice(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}

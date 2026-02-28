@@ -2,6 +2,7 @@ package discountservice
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
@@ -25,6 +26,7 @@ type ProductInfoProvider interface {
 	FindProductWithSpecialCategory(ctx context.Context, req productparam.GetProductWithSpecialCategoryRequest) (productparam.GetProductWithSpecialCategoryResponse, error)
 	GetPricesOfProducts(ctx context.Context, req productparam.GetPriceOfProductsRequest) (productparam.GetPriceOfProductsResponse, error)
 	GetProductIDsByCategories(ctx context.Context, req productparam.GetProductIDsByCategoriesRequest) (productparam.GetProductIDsByCategoriesResponse, error)
+	GetVariantsByIDs(ctx context.Context, req productparam.GetVariantsByIDsRequest) (response productparam.GetVariantsByIDsResponse, err error)
 }
 
 type EnrichedCart struct {
@@ -633,4 +635,227 @@ func (s BackofficeService) GetSpecialDiscount(ctx context.Context, req discountp
 	return discountparam.GetSpecialDiscountResponse{
 		Discount: discount,
 	}, nil
+}
+
+func (s BackofficeService) ApplyDiscountToCart(ctx context.Context, cart entity.Cart, discountCode string) (entity.CheckoutSummary, error) {
+	const op = "orderservice.ApplyDiscountToCart"
+
+	summary := entity.CheckoutSummary{IsReady: true}
+	summary.Subtotal = int64(cart.CalculateSubtotal())
+
+	err := s.validateCartItems(ctx, cart, &summary)
+	if err != nil {
+		return entity.CheckoutSummary{}, richerror.New(op).WithWarpError(err)
+	}
+	if !summary.IsReady {
+		summary.FinalPrice = summary.Subtotal
+		return summary, nil
+	}
+	valDiscounts, err := s.GetValidDiscountsForCart(ctx, discountparam.GetValidDiscountsForSpecificCartRequest{
+		DiscountCode: discountCode,
+		Cart:         cart,
+	})
+	if err != nil {
+		return entity.CheckoutSummary{}, richerror.New(op).WithWarpError(err)
+	}
+	err = s.calculateFinalPriceBackoffice(ctx, cart, &summary, valDiscounts.Discounts, discountCode)
+	if err != nil {
+		return entity.CheckoutSummary{}, richerror.New(op).WithWarpError(err)
+	}
+	return summary, nil
+}
+
+func (s BackofficeService) validateCartItems(ctx context.Context, cart entity.Cart, summary *entity.CheckoutSummary) error {
+	const op = "orderservice.validateCartItems"
+
+	var variantIDs []string
+	for _, item := range cart.Items {
+		variantIDs = append(variantIDs, item.VariantID)
+	}
+	resp, pErr := s.productInfoProvider.GetVariantsByIDs(ctx, productparam.GetVariantsByIDsRequest{IDs: variantIDs})
+	if pErr != nil {
+		return richerror.New(op).WithWarpError(pErr)
+	}
+
+	for _, item := range cart.Items {
+		nItem := entity.CheckoutItemResult{CartItem: item}
+		variant, ok := resp.Variants[item.VariantID]
+		if !ok {
+			return richerror.New(op).WithWarpError(fmt.Errorf("could not find variant %s for product %s", item.VariantID, item.ProductID))
+		}
+		if variant.Quantity < uint64(item.Quantity) {
+			nItem.HasStockIssue = true
+			summary.IsReady = false
+		}
+		if variant.Price != uint64(item.PriceAtTime) {
+			nItem.HasPriceChanged = true
+			nItem.CurrentPrice = int64(variant.Price)
+			summary.IsReady = true
+		} else {
+			summary.Items = append(summary.Items, nItem)
+		}
+	}
+	return nil
+}
+
+func (s BackofficeService) calculateFinalPriceBackoffice(ctx context.Context, cart entity.Cart, summary *entity.CheckoutSummary, allValidDiscounts []entity.Discount, userCode string) error {
+	const op = "orderservice.calculateFinalPrice"
+
+	productCategories, err := s.productInfoProvider.GetProductCategoriesForCartItems(ctx, productparam.GetProductCategoriesForCartItemsRequest{Items: cart.Items})
+	if err != nil {
+		return richerror.New(op).WithWarpError(err)
+	}
+
+	var autoDiscounts []entity.Discount
+	var coupon *entity.Discount
+	for _, d := range allValidDiscounts {
+		discountCopy := d
+		if d.Code != "" && d.Code == userCode {
+			coupon = &discountCopy
+		} else if d.Code == "" {
+			autoDiscounts = append(autoDiscounts, discountCopy)
+		}
+	}
+
+	var totalDiscountAmount int64 = 0
+	appliedDiscountsMap := make(map[string]entity.AppliedDiscount)
+
+	for i, item := range summary.Items {
+		var itemTotalDiscount int64 = 0
+		itemBasePrice := item.PriceAtTime * int64(item.Quantity)
+
+		var bestAutoDiscountAmount int64 = 0
+		var bestAutoDiscount *entity.Discount = nil
+		for _, autoDiscount := range autoDiscounts {
+			if s.isDiscountApplicableToItemBackoffice(autoDiscount, item.CartItem, productCategories.CategoryIDs[item.ProductID], cart.UserID) {
+				currentDiscountAmount := autoDiscount.CalculateAmount(uint(itemBasePrice), item.VariantID)
+				if currentDiscountAmount > uint(bestAutoDiscountAmount) {
+					bestAutoDiscountAmount = int64(currentDiscountAmount)
+					bestAutoDiscount = &autoDiscount
+				}
+			}
+		}
+
+		if bestAutoDiscount != nil {
+			itemTotalDiscount += bestAutoDiscountAmount
+			ad := appliedDiscountsMap[bestAutoDiscount.ID]
+			ad.DiscountID = bestAutoDiscount.ID
+			ad.Amount += bestAutoDiscountAmount
+			appliedDiscountsMap[bestAutoDiscount.ID] = ad
+		}
+
+		if coupon != nil && coupon.ApplicableTo == entity.ApplicableToProducts {
+			if s.isDiscountApplicableToItemBackoffice(*coupon, item.CartItem, productCategories.CategoryIDs[item.ProductID], cart.UserID) {
+				priceForItemCoupon := itemBasePrice - itemTotalDiscount
+				couponAmountOnItem := coupon.CalculateAmount(uint(priceForItemCoupon), item.VariantID)
+				if coupon.Type == entity.FixedAmountDiscount {
+					couponAmountOnItem = couponAmountOnItem * uint(item.Quantity)
+				}
+				itemTotalDiscount += int64(couponAmountOnItem)
+				ad := appliedDiscountsMap[coupon.ID]
+				ad.DiscountID = coupon.ID
+				ad.DiscountCode = coupon.Code
+				ad.Amount += int64(couponAmountOnItem)
+				appliedDiscountsMap[coupon.ID] = ad
+			}
+		}
+
+		if itemTotalDiscount > itemBasePrice {
+			itemTotalDiscount = itemBasePrice
+		}
+		summary.Items[i].DiscountAmount = uint(itemTotalDiscount)
+		totalDiscountAmount += itemTotalDiscount
+	}
+	currentSubtotal := summary.Subtotal - totalDiscountAmount
+
+	if coupon != nil && coupon.ApplicableTo == entity.ApplicableToUsers {
+		cartLevelDiscountAmount := int64(coupon.CalculateAmount(uint(currentSubtotal), ""))
+
+		if cartLevelDiscountAmount > currentSubtotal {
+			cartLevelDiscountAmount = currentSubtotal
+		}
+
+		ad := appliedDiscountsMap[coupon.ID]
+		ad.DiscountID = coupon.ID
+		ad.DiscountCode = coupon.Code
+		ad.Amount += cartLevelDiscountAmount
+		appliedDiscountsMap[coupon.ID] = ad
+
+		totalDiscountAmount += cartLevelDiscountAmount
+	}
+
+	summary.DiscountedSubtotal = uint(summary.Subtotal - totalDiscountAmount)
+	summary.FinalPrice = int64(summary.DiscountedSubtotal)
+
+	summary.AppliedDiscounts = make([]entity.AppliedDiscount, 0, len(appliedDiscountsMap))
+	for _, ad := range appliedDiscountsMap {
+		summary.AppliedDiscounts = append(summary.AppliedDiscounts, ad)
+	}
+
+	return nil
+}
+
+func (s *BackofficeService) isDiscountApplicableToItemBackoffice(
+	d entity.Discount,
+	item entity.CartItem,
+	itemCategoryIDs []string,
+	userID string,
+) bool {
+	if len(d.ApplicableUserIDs) > 0 {
+		userIsAllowed := false
+		for _, allowedUserID := range d.ApplicableUserIDs {
+			if userID == allowedUserID {
+				userIsAllowed = true
+				break
+			}
+		}
+		if !userIsAllowed {
+			return false
+		}
+	}
+	switch d.ApplicableTo {
+
+	case entity.ApplicableToProducts:
+		if len(d.ApplicableProductIDs) == 0 {
+			return false
+		}
+
+		for _, sdi := range d.ApplicableProductIDs {
+			if sdi.ProductID != item.ProductID {
+				continue
+			}
+			if sdi.VariantID == nil {
+				return true
+			}
+			if *sdi.VariantID == item.VariantID {
+				return true
+			}
+		}
+
+		return false
+
+	case entity.ApplicableToCategories:
+		if len(d.ApplicableCategoryIDs) == 0 {
+			return false
+		}
+
+		allowedCategorySet := make(map[string]struct{}, len(d.ApplicableCategoryIDs))
+		for _, catID := range d.ApplicableCategoryIDs {
+			allowedCategorySet[catID] = struct{}{}
+		}
+
+		for _, catID := range itemCategoryIDs {
+			if _, ok := allowedCategorySet[catID]; ok {
+				return true
+			}
+		}
+
+		return false
+
+	case entity.ApplicableToUsers:
+		return true
+
+	default:
+		return false
+	}
 }
