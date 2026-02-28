@@ -198,7 +198,7 @@ func main() {
 	discountHandler := discounthandler.New(discountbackofficeSvc, translator, discountVld, authSvc, cfg.Auth, aclSvc)
 	cartBackofficeSvc := cartservice.NewBackofficeService(cartRepo, userRepo, productRepo, productSvc)
 	orderRepo := mongodborder.New(mongoRepo)
-	orderVld := ordervalidator.New(discountbackofficeSvc)
+	orderVld := ordervalidator.New(discountbackofficeSvc, cartRepo)
 	shippingRepo := mongodbshipping.New(mongoRepo)
 	shippingVld := settingvalidator.NewShippingValidator(shippingRepo)
 	shippingBakcofficeSvc := settingservice.NewBackofficeShippingService(shippingRepo)
@@ -208,7 +208,7 @@ func main() {
 	cartHandler := carthandler.New(cartSvc, cartBackofficeSvc, orderSvc, cartVld, translator, authSvc, cfg.Auth, aclSvc)
 	storefrontCategorySvc := categoryservice.NewStorefrontService(categoryRepo, mediaSvc, attrSvc, productStorefrontSvc)
 	categoryHandler := categoryhandler.New(categorySvc, categoryVld, translator, authSvc, cfg.Auth, aclSvc, storefrontCategorySvc)
-	orderBackofficeSvc := orderservice.NewBackofficeService(orderRepo, backofficeUserSvc, productSvc, discountbackofficeSvc)
+	orderBackofficeSvc := orderservice.NewBackofficeService(orderRepo, backofficeUserSvc, productSvc, discountbackofficeSvc, &cartBackofficeSvc)
 
 	shippingHandler := shippinghandler.New(shippingBakcofficeSvc, shippingStorefrontSvc, shippingVld, translator, authSvc, cfg.Auth, aclSvc)
 
@@ -254,7 +254,7 @@ func main() {
 
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
-		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler, paymentHandler,  searchHandler)
+		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler, paymentHandler, searchHandler)
 
 	orderScheduler := orderscheduler.New(cfg.OrderScheduler, orderBackofficeSvc)
 	cartScheduler := cartscheduler.New(cfg.CartScheduler, cartBackofficeSvc)

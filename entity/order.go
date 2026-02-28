@@ -34,6 +34,13 @@ const (
 	OrderStatusRefunded OrderStatus = "refunded"
 )
 
+type PurchaseType string
+
+const (
+	PurchaseTypeInPerson PurchaseType = "in_person" // حضوری
+	PurchaseTypeOnline   PurchaseType = "online"    // آنلاین
+)
+
 type Order struct {
 	ID               string            `bson:"_id"`
 	UserID           string            `bson:"user_id"`
@@ -46,6 +53,7 @@ type Order struct {
 	FinalAmount      uint              `bson:"final_amount"`
 	Shipping         Shipping          `bson:"shipping,omitempty"`
 	Status           OrderStatus       `bson:"status"`
+	PurchaseType     PurchaseType      `bson:"purchase_type"`
 	CreatedAt        time.Time         `bson:"created_at"`
 	UpdatedAt        time.Time         `bson:"updated_at"`
 }
@@ -54,6 +62,10 @@ func (o *Order) BeforeCreate() {
 	o.ID = ulid.Make().String()
 	o.CreatedAt = time.Now()
 	o.UpdatedAt = time.Now()
+
+	if o.PurchaseType == "" {
+		o.PurchaseType = PurchaseTypeOnline
+	}
 }
 
 type OrderItem struct {

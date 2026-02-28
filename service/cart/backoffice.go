@@ -2,6 +2,7 @@ package cartservice
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
@@ -246,6 +247,7 @@ func (s *BackofficeService) UpdateStatus(ctx context.Context, req cartparam.Upda
 	if err != nil {
 		return cartparam.UpdateCartStatusResponse{}, richerror.New(op).WithWarpError(err)
 	}
+
 	if !entity.CanTransitionCartStatus(cart.Status, req.Status) {
 		return cartparam.UpdateCartStatusResponse{}, richerror.New(op).
 			WithKind(richerror.KindInvalid).

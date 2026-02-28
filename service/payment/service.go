@@ -213,3 +213,26 @@ func (s Service) GetPaymentsByOrderID(ctx context.Context, req paymentparam.GetP
 
 	return paymentparam.GetPaymentsByOrderIDResponse{Payments: payments}, nil
 }
+
+func (s Service) CreatePaymentForBackofficePanel(ctx context.Context, req paymentparam.CreatePaymentForBackofficePanelRequest) (paymentparam.CreatePaymentForBackofficePanelResponse, error) {
+	const op = "paymentservice.CreatePaymentForBackofficePanel"
+	order, err := s.orderProvider.GetOrderByID(ctx, orderparam.GetOrderByIDRequest{ID: req.OrderID})
+	if err != nil {
+		return paymentparam.CreatePaymentForBackofficePanelResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	payment := entity.Payment{
+		UserID:      order.Order.UserID,
+		OrderID:     order.Order.ID,
+		Amount:      uint64(order.Order.FinalAmount),
+		Gateway:     "in_person",
+		Description: req.Description,
+	}
+	payment.BeforeCreate()
+	payment.Status = entity.PaymentStatusSuccessful
+
+	pErr := s.repo.CreatePayment(ctx, payment)
+	if pErr != nil {
+		return paymentparam.CreatePaymentForBackofficePanelResponse{}, richerror.New(op).WithWarpError(pErr)
+	}
+	return paymentparam.CreatePaymentForBackofficePanelResponse{}, nil
+}

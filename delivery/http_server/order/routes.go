@@ -14,4 +14,7 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.GET("/storefront/all", h.GetUserOrder, middleware.Auth(h.authSvc, h.authCfg))
 	g.GET("/storefront/user-order/statics", h.GetUserOrderStatics, middleware.Auth(h.authSvc, h.authCfg))
 	g.PATCH("/update-status/:id", h.UpdateStatus, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateOrderStatus))
+
+	g.POST("/backoffice/register", h.RegisterBackoffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.CreateOrder))
+	g.POST("/backoffice/complete-order", h.CompleteOrderBackoffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.CreateOrder))
 }

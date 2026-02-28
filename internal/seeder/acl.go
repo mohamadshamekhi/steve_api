@@ -52,6 +52,7 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.ListOrders, Description: "مشاهده لیست سفارشات"},
 	{Name: key.ViewOrderDetails, Description: "مشاهده جزئیات سفارش"},
 	{Name: key.UpdateOrderStatus, Description: "تغییر وضعیت سفارش"},
+	{Name: key.CreateOrder, Description: "ایجاد سفارش جدید"},
 	{Name: key.ListCarts, Description: "مشاهده لیست سبدهای خرید"},
 	{Name: key.ViewCartDetails, Description: "مشاهده جزئیات سبد خرید"},
 	{Name: key.UpdateCarts, Description: "ویرایش سبد خرید"},
@@ -133,7 +134,7 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 			key.AccessAdminPanel, key.ViewDashboardAnalytics,
 			key.ListUsers, key.ViewUserDetails,
 			key.ListProducts, key.ViewProduct,
-			key.ListOrders, key.ViewOrderDetails, key.UpdateOrderStatus,
+			key.ListOrders, key.ViewOrderDetails, key.UpdateOrderStatus, key.CreateOrder,
 			key.ListCarts, key.ViewCartDetails, key.UpdateCarts, key.CreateCarts,
 			key.ListPayments, key.ViewPaymentDetails,
 			key.ListDiscounts,
@@ -155,7 +156,7 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 		key.CustomerSupportLead: {
 			key.AccessAdminPanel,
 			key.ListUsers, key.ViewUserDetails, key.UpdateUser, key.BanUser,
-			key.ListOrders, key.ViewOrderDetails, key.UpdateOrderStatus,
+			key.ListOrders, key.ViewOrderDetails, key.UpdateOrderStatus, key.CreateOrder,
 			key.ListCarts, key.ViewCartDetails, key.UpdateCarts, key.CreateCarts,
 		},
 

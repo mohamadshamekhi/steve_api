@@ -2,10 +2,10 @@ package orderservice
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
+	cartparam "github.com/abolfazlnorzad/steve/param/cart"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	discountparam "github.com/abolfazlnorzad/steve/param/discount"
 	orderparam "github.com/abolfazlnorzad/steve/param/order"
@@ -23,10 +23,11 @@ type BackofficeService struct {
 	paymentProvider  PaymentProvider
 	productProvider  ProductProvider
 	discountProvider DiscountProvider
+	cartProvider     CartProvider
 }
 
-func NewBackofficeService(repo OrderReadWriter, userProvider UserProvider, productProvider ProductProvider, discountProvider DiscountProvider) BackofficeService {
-	return BackofficeService{repo: repo, userProvider: userProvider, productProvider: productProvider, discountProvider: discountProvider}
+func NewBackofficeService(repo OrderReadWriter, userProvider UserProvider, productProvider ProductProvider, discountProvider DiscountProvider, cartProvider CartProvider) BackofficeService {
+	return BackofficeService{repo: repo, userProvider: userProvider, productProvider: productProvider, discountProvider: discountProvider, cartProvider: cartProvider}
 }
 
 func (s *BackofficeService) SetPaymentProvider(p PaymentProvider) {
@@ -112,7 +113,7 @@ func (s BackofficeService) GetAll(ctx context.Context, req orderparam.GetAllOrde
 }
 
 func (s BackofficeService) UpdateStatus(ctx context.Context, req orderparam.UpdateStatusOrderRequest) (orderparam.UpdateStatusOrderResponse, error) {
-	const op = "backofficeService.UpdateStatus"
+	const op = "orderservice.UpdateStatus"
 
 	order, err := s.repo.GetOrderByID(ctx, req.OrderID)
 	if err != nil {
@@ -176,216 +177,98 @@ func (s BackofficeService) CancelExpiredPendingOrders(ctx context.Context, req o
 	return orderparam.CancelExpiredPendingOrdersResponse{}, nil
 }
 
-func (s BackofficeService) FinalizeCartForCheckoutBackoffice(ctx context.Context, cart entity.Cart, discountCode string) (entity.CheckoutSummary, error) {
-	const op = "order.service.FinalizeCartForCheckoutBackoffice"
+func (s BackofficeService) RegisterOrderBackoffice(ctx context.Context, req orderparam.RegisterOrderBackofficeRequest) (orderparam.RegisterOrderBackofficeResponse, error) {
+	const op = "orderservice.RegisterOrderBackoffice"
 
-	summary := entity.CheckoutSummary{IsReady: true}
-	summary.Subtotal = int64(cart.CalculateSubtotal())
-
-	if err := s.validateCartItemsBackoffice(ctx, cart, &summary); err != nil {
-		return entity.CheckoutSummary{}, richerror.New(op).WithWarpError(err)
+	myActiveCart, cErr := s.cartProvider.GetMyActiveCartBackoffice(ctx, cartparam.MyActiveCartBackofficeRequest{UserID: req.UserID})
+	if cErr != nil {
+		return orderparam.RegisterOrderBackofficeResponse{}, richerror.New(op).WithWarpError(cErr)
 	}
-
+	if req.DiscountCode != "" {
+		dCode, pErr := s.discountProvider.GetByCode(ctx, discountparam.GetSingleDiscountByCodeRequest{Code: req.DiscountCode})
+		if pErr != nil {
+			return orderparam.RegisterOrderBackofficeResponse{}, richerror.New(op).WithWarpError(pErr)
+		}
+		if vErr := dCode.Discount.CheckIsValidForUser(myActiveCart.Cart.UserID, myActiveCart.Cart.Subtotal); vErr != nil {
+			return orderparam.RegisterOrderBackofficeResponse{}, richerror.New(op).WithWarpError(vErr)
+		}
+	}
+	var cartItem []entity.CartItem
+	for _, item := range myActiveCart.Cart.Items {
+		cartItem = append(cartItem, entity.CartItem{
+			ProductID:         item.ProductID,
+			VariantID:         item.VariantID,
+			Quantity:          item.Quantity,
+			ProductName:       item.ProductName,
+			VariantAttributes: item.VariantAttributes,
+			PriceAtTime:       item.PriceAtTime,
+		})
+	}
+	cart := entity.Cart{
+		ID:     myActiveCart.Cart.ID,
+		UserID: myActiveCart.Cart.UserID,
+		Items:  cartItem,
+		Status: entity.CartStatus(myActiveCart.Cart.Status),
+	}
+	summary, err := s.discountProvider.ApplyDiscountToCart(ctx, cart, req.DiscountCode)
+	if err != nil {
+		return orderparam.RegisterOrderBackofficeResponse{}, richerror.New(op).WithWarpError(err)
+	}
 	if !summary.IsReady {
-		summary.FinalPrice = summary.Subtotal
-		return summary, nil
+		return orderparam.RegisterOrderBackofficeResponse{}, richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("order.cart_not_ready_for_checkout").
+			WithMeta(map[string]any{"summary": summary})
 	}
 
-	validDiscountsResp, err := s.discountProvider.GetValidDiscountsForCart(ctx, discountparam.GetValidDiscountsForSpecificCartRequest{
-		DiscountCode: discountCode,
-		Cart:         cart,
-	})
-	if err != nil {
-		return entity.CheckoutSummary{}, richerror.New(op).WithWarpError(err)
+	newOrder := entity.Order{
+		UserID:           req.UserID,
+		CartID:           cart.ID,
+		Items:            buildOrderItems(summary.Items),
+		SubtotalAmount:   uint(summary.Subtotal),
+		AppliedDiscounts: summary.AppliedDiscounts,
+		FinalAmount:      uint(summary.FinalPrice),
+		Status:           entity.OrderStatusPendingPayment,
+	}
+	newOrder.BeforeCreate()
+	newOrder.PurchaseType = entity.PurchaseTypeInPerson
+	if err := s.repo.Create(ctx, newOrder); err != nil {
+		return orderparam.RegisterOrderBackofficeResponse{}, richerror.New(op).WithWarpError(err)
 	}
 
-	s.calculateFinalPriceBackoffice(ctx, &cart, &summary, validDiscountsResp.Discounts, discountCode)
+	if _, err = s.cartProvider.UpdateStatus(ctx, cartparam.UpdateCartStatusRequest{CartID: cart.ID, Status: entity.PendingPayment}); err != nil {
+		return orderparam.RegisterOrderBackofficeResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return orderparam.RegisterOrderBackofficeResponse{OrderID: newOrder.ID}, nil
 
-	return summary, nil
 }
 
-func (s BackofficeService) validateCartItemsBackoffice(ctx context.Context, cart entity.Cart, summary *entity.CheckoutSummary) error {
-	variantIDs := make([]string, 0, len(cart.Items))
-	for _, item := range cart.Items {
-		variantIDs = append(variantIDs, item.VariantID)
+func (s BackofficeService) CompleteOrderBackoffice(ctx context.Context, req orderparam.CompletedOrderBackofficeRequest) (orderparam.CompletedOrderBackofficeResponse, error) {
+	const op = "orderservice.CompleteOrderBackoffice"
+
+	order, oErr := s.repo.GetOrderByID(ctx, req.OrderID)
+	if oErr != nil {
+		return orderparam.CompletedOrderBackofficeResponse{}, richerror.New(op).WithWarpError(oErr)
 	}
 
-	respProduct, err := s.productProvider.GetVariantsByIDs(ctx, productparam.GetVariantsByIDsRequest{IDs: variantIDs})
-	currentVariants := respProduct.Variants
+	_, err := s.paymentProvider.CreatePaymentForBackofficePanel(ctx, paymentparam.CreatePaymentForBackofficePanelRequest{OrderID: order.ID, Description: req.Description})
 	if err != nil {
-		return err
+		return orderparam.CompletedOrderBackofficeResponse{}, richerror.New(op).WithWarpError(err)
 	}
-
-	for _, item := range cart.Items {
-		itemResult := entity.CheckoutItemResult{CartItem: item}
-		currentVariant, ok := currentVariants[item.VariantID]
-		if !ok {
-			return fmt.Errorf("could not find variant %s for product %s", item.VariantID, item.ProductID)
-		}
-
-		if currentVariant.Quantity < uint64(item.Quantity) {
-			itemResult.HasStockIssue = true
-			summary.IsReady = false
-		}
-		if currentVariant.Price != uint64(item.PriceAtTime) {
-			itemResult.HasPriceChanged = true
-			itemResult.CurrentPrice = int64(currentVariant.Price)
-			summary.IsReady = false
-		} else {
-			itemResult.CurrentPrice = int64(currentVariant.Price)
-		}
-		summary.Items = append(summary.Items, itemResult)
+	if _, err = s.cartProvider.UpdateStatus(ctx, cartparam.UpdateCartStatusRequest{CartID: order.CartID, Status: entity.CartPaid}); err != nil {
+		return orderparam.CompletedOrderBackofficeResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	return nil
-}
-
-func (s *BackofficeService) calculateFinalPriceBackoffice(ctx context.Context, cart *entity.Cart, summary *entity.CheckoutSummary, allValidDiscounts []entity.Discount, userCode string) error {
-	const op = "orderservice.calculateFinalPrice"
-
-	productCategories, err := s.productProvider.GetProductCategoriesForCartItems(ctx, productparam.GetProductCategoriesForCartItemsRequest{Items: cart.Items})
-	if err != nil {
-		return richerror.New(op).WithWarpError(err)
+	if err = s.repo.UpdateOrderStatus(ctx, order.ID, entity.OrderStatusDelivered); err != nil {
+		return orderparam.CompletedOrderBackofficeResponse{}, richerror.New(op).WithWarpError(err)
 	}
-
-	var autoDiscounts []entity.Discount
-	var coupon *entity.Discount
-	for _, d := range allValidDiscounts {
-		discountCopy := d
-		if d.Code != "" && d.Code == userCode {
-			coupon = &discountCopy
-		} else if d.Code == "" {
-			autoDiscounts = append(autoDiscounts, discountCopy)
-		}
+	if _, err = s.productProvider.UpdateProductVariantQuantityAfterRegisterOrder(ctx, productparam.UpdateProductVariantQuantityAfterRegisterOrderRequest{Order: order}); err != nil {
+		return orderparam.CompletedOrderBackofficeResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	var totalDiscountAmount int64 = 0
-	appliedDiscountsMap := make(map[string]entity.AppliedDiscount)
-
-	for i, item := range summary.Items {
-		var itemTotalDiscount int64 = 0
-		itemBasePrice := item.PriceAtTime * int64(item.Quantity)
-
-		var bestAutoDiscountAmount int64 = 0
-		var bestAutoDiscount *entity.Discount = nil
-		for _, autoDiscount := range autoDiscounts {
-			if s.isDiscountApplicableToItemBackoffice(autoDiscount, item.CartItem, productCategories.CategoryIDs[item.ProductID], cart.UserID) {
-				currentDiscountAmount := autoDiscount.CalculateAmount(uint(itemBasePrice), item.VariantID)
-				if currentDiscountAmount > uint(bestAutoDiscountAmount) {
-					bestAutoDiscountAmount = int64(currentDiscountAmount)
-					bestAutoDiscount = &autoDiscount
-				}
-			}
-		}
-
-		if bestAutoDiscount != nil {
-			itemTotalDiscount += bestAutoDiscountAmount
-			ad := appliedDiscountsMap[bestAutoDiscount.ID]
-			ad.DiscountID = bestAutoDiscount.ID
-			ad.Amount += bestAutoDiscountAmount
-			appliedDiscountsMap[bestAutoDiscount.ID] = ad
-		}
-
-		if coupon != nil {
-			if s.isDiscountApplicableToItemBackoffice(*coupon, item.CartItem, productCategories.CategoryIDs[item.ProductID], cart.UserID) {
-				priceForItemCoupon := itemBasePrice - itemTotalDiscount
-				couponAmountOnItem := coupon.CalculateAmount(uint(priceForItemCoupon), item.VariantID)
-
-				itemTotalDiscount += int64(couponAmountOnItem)
-				ad := appliedDiscountsMap[coupon.ID]
-				ad.DiscountID = coupon.ID
-				ad.DiscountCode = coupon.Code
-				ad.Amount += int64(couponAmountOnItem)
-				appliedDiscountsMap[coupon.ID] = ad
-			}
-		}
-
-		if itemTotalDiscount > itemBasePrice {
-			itemTotalDiscount = itemBasePrice
-		}
-		summary.Items[i].DiscountAmount = uint(itemTotalDiscount)
-		totalDiscountAmount += itemTotalDiscount
+	if _, err = s.discountProvider.UpdateDiscountUsageAfterRegisterOrder(ctx, discountparam.UpdateDiscountUsageAfterRegisterOrderRequest{AppliedDiscount: order.AppliedDiscounts}); err != nil {
+		return orderparam.CompletedOrderBackofficeResponse{}, richerror.New(op).WithWarpError(err)
 	}
-
-	summary.DiscountedSubtotal = uint(summary.Subtotal - totalDiscountAmount)
-	summary.FinalPrice = int64(summary.DiscountedSubtotal)
-
-	summary.AppliedDiscounts = make([]entity.AppliedDiscount, 0, len(appliedDiscountsMap))
-	for _, ad := range appliedDiscountsMap {
-		summary.AppliedDiscounts = append(summary.AppliedDiscounts, ad)
+	if _, err = s.productProvider.UpdateProductSalesCountAfterRegisterOrder(ctx, productparam.UpdateProductSalesCountAfterRegisterOrderRequest{Order: order}); err != nil {
+		return orderparam.CompletedOrderBackofficeResponse{}, richerror.New(op).WithWarpError(err)
 	}
-
-	return nil
-}
-
-func (s *BackofficeService) isDiscountApplicableToItemBackoffice(
-	d entity.Discount,
-	item entity.CartItem,
-	itemCategoryIDs []string,
-	userID string,
-) bool {
-	// 1) فیلتر بر اساس یوزر (اگر محدود شده باشد)
-	if len(d.ApplicableUserIDs) > 0 {
-		userIsAllowed := false
-		for _, allowedUserID := range d.ApplicableUserIDs {
-			if userID == allowedUserID {
-				userIsAllowed = true
-				break
-			}
-		}
-		if !userIsAllowed {
-			return false
-		}
-	}
-
-	// 2) تصمیم‌گیری بر اساس ApplicableTo
-	switch d.ApplicableTo {
-
-	case entity.ApplicableToProducts:
-		// باید با SpecialDiscountItems چک کنیم
-		if len(d.ApplicableProductIDs) == 0 {
-			return false
-		}
-
-		for _, sdi := range d.ApplicableProductIDs {
-			if sdi.ProductID != item.ProductID {
-				continue
-			}
-
-			// اگر VariantID در تخفیف مشخص نشده باشد، یعنی برای همه ورینت‌های این محصول معتبر است
-			if sdi.VariantID == nil {
-				return true
-			}
-
-			// اگر VariantID مشخص شده، باید دقیقاً با Variant آیتم برابر باشد
-			if *sdi.VariantID == item.VariantID {
-				return true
-			}
-		}
-
-		return false
-
-	case entity.ApplicableToCategories:
-		// اگر دسته‌ای تنظیم نشده، در این مود عملاً تخفیف قابل اعمال نیست
-		if len(d.ApplicableCategoryIDs) == 0 {
-			return false
-		}
-
-		allowedCategorySet := make(map[string]struct{}, len(d.ApplicableCategoryIDs))
-		for _, catID := range d.ApplicableCategoryIDs {
-			allowedCategorySet[catID] = struct{}{}
-		}
-
-		for _, catID := range itemCategoryIDs {
-			if _, ok := allowedCategorySet[catID]; ok {
-				return true
-			}
-		}
-
-		return false
-
-	case entity.ApplicableToUsers:
-		return true
-
-	default:
-		return false
-	}
+	return orderparam.CompletedOrderBackofficeResponse{}, nil
 }

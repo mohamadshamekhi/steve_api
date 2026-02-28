@@ -90,6 +90,17 @@ func (s BackofficeService) UpdateProductVariantQuantityAfterRegisterOrder(ctx co
 	return productparam.UpdateProductVariantQuantityAfterRegisterOrderResponse{}, nil
 }
 
+func (s BackofficeService) UpdateProductSalesCountAfterRegisterOrder(ctx context.Context, req productparam.UpdateProductSalesCountAfterRegisterOrderRequest) (productparam.UpdateProductSalesCountAfterRegisterOrderResponse, error) {
+	const op = "productservice.UpdateProductSalesCountAfterRegisterOrder"
+
+	for _, item := range req.Order.Items {
+		if err := s.repo.UpdateProductSalesCount(ctx, item.ProductID, item.Quantity); err != nil {
+			return productparam.UpdateProductSalesCountAfterRegisterOrderResponse{}, richerror.New(op).WithWarpError(err)
+		}
+	}
+	return productparam.UpdateProductSalesCountAfterRegisterOrderResponse{}, nil
+}
+
 func (s BackofficeService) PublishProduct(ctx context.Context, req productparam.PublishProductRequest) (productparam.PublishProductResponse, error) {
 	const op = "productservice.PublishProduct"
 	product, err := s.repo.FindByID(ctx, req.ProductID)

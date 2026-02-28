@@ -77,7 +77,7 @@ func (s *StoreFrontService) SetPaymentProvider(p StorefrontPaymentProvider) {
 }
 
 func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.RegisterOrderRequest) (orderparam.RegisterOrderResponse, error) {
-	const op = "orderservice.GoToGateway"
+	const op = "orderservice.RegisterOrder"
 	userID, _ := ctx.Value("user_id").(string)
 	activeCartResp, gCErr := s.cartProvider.GetMyActiveCart(ctx, cartparam.MyActiveCartRequest{UserID: userID})
 	if gCErr != nil {
