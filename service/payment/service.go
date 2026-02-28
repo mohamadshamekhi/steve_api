@@ -363,6 +363,7 @@ func (s Service) notifyDeveloper(err error, meta map[string]any) {
 			logger.L().Error("Telegram bot failed to send message to developer chat", "err: ", err)
 		}
 	}
+}
 
 func (s Service) CreatePaymentForBackofficePanel(ctx context.Context, req paymentparam.CreatePaymentForBackofficePanelRequest) (paymentparam.CreatePaymentForBackofficePanelResponse, error) {
 	const op = "paymentservice.CreatePaymentForBackofficePanel"
