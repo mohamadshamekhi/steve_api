@@ -2,6 +2,7 @@ package mongodbbrand
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
@@ -16,15 +17,33 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 	filter := bson.M{
 		"deleted_at": bson.M{"$exists": false},
 	}
-	for _, f := range f.Filter {
-		for key, value := range f {
-			if key == "name" {
-				filter[key] = bson.M{"$regex": value, "$options": "i"}
-			} else {
-				filter[key] = value
+
+	for _, item := range f.Filter {
+		for key, value := range item {
+
+			switch key {
+
+			case "name":
+				if v, ok := value.(string); ok && v != "" {
+					filter["name"] = bson.M{
+						"$regex":   v,
+						"$options": "i",
+					}
+				}
+
+			case "is_favorite":
+				if v, ok := value.(bool); ok {
+					filter["$or"] = []bson.M{
+						{"is_favorite": v},
+						{"is_favorite": bson.M{"$exists": v}},
+					}
+				}
 			}
 		}
 	}
+
+	fmt.Println("qqq", filter)
+
 	totalCount, err := d.collection.CountDocuments(ctx, filter)
 	if err != nil {
 		return brandservice.ListResult{}, richerror.New(op).WithWarpError(err).

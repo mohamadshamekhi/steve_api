@@ -31,6 +31,10 @@ func (v Validator) ValidateUpdateBrandRequest(req brandparam.UpdateBrandRequest)
 				validation.By(v.mediaBrandIsExist),
 			),
 		),
+		validation.Field(&req.IsFavorite,
+			validation.When(req.IsFavorite != nil,
+				validation.Required.Error("validation.required"),
+			)),
 	); err != nil {
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {
