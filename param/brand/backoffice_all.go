@@ -18,4 +18,5 @@ type BrandInfo struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	URL         string `json:"url"`
+	IsFavorite  bool   `json:"is_favorite"`
 }

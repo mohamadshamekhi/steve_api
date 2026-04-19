@@ -11,6 +11,7 @@ type GetBrandResponse struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Url         string `json:"url"`
+	IsFavorite  bool   `json:"is_favorite"`
 }
 
 type GetBrandsByIDsRequest struct {

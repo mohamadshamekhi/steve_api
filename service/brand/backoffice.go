@@ -27,6 +27,7 @@ func (s BackofficeService) Create(ctx context.Context, req brandparam.CreateBran
 		Name:        req.Name,
 		Description: req.Description,
 		MediaID:     req.MediaID,
+		IsFavorite:  req.IsFavorite,
 	}
 	brand.BeforeCreate()
 
@@ -59,6 +60,7 @@ func (s BackofficeService) GetBrand(ctx context.Context, req brandparam.GetBrand
 		Name:        brand.Name,
 		Description: brand.Description,
 		Url:         resp.URL,
+		IsFavorite:  brand.IsFavorite,
 	}, nil
 }
 
@@ -102,6 +104,10 @@ func (s BackofficeService) Update(ctx context.Context, req brandparam.UpdateBran
 		oldMediaIDToDelete = brand.MediaID
 
 		brand.MediaID = *req.MediaID
+	}
+
+	if req.IsFavorite != nil {
+		brand.IsFavorite = *req.IsFavorite
 	}
 
 	if uErr := s.repo.Update(ctx, brand); uErr != nil {
@@ -166,6 +172,7 @@ func (s BackofficeService) All(ctx context.Context, req brandparam.GetAllBrandsP
 			Name:        b.Name,
 			Description: b.Description,
 			URL:         r.URL,
+			IsFavorite:  b.IsFavorite,
 		})
 	}
 

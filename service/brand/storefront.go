@@ -39,6 +39,7 @@ func (s StorefrontService) GetAllBrands(ctx context.Context, req brandparam.GetA
 			Name:        b.Name,
 			Description: b.Description,
 			URL:         r.URL,
+			IsFavorite:  b.IsFavorite,
 		})
 	}
 
