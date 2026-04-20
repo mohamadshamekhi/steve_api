@@ -16,9 +16,9 @@ type BackofficeOrderInfo struct {
 	UserID              string                   `json:"user_id"`
 	CartID              string                   `json:"cart_id"`
 	Items               []OrderItemInfo          `json:"items"`
-	AppliedDiscounts    []entity.AppliedDiscount `json:"applied_discounts"`
+	AppliedDiscounts    []entity.AppliedDiscount `json:"applied_discounts,omitempty"`
 	SubtotalAmount      uint                     `json:"subtotal_amount"`
-	TotalDiscountAmount uint                     `json:"total_discount_amount"`
+	TotalDiscountAmount uint                     `json:"total_discount_amount,omitempty"`
 	FinalAmount         uint                     `json:"final_amount"`
 	Status              entity.OrderStatus       `json:"status"`
 }
@@ -29,5 +29,5 @@ type OrderItemInfo struct {
 	Quantity          uint                      `json:"quantity"`
 	VariantAttributes []entity.VariantAttribute `json:"variant_attributes"`
 	TotalPriceAtTime  uint                      `json:"total_price_at_time"`
-	DiscountAmount    uint                      `json:"discount_amount"`
+	DiscountAmount    uint                      `json:"discount_amount,omitempty"`
 }

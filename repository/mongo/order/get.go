@@ -33,3 +33,30 @@ func (d DB) GetOrderByID(ctx context.Context, orderID string) (entity.Order, err
 
 	return order, nil
 }
+
+func (d DB) CheckPendingOrderExist(ctx context.Context, userID string) (*entity.Order, error) {
+	const op = "mongodborder.CheckPendingOrderExist"
+
+	filter := bson.M{}
+
+	filter["user_id"] = userID
+	filter["status"] = entity.OrderStatusPendingPayment
+
+	var order entity.Order
+
+	err := d.collection.FindOne(ctx, filter).Decode(&order)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return &entity.Order{}, richerror.New(op).
+				WithKind(richerror.KindNotFound).
+				WithMessageKey("order.not_found").
+				WithMeta(map[string]any{"user_id": userID})
+		}
+		return &entity.Order{}, richerror.New(op).
+			WithWarpError(err).
+			WithKind(richerror.KindUnexpected).
+			WithMessageKey("global.something_wrong")
+	}
+
+	return &order, nil
+}
