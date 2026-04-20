@@ -239,8 +239,32 @@ func (s BackofficeService) RegisterOrderBackoffice(ctx context.Context, req orde
 	if _, err = s.cartProvider.UpdateStatus(ctx, cartparam.UpdateCartStatusRequest{CartID: cart.ID, Status: entity.PendingPayment}); err != nil {
 		return orderparam.RegisterOrderBackofficeResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	return orderparam.RegisterOrderBackofficeResponse{OrderID: newOrder.ID}, nil
 
+	var orderItemInfo []orderparam.OrderItemInfo
+	for _, item := range summary.Items {
+		orderItemInfo = append(orderItemInfo, orderparam.OrderItemInfo{
+			ProductID:         item.ProductID,
+			VariantID:         item.VariantID,
+			Quantity:          uint(item.Quantity),
+			VariantAttributes: item.VariantAttributes,
+			TotalPriceAtTime:  uint(item.PriceAtTime),
+			DiscountAmount:    item.DiscountAmount,
+		})
+	}
+
+	orderInfo := orderparam.BackofficeOrderInfo{
+		ID:                  newOrder.ID,
+		UserID:              newOrder.UserID,
+		CartID:              newOrder.CartID,
+		Items:               orderItemInfo,
+		SubtotalAmount:      newOrder.SubtotalAmount,
+		AppliedDiscounts:    newOrder.AppliedDiscounts,
+		TotalDiscountAmount: newOrder.SubtotalAmount - summary.DiscountedSubtotal,
+		FinalAmount:         newOrder.FinalAmount,
+		Status:              newOrder.Status,
+	}
+
+	return orderparam.RegisterOrderBackofficeResponse{Order: orderInfo}, nil
 }
 
 func (s BackofficeService) CompleteOrderBackoffice(ctx context.Context, req orderparam.CompletedOrderBackofficeRequest) (orderparam.CompletedOrderBackofficeResponse, error) {
