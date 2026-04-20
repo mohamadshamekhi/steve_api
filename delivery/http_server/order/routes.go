@@ -18,4 +18,5 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	backofficePanel := e.Group("/backoffice/order")
 	backofficePanel.POST("/register", h.RegisterBackoffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.CreateOrder))
 	backofficePanel.POST("/complete-order", h.CompleteOrderBackoffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.CreateOrder))
+	backofficePanel.GET("/check-pending-exist/:id", h.CheckPendingExist, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ViewOrderDetails))
 }

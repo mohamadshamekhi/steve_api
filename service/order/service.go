@@ -30,6 +30,7 @@ type OrderReader interface {
 	GetUserOrderStatics(ctx context.Context, userID string, status entity.OrderStatus) (uint64, error)
 	GetOrderByID(ctx context.Context, orderID string) (entity.Order, error)
 	GetExpiredPendingOrders(ctx context.Context, expiredBefore time.Time) ([]entity.Order, error)
+	CheckPendingOrderExist(ctx context.Context, userID string) (*entity.Order, error)
 }
 
 type OrderWriter interface {

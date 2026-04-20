@@ -2,6 +2,7 @@ package orderservice
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
@@ -295,4 +296,43 @@ func (s BackofficeService) CompleteOrderBackoffice(ctx context.Context, req orde
 		return orderparam.CompletedOrderBackofficeResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	return orderparam.CompletedOrderBackofficeResponse{}, nil
+}
+
+func (s BackofficeService) CheckPendingExist(ctx context.Context, req orderparam.CheckPendingExistRequest) (orderparam.CheckPendingExistResponse, error) {
+	const op = "orderservice.CheckPendingExist"
+
+	order, err := s.repo.CheckPendingOrderExist(ctx, req.UserID)
+	if err != nil {
+		var rErr *richerror.RichError
+		if errors.As(err, &rErr) && richerror.GetKind(rErr) == richerror.KindNotFound {
+			return orderparam.CheckPendingExistResponse{}, nil
+		}
+		return orderparam.CheckPendingExistResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	var itemsInfo []orderparam.OrderItemInfo
+	for _, item := range order.Items {
+		itemsInfo = append(itemsInfo, orderparam.OrderItemInfo{
+			ProductID:         item.ProductID,
+			VariantID:         item.VariantID,
+			Quantity:          item.Quantity,
+			VariantAttributes: item.VariantAttributes,
+			TotalPriceAtTime:  item.PriceAtTime,
+		})
+	}
+
+	orderInfo := orderparam.BackofficeOrderInfo{
+		ID:               order.ID,
+		UserID:           order.UserID,
+		CartID:           order.CartID,
+		Items:            itemsInfo,
+		AppliedDiscounts: order.AppliedDiscounts,
+		SubtotalAmount:   order.SubtotalAmount,
+		FinalAmount:      order.FinalAmount,
+		Status:           order.Status,
+	}
+
+	return orderparam.CheckPendingExistResponse{
+		Order: &orderInfo,
+	}, err
 }
