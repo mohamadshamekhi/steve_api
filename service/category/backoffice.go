@@ -316,3 +316,29 @@ func (s BackofficeService) GetCategoriesByIDs(ctx context.Context, req categoryp
 	}
 	return categoryparam.GetCategoriesByIDsResponse{Categories: categories}, nil
 }
+
+func (s BackofficeService) GetCategoryBySlug(ctx context.Context, req categoryparam.GetCategoryBySlugRequest) (categoryparam.GetCategoryBySlugResponse, error) {
+	const op = "categoryservice.GetCategoryBySlug"
+
+	resp, err := s.repo.FindBySlug(ctx, req.Slug)
+	if err != nil {
+		return categoryparam.GetCategoryBySlugResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	category := entity.Category{
+		ID:             resp.ID,
+		Name:           resp.Name,
+		Slug:           resp.Slug,
+		Description:    resp.Description,
+		MediaID:        resp.MediaID,
+		ParentID:       resp.ParentID,
+		Ancestors:      resp.Ancestors,
+		Level:          resp.Level,
+		AttributeSetID: resp.AttributeSetID,
+		CreatedAt:      resp.CreatedAt,
+		UpdatedAt:      resp.UpdatedAt,
+		DeletedAt:      resp.DeletedAt,
+	}
+
+	return categoryparam.GetCategoryBySlugResponse{Category: category}, nil
+}

@@ -95,6 +95,9 @@ func (h Handler) StorefrontGetFilterableProduct(c echo.Context) error {
 	if v := queryParams.Get("category_id"); v != "" {
 		req.Filter.CategoryID = &v
 	}
+	if v := queryParams.Get("category_slug"); v != "" {
+		req.Filter.CategorySlug = &v
+	}
 	if v := queryParams.Get("color"); v != "" {
 		req.Filter.Color = &v
 	}
@@ -138,6 +141,7 @@ func (h Handler) StorefrontGetFilterableProduct(c echo.Context) error {
 	reservedKeys := map[string]bool{
 		"brand_id":       true,
 		"category_id":    true,
+		"category_slug":  true,
 		"color":          true,
 		"order_by":       true,
 		"is_second_hand": true,

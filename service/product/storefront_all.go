@@ -15,6 +15,14 @@ import (
 func (s StorefrontService) GetFilteredProduct(ctx context.Context, req productparam.StorefrontGetAllProductRequest) (productparam.StorefrontGetAllProductResponse, error) {
 	const op = "productservice.GetFilteredProduct"
 
+	if req.Filter.CategorySlug != nil {
+		category, cErr := s.categoryProvider.GetCategoryBySlug(ctx, categoryparam.GetCategoryBySlugRequest{Slug: *req.Filter.CategorySlug})
+		if cErr != nil {
+			logger.L().Error("failed to get category by slug", "category_slug", *req.Filter.CategorySlug, "err", cErr)
+		}
+		req.Filter.CategoryID = &category.Category.ID
+	}
+
 	resp, err := s.repo.GetFilteredProducts(ctx, &req.Filter, req.Pagination)
 	if err != nil {
 		return productparam.StorefrontGetAllProductResponse{}, richerror.New(op).WithWarpError(err)

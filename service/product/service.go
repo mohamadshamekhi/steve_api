@@ -81,6 +81,7 @@ func NewBackofficeService(repo ProductReadWriter, mediaSvc MediaService, categor
 type CategoryProvider interface {
 	GetCategory(ctx context.Context, req categoryparam.GetCategoryRequest) (categoryparam.GetCategoryResponse, error)
 	GetCategoriesByIDs(ctx context.Context, req categoryparam.GetCategoriesByIDsRequest) (categoryparam.GetCategoriesByIDsResponse, error)
+	GetCategoryBySlug(ctx context.Context, req categoryparam.GetCategoryBySlugRequest) (categoryparam.GetCategoryBySlugResponse, error)
 }
 
 type BrandProvider interface {
