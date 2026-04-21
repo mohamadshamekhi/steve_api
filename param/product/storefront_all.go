@@ -9,6 +9,7 @@ type StorefrontGetAllProductRequest struct {
 type StorefrontFilterProduct struct {
 	BrandID      *string        `json:"brand_id"`
 	CategoryID   *string        `json:"category_id"`
+	CategorySlug *string        `json:"category_slug"`
 	MinPrice     *uint64        `json:"min_price"`
 	MaxPrice     *uint64        `json:"max_price"`
 	Color        *string        `json:"color"`
