@@ -85,6 +85,9 @@ func (bs BannerBackofficeService) Update(ctx context.Context, req settingparam.U
 	if req.IsActive != nil {
 		b.IsActive = *req.IsActive
 	}
+	if req.AltText != nil {
+		b.AltText = *req.AltText
+	}
 	if req.StartsAt != nil {
 		b.StartsAt = req.StartsAt
 	}
