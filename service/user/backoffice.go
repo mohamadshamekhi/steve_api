@@ -95,3 +95,21 @@ func (s BackofficeService) UpdateUser(ctx context.Context, req userparam.UpdateU
 	}
 	return userparam.UpdateUserBackofficeResponse{}, nil
 }
+
+func (s BackofficeService) GetUserByID(ctx context.Context, req userparam.GetUsersRequest) (userparam.GetUsersResponse, error) {
+	const op = "userservice.GetUserByID"
+
+	user, err := s.repo.GetUserByID(ctx, req.ID)
+	if err != nil {
+		return userparam.GetUsersResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	userInfo := userparam.UserInfo{
+		ID:          user.ID,
+		Name:        user.Name,
+		PhoneNumber: user.PhoneNumber,
+		CreatedAt:   user.CreatedAt,
+		Addresses:   user.Addresses,
+	}
+
+	return userparam.GetUsersResponse{User: userInfo}, nil
+}

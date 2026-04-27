@@ -14,3 +14,9 @@ type AllBackofficeResponse struct {
 	Backoffice []entity.BackOffice            `json:"backoffice"`
 	Pagination commonparam.PaginationResponse `json:"pagination"`
 }
+
+type GetSuperUserBackofficeRequest struct{}
+
+type GetSuperUserBackofficeResponse struct {
+	Backoffice []entity.BackOffice `json:"backoffice"`
+}

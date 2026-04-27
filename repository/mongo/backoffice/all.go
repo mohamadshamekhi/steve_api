@@ -54,3 +54,45 @@ func (d DB) AllBackoffice(ctx context.Context, f commonparam.FilterRequest, p co
 		TotalCount: totalCount,
 	}, nil
 }
+
+func (d DB) AllSuperUserBackOffices(ctx context.Context) (backofficeservice.ListResult, error) {
+	const op = "mongodbbackoffice.AllSuperUserBackOffices"
+
+	filter := bson.M{
+		"roles":      "super_admin",
+		"deleted_at": bson.M{"$exists": false},
+	}
+
+	findOptions := options.Find().
+		SetSort(bson.D{{Key: "created_at", Value: -1}})
+
+	totalCount, err := d.collection.CountDocuments(ctx, filter)
+	if err != nil {
+		return backofficeservice.ListResult{}, richerror.New(op).
+			WithWarpError(err).
+			WithMessageKey("global.something_wrong").
+			WithKind(richerror.KindUnexpected)
+	}
+
+	cursor, err := d.collection.Find(ctx, filter, findOptions)
+	if err != nil {
+		return backofficeservice.ListResult{}, richerror.New(op).
+			WithWarpError(err).
+			WithMessageKey("global.something_wrong").
+			WithKind(richerror.KindUnexpected)
+	}
+	defer cursor.Close(ctx)
+
+	var backoffice []entity.BackOffice
+	if err := cursor.All(ctx, &backoffice); err != nil {
+		return backofficeservice.ListResult{}, richerror.New(op).
+			WithWarpError(err).
+			WithMessageKey("global.something_wrong").
+			WithKind(richerror.KindUnexpected)
+	}
+
+	return backofficeservice.ListResult{
+		Backoffice: backoffice,
+		TotalCount: totalCount,
+	}, nil
+}

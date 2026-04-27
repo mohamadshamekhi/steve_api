@@ -70,6 +70,7 @@ mellipayamak:
     patterns:
       otp : "422053"
       payment : "428066"
+      backoffice : "446054"
     from_number: "50002710070797"
 
 payment:

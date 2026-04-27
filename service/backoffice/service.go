@@ -24,6 +24,7 @@ type Repository interface {
 	AddNewBackofficeUser(ctx context.Context, u entity.BackOffice) error
 	UpdateBackofficeUser(context.Context, entity.BackOffice) error
 	AllBackoffice(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
+	AllSuperUserBackOffices(ctx context.Context) (ListResult, error)
 }
 type Service struct {
 	config        Config
