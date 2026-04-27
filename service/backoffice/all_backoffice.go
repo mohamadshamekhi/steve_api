@@ -23,3 +23,16 @@ func (s Service) GetAll(ctx context.Context, req backofficeparam.AllBackofficeRe
 		}{PageSize: req.Pagination.GetPageSize(), PageNumber: req.Pagination.GetPageNumber(), Total: uint(resp.TotalCount)},
 	}, nil
 }
+
+func (s Service) GetSuperUserBackOffices(ctx context.Context, req backofficeparam.GetSuperUserBackofficeRequest) (backofficeparam.GetSuperUserBackofficeResponse, error) {
+	const op = "backofficeservice.GetSuperUserBackOffices"
+
+	resp, err := s.repo.AllSuperUserBackOffices(ctx)
+	if err != nil {
+		return backofficeparam.GetSuperUserBackofficeResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	return backofficeparam.GetSuperUserBackofficeResponse{
+		Backoffice: resp.Backoffice,
+	}, nil
+}

@@ -3,8 +3,11 @@ package sellservice
 import (
 	"context"
 	"sync"
+	"time"
 
+	"github.com/abolfazlnorzad/steve/adapter/mellipayamak"
 	"github.com/abolfazlnorzad/steve/entity"
+	backofficeparam "github.com/abolfazlnorzad/steve/param/backoffice"
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
@@ -12,13 +15,16 @@ import (
 	userparam "github.com/abolfazlnorzad/steve/param/user"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	persian "github.com/yaa110/go-persian-calendar"
 )
 
 type StorefrontService struct {
-	Repo      StorefrontRepo
-	uProvider UserProvider
-	bProvider BrandProvider
-	pProvider ProductProvider
+	Repo                 StorefrontRepo
+	uProvider            UserProvider
+	bProvider            BrandProvider
+	pProvider            ProductProvider
+	backofficeProvider   BackofficeProvider
+	melliPayamakProvider MelliPayamakProvider
 }
 
 type StorefrontRepo interface {
@@ -29,12 +35,17 @@ type StorefrontRepo interface {
 
 func NewStorefrontService(r StorefrontRepo, uProvider UserProvider,
 	bProvider BrandProvider,
-	pProvider ProductProvider) StorefrontService {
+	pProvider ProductProvider,
+	backofficeProvider BackofficeProvider,
+	melliPayamakProvider MelliPayamakProvider,
+) StorefrontService {
 	return StorefrontService{
-		Repo:      r,
-		uProvider: uProvider,
-		bProvider: bProvider,
-		pProvider: pProvider,
+		Repo:                 r,
+		uProvider:            uProvider,
+		bProvider:            bProvider,
+		pProvider:            pProvider,
+		backofficeProvider:   backofficeProvider,
+		melliPayamakProvider: melliPayamakProvider,
 	}
 }
 
@@ -55,6 +66,41 @@ func (s StorefrontService) Create(ctx context.Context, req sellparam.AddSellRequ
 	err := s.Repo.Add(ctx, sell)
 	if err != nil {
 		return sellparam.AddSellResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	loc, _ := time.LoadLocation("Asia/Tehran")
+	now := time.Now().In(loc)
+	pt := persian.New(now)
+	date := pt.Format("yyyy/MM/dd")
+	hour := pt.Format("HH:mm")
+
+	resp, bErr := s.backofficeProvider.GetSuperUserBackOffices(ctx, backofficeparam.GetSuperUserBackofficeRequest{})
+	if bErr != nil {
+		logger.L().Error("Failed to get super user backoffice", "err", err)
+	}
+
+	user, uErr := s.uProvider.GetUserByID(ctx, userparam.GetUsersRequest{ID: req.UserID})
+	if uErr != nil {
+		logger.L().Error("Failed to get user", "err", uErr)
+	}
+
+	for _, backoffice := range resp.Backoffice {
+		go func(date string, hour string) {
+			sCtx, cancel := context.WithTimeout(context.Background(), 40*time.Second)
+			defer cancel()
+
+			if mErr := s.melliPayamakProvider.SendPatternSMS(sCtx, backoffice.PhoneNumber, []string{
+				backoffice.Name,
+				user.User.Name,
+				user.User.PhoneNumber,
+				"کالایی برای فروش",
+				"تلفن",
+				user.User.PhoneNumber,
+				date, hour,
+			}, mellipayamak.BackofficeKey); mErr != nil {
+				logger.L().Error("Failed to send sms backoffice", "err", mErr)
+			}
+		}(date, hour)
 	}
 
 	return sellparam.AddSellResponse{}, nil

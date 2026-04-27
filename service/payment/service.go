@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/abolfazlnorzad/steve/adapter/mellipayamak"
 	"github.com/abolfazlnorzad/steve/entity"
+	backofficeparam "github.com/abolfazlnorzad/steve/param/backoffice"
 	discountparam "github.com/abolfazlnorzad/steve/param/discount"
 	orderparam "github.com/abolfazlnorzad/steve/param/order"
 	paymentparam "github.com/abolfazlnorzad/steve/param/payment"
@@ -59,7 +61,11 @@ type ProductProvider interface {
 }
 
 type MelliPayamakProvider interface {
-	SendPayment(ctx context.Context, to string, text []string) error
+	SendPatternSMS(ctx context.Context, to string, text []string, patternKey string) error
+}
+
+type BackofficeProvider interface {
+	GetSuperUserBackOffices(ctx context.Context, req backofficeparam.GetSuperUserBackofficeRequest) (backofficeparam.GetSuperUserBackofficeResponse, error)
 }
 
 type UserProvider interface {
@@ -77,6 +83,7 @@ type Service struct {
 	userProvider                UserProvider
 	telegramAdminBotAdapter     TelegramBotAdapter
 	telegramDeveloperBotAdapter TelegramBotAdapter
+	backofficeProvider          BackofficeProvider
 }
 
 func NewService(cfg Config, repo Repository,
@@ -88,6 +95,7 @@ func NewService(cfg Config, repo Repository,
 	userProvider UserProvider,
 	telegramAdminBotAdapter TelegramBotAdapter,
 	telegramDeveloperBotAdapter TelegramBotAdapter,
+	backofficeProvider BackofficeProvider,
 ) Service {
 	return Service{
 		cfg:                         cfg,
@@ -100,6 +108,7 @@ func NewService(cfg Config, repo Repository,
 		userProvider:                userProvider,
 		telegramAdminBotAdapter:     telegramAdminBotAdapter,
 		telegramDeveloperBotAdapter: telegramDeveloperBotAdapter,
+		backofficeProvider:          backofficeProvider,
 	}
 }
 
@@ -212,6 +221,44 @@ func (s Service) VerifyPayment(ctx context.Context, req paymentparam.VerifyPayme
 	date := pt.Format("yyyy/MM/dd")
 	hour := pt.Format("HH:mm")
 
+	resp, bErr := s.backofficeProvider.GetSuperUserBackOffices(ctx, backofficeparam.GetSuperUserBackofficeRequest{})
+	if bErr != nil {
+		logger.L().Error("Failed to get super user backoffice", "err", err)
+	}
+
+	if len(resp.Backoffice) > 0 {
+		for _, backoffice := range resp.Backoffice {
+			go func(date string, hour string) {
+				otpCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ExpirationTimePaymentSmsContext)
+				defer cancel()
+
+				s.retry(
+					otpCtx,
+					map[string]any{
+						"op":                     "send_admin_sms_payment",
+						"backoffice_name":        backoffice.Name,
+						"backoffice_phoneNumber": backoffice.PhoneNumber,
+						"User_name":              userRes.User.Name,
+						"user_phoneNumber":       userRes.User.PhoneNumber,
+						"refID":                  refID,
+						"date":                   date + " " + hour,
+					},
+					func() error {
+						return s.melliPayamakProvider.SendPatternSMS(otpCtx, backoffice.PhoneNumber, []string{
+							backoffice.Name,
+							userRes.User.Name,
+							userRes.User.PhoneNumber,
+							"خریدی",
+							"پیگیری",
+							refID,
+							date, hour,
+						}, mellipayamak.BackofficeKey)
+					},
+				)
+			}(date, hour)
+		}
+	}
+
 	go func(date string, hour string) {
 		otpCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ExpirationTimePaymentSmsContext)
 		defer cancel()
@@ -226,7 +273,7 @@ func (s Service) VerifyPayment(ctx context.Context, req paymentparam.VerifyPayme
 				"date":        date + " " + hour,
 			},
 			func() error {
-				return s.melliPayamakProvider.SendPayment(otpCtx, userRes.User.PhoneNumber, []string{userRes.User.Name, date, hour, refID})
+				return s.melliPayamakProvider.SendPatternSMS(otpCtx, userRes.User.PhoneNumber, []string{userRes.User.Name, date, hour, refID}, mellipayamak.SuccessPaymentKey)
 			},
 		)
 	}(date, hour)
@@ -252,7 +299,7 @@ func (s Service) VerifyPayment(ctx context.Context, req paymentparam.VerifyPayme
 			)
 		}
 		message := fmt.Sprintf(`✅ یک سفارش با موفقیت ثبت شد
-
+	
 		🔹 کد پیگیری: %s
 		🔹 مبلغ خرید: %v
 		🔹 نام کاربر: %s
@@ -261,7 +308,7 @@ func (s Service) VerifyPayment(ctx context.Context, req paymentparam.VerifyPayme
 		🔹 ساعت ثبت: %s
 		🔹 روش ارسال: %s
 		🔹 آدرس: %s
-
+	
 		📦 لیست آیتم‌ها:
 		%s
 		https://backoffice.stevemobile.com/dashboard/order?order=%s

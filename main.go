@@ -217,13 +217,13 @@ func main() {
 
 	repairRepo := mongodbrepair.New(mongoRepo)
 	repairVld := repairvalidator.New()
-	repairStorfrontSvc := repairservice.NewStorefrontService(repairRepo, backofficeUserSvc, backofficebrandsvc, productSvc)
+	repairStorfrontSvc := repairservice.NewStorefrontService(repairRepo, backofficeUserSvc, backofficebrandsvc, productSvc, backOfficeSvc, mp)
 	repairBackofficeSvc := repairservice.NewBackofficeService(repairRepo, backofficeUserSvc, backofficebrandsvc, productSvc)
 	reapirHandler := repairhandler.New(repairBackofficeSvc, repairStorfrontSvc, translator, repairVld, authSvc, cfg.Auth, aclSvc)
 
 	sellRepo := mongodbsell.New(mongoRepo)
 	sellVld := sellvalidator.New()
-	sellStorefrontSvc := sellservice.NewStorefrontService(sellRepo, backofficeUserSvc, backofficebrandsvc, productSvc)
+	sellStorefrontSvc := sellservice.NewStorefrontService(sellRepo, backofficeUserSvc, backofficebrandsvc, productSvc, backOfficeSvc, mp)
 	sellBackofficeSvc := sellservice.NewBackofficeService(sellRepo, backofficeUserSvc, backofficebrandsvc, productSvc)
 	sellHandler := sellhandler.New(sellBackofficeSvc, sellStorefrontSvc, translator, sellVld, authSvc, cfg.Auth, aclSvc)
 
@@ -246,7 +246,7 @@ func main() {
 	bannerHandler := bannerhandler.New(bannerBackofficeSvc, bannerVld, translator, authSvc, cfg.Auth, aclSvc)
 	paymentRepo := mongodbpayment.New(mongoRepo)
 	zarinpal := gateway.NewZarinpalAdapter(cfg.Zarinpal)
-	paymentSvc := paymentservice.NewService(cfg.Payment, paymentRepo, orderSvc, zarinpal, discountbackofficeSvc, productStorefrontSvc, mp, userSvc, adminTelegramBot, developerTelegramBot)
+	paymentSvc := paymentservice.NewService(cfg.Payment, paymentRepo, orderSvc, zarinpal, discountbackofficeSvc, productStorefrontSvc, mp, userSvc, adminTelegramBot, developerTelegramBot, backOfficeSvc)
 	paymentHandler := paymenthandler.New(paymentSvc, translator, authSvc, cfg.Auth, aclSvc)
 	orderSvc.SetPaymentProvider(paymentSvc)
 	orderBackofficeSvc.SetPaymentProvider(paymentSvc)

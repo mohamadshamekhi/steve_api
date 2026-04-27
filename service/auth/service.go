@@ -22,7 +22,7 @@ type Repository interface {
 }
 
 type MelliPayamakProvider interface {
-	SendOTP(ctx context.Context, to string, code string) error
+	SendPatternSMS(ctx context.Context, to string, text []string, patternKey string) error
 }
 type Service struct {
 	cfg                  Config

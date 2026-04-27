@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/abolfazlnorzad/steve/adapter/mellipayamak"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 )
@@ -28,7 +29,7 @@ func (s Service) GenerateOTPCode(ctx context.Context, phoneNumber string, prefix
 		}
 		otpCtx, cancel := context.WithTimeout(context.Background(), s.cfg.ExpirationTimeOtpContext)
 		defer cancel()
-		mErr := s.melliPayamakProvider.SendOTP(otpCtx, phoneNumber, code)
+		mErr := s.melliPayamakProvider.SendPatternSMS(otpCtx, phoneNumber, []string{code}, mellipayamak.PatternOTPKey)
 		if mErr != nil {
 			dErr := s.repo.DeleteUserActiveCode(ctx, key)
 			if dErr != nil {
