@@ -38,11 +38,12 @@ const (
 	BanUser         = "user:ban"
 
 	// --- مدیریت کاتالوگ محصولات ---
-	ListProducts  = "product:list"
-	ViewProduct   = "product:view"
-	CreateProduct = "product:create"
-	UpdateProduct = "product:update"
-	DeleteProduct = "product:delete"
+	ListProducts   = "product:list"
+	ViewProduct    = "product:view"
+	CreateProduct  = "product:create"
+	UpdateProduct  = "product:update"
+	DeleteProduct  = "product:delete"
+	ExportProducts = "product:export"
 
 	// --- مدیریت موجودیت‌های وابسته به محصول ---
 	ListBrands  = "brand:list"

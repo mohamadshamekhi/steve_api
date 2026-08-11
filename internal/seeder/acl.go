@@ -32,6 +32,7 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.CreateProduct, Description: "ایجاد محصول جدید"},
 	{Name: key.UpdateProduct, Description: "ویرایش محصول"},
 	{Name: key.DeleteProduct, Description: "حذف محصول"},
+	{Name: key.ExportProducts, Description: "خروجی اکسل از لیست محصولات"},
 	{Name: key.ListBrands, Description: "مشاهده لیست برندها"},
 	{Name: key.CreateBrand, Description: "ایجاد برند جدید"},
 	{Name: key.UpdateBrand, Description: "ویرایش برند"},
@@ -133,7 +134,7 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 		key.StoreManager: {
 			key.AccessAdminPanel, key.ViewDashboardAnalytics,
 			key.ListUsers, key.ViewUserDetails,
-			key.ListProducts, key.ViewProduct,
+			key.ListProducts, key.ViewProduct, key.ExportProducts,
 			key.ListOrders, key.ViewOrderDetails, key.UpdateOrderStatus, key.CreateOrder,
 			key.ListCarts, key.ViewCartDetails, key.UpdateCarts, key.CreateCarts,
 			key.ListPayments, key.ViewPaymentDetails,
@@ -142,7 +143,7 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 
 		key.ProductManager: {
 			key.AccessAdminPanel,
-			key.ListProducts, key.ViewProduct, key.CreateProduct, key.UpdateProduct, key.DeleteProduct,
+			key.ListProducts, key.ViewProduct, key.CreateProduct, key.UpdateProduct, key.DeleteProduct, key.ExportProducts,
 			key.ListBrands, key.CreateBrand, key.UpdateBrand, key.DeleteBrand,
 			key.ListCategories, key.CreateCategory, key.UpdateCategory, key.DeleteCategory,
 		},

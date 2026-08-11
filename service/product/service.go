@@ -21,6 +21,7 @@ type ProductReader interface {
 	FindByID(ctx context.Context, id string) (entity.Product, error)
 	FindBySlug(ctx context.Context, slug string) (entity.Product, error)
 	All(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
+	AllForExport(ctx context.Context, filter commonparam.FilterRequest) ([]entity.Product, error)
 	GetProductCategoriesForCartItems(ctx context.Context, items []entity.CartItem) (map[string][]string, error)
 	GetVariantsByIDs(ctx context.Context, variantIDs []string) (map[string]entity.Variant, error)
 	GetProductsByIDs(ctx context.Context, ids []string) ([]entity.Product, error)

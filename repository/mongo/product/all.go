@@ -17,8 +17,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.PaginationRequest) (productservice.ListResult, error) {
-	const op = "mongodbproduct.All"
+// buildListFilter turns the generic key/value filter (as used by the backoffice product
+// list and export endpoints) into a Mongo query, always excluding soft-deleted products.
+func buildListFilter(f commonparam.FilterRequest) bson.M {
 	filter := bson.M{
 		"deleted_at": bson.M{"$exists": false},
 	}
@@ -47,6 +48,12 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 			}
 		}
 	}
+	return filter
+}
+
+func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.PaginationRequest) (productservice.ListResult, error) {
+	const op = "mongodbproduct.All"
+	filter := buildListFilter(f)
 
 	totalCount, err := d.collection.CountDocuments(ctx, filter)
 	if err != nil {
@@ -76,6 +83,26 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 		Products:   products,
 		TotalCount: totalCount,
 	}, nil
+}
+
+func (d DB) AllForExport(ctx context.Context, f commonparam.FilterRequest) ([]entity.Product, error) {
+	const op = "mongodbproduct.AllForExport"
+	filter := buildListFilter(f)
+	findOptions := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+
+	cursor, err := d.collection.Find(ctx, filter, findOptions)
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err).
+			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
+	}
+	defer cursor.Close(ctx)
+
+	var products []entity.Product
+	if err := cursor.All(ctx, &products); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).
+			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
+	}
+	return products, nil
 }
 
 func (d DB) GetFilteredProducts(ctx context.Context, filter *productparam.StorefrontFilterProduct, p commonparam.PaginationRequest) (productservice.ListResult, error) {
