@@ -229,6 +229,7 @@ Temporary Items
 ./cmd/example.go
 
 env-tmp.sh
+/config.yml
 
 /tmp
 .air.toml
