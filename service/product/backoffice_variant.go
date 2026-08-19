@@ -54,7 +54,9 @@ func (s BackofficeService) UpdateVariant(ctx context.Context, req productparam.U
 		}
 	}
 	if variant.ID == "" {
-		return productparam.UpdateVariantResponse{}, nil
+		return productparam.UpdateVariantResponse{}, richerror.New(op).
+			WithKind(richerror.KindNotFound).
+			WithMessageKey("product.variant_not_found")
 	}
 	if req.Meta != nil {
 		variant.VariantAttribute[0].Meta = *req.Meta

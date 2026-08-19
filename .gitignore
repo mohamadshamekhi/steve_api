@@ -230,6 +230,8 @@ Temporary Items
 
 env-tmp.sh
 /config.yml
+/.env
+/deploy.env
 
 /tmp
 .air.toml

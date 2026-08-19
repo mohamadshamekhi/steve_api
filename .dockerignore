@@ -1,0 +1,19 @@
+# VCS / IDE
+.git
+.idea
+.DS_Store
+
+# secrets / local-only config - never let these leak into the build context
+config.yml
+env-tmp.sh
+.env
+*.env
+
+# runtime artifacts
+logs
+main
+
+# docs not needed at build time
+docs
+*.md
+!README.md

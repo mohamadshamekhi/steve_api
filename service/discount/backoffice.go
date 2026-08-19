@@ -87,11 +87,10 @@ func (s BackofficeService) validateApplicableTo(d entity.Discount, req discountp
 	const op = "backoffice.validateApplicableTo"
 	switch d.ApplicableTo {
 	case entity.ApplicableToCategories:
-		if req.ApplicableCategoryIDs == nil {
-			return discountparam.AddDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_category_required")
-		} else {
-			// todo - check category is exist
-		}
+		// no categories selected -> the discount applies to all categories (see
+		// isDiscountApplicableToItem in service/order), so this is intentionally
+		// not a required field.
+		// todo - check category is exist
 	case entity.ApplicableToUsers:
 		if req.ApplicableUserIDs == nil {
 			return discountparam.AddDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_user_required")
@@ -99,11 +98,10 @@ func (s BackofficeService) validateApplicableTo(d entity.Discount, req discountp
 			// todo - check user is exist
 		}
 	case entity.ApplicableToProducts:
-		if req.ApplicableProductIDs == nil {
-			return discountparam.AddDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_product_required")
-		} else {
-			// todo - check product & variant is exist
-		}
+		// no products selected -> the discount applies to all products (see
+		// isDiscountApplicableToItem in service/order), so this is intentionally
+		// not a required field.
+		// todo - check product & variant is exist
 
 	}
 	return discountparam.AddDiscountResponse{}, nil
@@ -153,9 +151,11 @@ func (s BackofficeService) Update(ctx context.Context, req discountparam.UpdateD
 		discount.ApplicableTo = entity.ApplicableTo(*req.ApplicableTo)
 		switch *req.ApplicableTo {
 		case string(entity.ApplicableToCategories):
-			if req.ApplicableCategoryIDs == nil {
-				return discountparam.UpdateDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_category_required")
-			} else {
+			// no categories selected -> the discount applies to all categories (see
+			// isDiscountApplicableToItem in service/order), so this is intentionally
+			// not a required field. req.ApplicableCategoryIDs == nil just means the
+			// field was omitted from this update, leave the existing list as-is.
+			if req.ApplicableCategoryIDs != nil {
 				discount.ApplicableCategoryIDs = *req.ApplicableCategoryIDs
 				// todo - check category is exist
 			}
@@ -167,9 +167,11 @@ func (s BackofficeService) Update(ctx context.Context, req discountparam.UpdateD
 				// todo - check user is exist
 			}
 		case string(entity.ApplicableToProducts):
-			if req.ApplicableProductIDs == nil {
-				return discountparam.UpdateDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_product_required")
-			} else {
+			// no products selected -> the discount applies to all products (see
+			// isDiscountApplicableToItem in service/order), so this is intentionally
+			// not a required field. req.ApplicableProductIDs == nil just means the
+			// field was omitted from this update, leave the existing list as-is.
+			if req.ApplicableProductIDs != nil {
 				discount.ApplicableProductIDs = *req.ApplicableProductIDs
 				// todo - check product & variant is exist
 			}

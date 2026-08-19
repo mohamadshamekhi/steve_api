@@ -239,6 +239,10 @@
     "translation": "موجودی محصول به اتمام رسیده است."
   },
   {
+    "id": "product.variant_not_found",
+    "translation": "variant یافت نشد"
+  },
+  {
     "id": "product.is-not-published",
     "translation": "محصول مورد نظر هنوز منتشر نشده است"
   },
@@ -265,6 +269,10 @@
   {
     "id": "discount.not_applicable_for_user",
     "translation": "این کد تخفیف برای شما معتبر نمی‌باشد."
+  },
+  {
+    "id": "discount.not_applicable_to_cart_items",
+    "translation": "این کد تخفیف برای کالاهای موجود در سبد خرید شما قابل استفاده نیست."
   },
   {
     "id": "order.cart_not_ready_for_checkout",

@@ -1,8 +1,6 @@
-version: '3.9'
-
 services:
   app:
-    image: steve-app:latest
+    image: ${IMAGE_TAG:-steve-api:latest}
     container_name: steve_app
     restart: unless-stopped
     ports:
@@ -11,6 +9,11 @@ services:
       - mongodb
       - redis
     environment:
+      # frequently-rotated secrets, read from .env next to this file (see
+      # .env.example). the rest of the app config (auth.sign_key, zarinpal
+      # urls, media policies, mellipayamak url/patterns, schedulers, ...)
+      # comes from the mounted config.yml below - matches the split that was
+      # already running in production, kept as-is to avoid a behavior change.
       - ST_MONGO__PORT=27017
       - ST_MONGO__HOST=steve_db
       - ST_MONGO__USERNAME=${ST_MONGO__USERNAME}
@@ -25,10 +28,15 @@ services:
       - ST_REDIS__PORT=6379
       - ST_REDIS__HOST=steve_cache
       - ST_ZARINPAL__MERCHANT_ID=${ST_ZARINPAL__MERCHANT_ID}
-      - ST_TELEGRAM_BOT__ADMIN_API_TOKEN_BOT=${ST_TELEGRAM_BOT}
-      - ST_TELEGRAM_BOT__DEVELOPER_API_TOKEN_BOT=${ST_TELEGRAM_BOT}
-      - ST_TELEGRAM_BOT__ADMIN_CHAT_ID=${ST_CHAT_ID}
-      - ST_TELEGRAM_BOT__DEVELOPER_CHAT_ID=${ST_CHAT_ID}
+      - ST_TELEGRAM_BOT__ADMIN_API_TOKEN_BOT=${ST_TELEGRAM_BOT__ADMIN_API_TOKEN_BOT}
+      - ST_TELEGRAM_BOT__DEVELOPER_API_TOKEN_BOT=${ST_TELEGRAM_BOT__DEVELOPER_API_TOKEN_BOT}
+      - ST_TELEGRAM_BOT__ADMIN_CHAT_ID=${ST_TELEGRAM_BOT__ADMIN_CHAT_ID}
+      - ST_TELEGRAM_BOT__DEVELOPER_CHAT_ID=${ST_TELEGRAM_BOT__DEVELOPER_CHAT_ID}
+    volumes:
+      # config.yml is NOT baked into the image (it holds real secrets and is
+      # gitignored). It must exist next to this compose file on the server -
+      # see deploy.sh / README for how it gets there on first deploy.
+      - ./config.yml:/root/config.yml:ro
     networks:
       - steve_network
 
@@ -40,7 +48,9 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=${ST_MONGO__USERNAME}
       - MONGO_INITDB_ROOT_PASSWORD=${ST_MONGO__PASSWORD}
     ports:
-      - "27017:27017"
+      # bound to loopback only - reachable via `docker exec` or an SSH
+      # tunnel for maintenance (mongodump etc.), not from the public internet
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongo_data:/data/db
     networks:
@@ -51,7 +61,7 @@ services:
     container_name: steve_cache
     restart: unless-stopped
     ports:
-      - "6380:6379"
+      - "127.0.0.1:6380:6379"
     volumes:
       - redis_data:/data
     networks:

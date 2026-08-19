@@ -27,6 +27,7 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.PATCH("/:id/add-variant", h.AddVariant, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
 	g.PATCH("/:id/update-variant/:varid", h.UpdateVariant, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
 	g.PATCH("/:id/delete-variant/:varid", h.DeleteVariant, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
+	g.PATCH("/bulk-update-variants", h.BulkUpdateVariants, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
 
 	g.GET("/storefront/with-auto-discount", h.StorefrontGetProductsWithAutoDiscount)
 	g.GET("/storefront", h.StorefrontGetFilterableProduct)

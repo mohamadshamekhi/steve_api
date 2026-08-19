@@ -14,5 +14,13 @@
   {
     "id": "auth.invalid_otp",
     "translation": "The OTP code '{{.Code}}' is not valid."
+  },
+  {
+    "id": "discount.not_applicable_to_cart_items",
+    "translation": "This discount code is not applicable to the items in your cart."
+  },
+  {
+    "id": "product.variant_not_found",
+    "translation": "Variant not found."
   }
 ]

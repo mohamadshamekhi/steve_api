@@ -194,12 +194,43 @@ func (s StoreFrontService) FinalizeCartForCheckout(ctx context.Context, cart ent
 		return summary, nil
 	}
 
+	if discountCode != "" {
+		discountResp, gErr := s.discountProvider.GetByCode(ctx, discountparam.GetSingleDiscountByCodeRequest{Code: discountCode})
+		if gErr != nil {
+			return entity.CheckoutSummary{}, richerror.New(op).WithWarpError(gErr)
+		}
+		if vErr := discountResp.Discount.CheckIsValidForUser(cart.UserID, uint(summary.Subtotal)); vErr != nil {
+			return entity.CheckoutSummary{}, richerror.New(op).WithWarpError(vErr)
+		}
+	}
+
 	validDiscountsResp, err := s.discountProvider.GetValidDiscountsForCart(ctx, discountparam.GetValidDiscountsForSpecificCartRequest{
 		DiscountCode: discountCode,
 		Cart:         cart,
 	})
 	if err != nil {
 		return entity.CheckoutSummary{}, richerror.New(op).WithWarpError(err)
+	}
+
+	// CheckIsValidForUser above only covers the code's own state (active/dates/usage
+	// limit/minimum purchase/user restriction); it doesn't know whether the code is
+	// scoped to specific products/categories that aren't in this cart. Catch that case
+	// here too, otherwise a code that fails only this check would silently apply as if
+	// nothing was entered instead of telling the user why (see GetValidDiscountsForCart /
+	// isDiscountValid for the product/category scoping check).
+	if discountCode != "" {
+		codeIsUsable := false
+		for _, d := range validDiscountsResp.Discounts {
+			if d.Code == discountCode {
+				codeIsUsable = true
+				break
+			}
+		}
+		if !codeIsUsable {
+			return entity.CheckoutSummary{}, richerror.New(op).
+				WithKind(richerror.KindBadRequest).
+				WithMessageKey("discount.not_applicable_to_cart_items")
+		}
 	}
 
 	s.calculateFinalPrice(ctx, &cart, &summary, validDiscountsResp.Discounts, discountCode)
@@ -411,7 +442,8 @@ func (s *StoreFrontService) isDiscountApplicableToItem(
 
 	case entity.ApplicableToProducts:
 		if len(d.ApplicableProductIDs) == 0 {
-			return false
+			// no specific products selected -> applies to every product
+			return true
 		}
 
 		for _, sdi := range d.ApplicableProductIDs {
@@ -431,7 +463,8 @@ func (s *StoreFrontService) isDiscountApplicableToItem(
 
 	case entity.ApplicableToCategories:
 		if len(d.ApplicableCategoryIDs) == 0 {
-			return false
+			// no specific categories selected -> applies to every category
+			return true
 		}
 
 		allowedCategorySet := make(map[string]struct{}, len(d.ApplicableCategoryIDs))

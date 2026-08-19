@@ -185,7 +185,7 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 	}
 
 	for roleName, permissionKeys := range rolesToSeed {
-		_, err := repo.FindByName(ctx, roleName)
+		existingRole, err := repo.FindByName(ctx, roleName)
 		if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
 			return err
 		}
@@ -202,7 +202,36 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 				return err
 			}
 			fmt.Printf("Role '%s' created with %d permissions.\n", newRole.Name, len(permissionKeys))
+			continue
 		}
+
+		// Role already exists: FindByName above only creates roles that are
+		// missing entirely, so a permission added to rolesToSeed after the
+		// role's first seeding would otherwise never reach the stored
+		// document. Sync in any predefined permission keys the role doesn't
+		// have yet, without touching permissions an admin may have added
+		// manually via the role-management endpoints.
+		existingSet := make(map[string]struct{}, len(existingRole.PermissionKeys))
+		for _, k := range existingRole.PermissionKeys {
+			existingSet[k] = struct{}{}
+		}
+
+		missing := make([]string, 0)
+		for _, k := range permissionKeys {
+			if _, ok := existingSet[k]; !ok {
+				missing = append(missing, k)
+			}
+		}
+
+		if len(missing) == 0 {
+			continue
+		}
+
+		merged := append(existingRole.PermissionKeys, missing...)
+		if err := repo.UpdatePermissionKeys(ctx, roleName, merged); err != nil {
+			return err
+		}
+		fmt.Printf("Role '%s' synced with %d new permission(s): %v\n", roleName, len(missing), missing)
 	}
 	return nil
 }
