@@ -17,6 +17,7 @@ type Article struct {
 	BackOfficeID    string    `bson:"back_office_id"`
 	MediaID         string    `bson:"media_id"`
 	Alt             string    `bson:"alt"`
+	ViewCount       int64     `bson:"view_count"`
 	CreatedAt       time.Time `bson:"created_at"`
 	UpdatedAt       time.Time `bson:"updated_at"`
 	DeletedAt       time.Time `bson:"deleted_at,omitempty"`

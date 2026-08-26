@@ -30,6 +30,18 @@ type BackOfficeReader interface {
 	GetBackOfficeUserByID(ctx context.Context, id string) (entity.BackOffice, error)
 }
 
+// ArticleViewCounter durably persists article view counts (Mongo).
+type ArticleViewCounter interface {
+	IncrementViewCount(ctx context.Context, id string) error
+}
+
+// ArticleViewDeduplicator decides whether a given visitor has already been
+// counted for a given article (Redis), so a view is only counted once per
+// unique visitor.
+type ArticleViewDeduplicator interface {
+	AddViewer(ctx context.Context, articleID, visitorID string) (bool, error)
+}
+
 type ArticleReadWriter interface {
 	ArticleReader
 	ArticleWriter

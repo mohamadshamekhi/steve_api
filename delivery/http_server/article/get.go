@@ -33,7 +33,8 @@ func (h Handler) GetSingleStorefront(c echo.Context) error {
 	const op = "articlehandler.Get"
 	id := c.Param("id")
 	req := articleparam.GetStorefrontArticleRequest{
-		ID: id,
+		ID:        id,
+		VisitorID: h.visitorID(c),
 	}
 
 	if err := h.storefrontVld.ValidateGetStoreArticleRequest(req); err != nil {
@@ -55,7 +56,8 @@ func (h Handler) GetSingleBySlugStorefront(c echo.Context) error {
 	const op = "articlehandler.GetBySlugStorefront"
 	slug := c.Param("slug")
 	req := articleparam.GetBySlugStorefrontArticleRequest{
-		Slug: slug,
+		Slug:      slug,
+		VisitorID: h.visitorID(c),
 	}
 	if err := h.storefrontVld.ValidateGetBySlugStoreArticleRequest(req); err != nil {
 		return err

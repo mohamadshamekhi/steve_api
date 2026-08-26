@@ -64,6 +64,7 @@ import (
 	mongodbsell "github.com/abolfazlnorzad/steve/repository/mongo/sell"
 	mongodbshipping "github.com/abolfazlnorzad/steve/repository/mongo/shipping"
 	mongodbuser "github.com/abolfazlnorzad/steve/repository/mongo/user"
+	redisarticleview "github.com/abolfazlnorzad/steve/repository/redis/articleview"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
 	cartscheduler "github.com/abolfazlnorzad/steve/scheduler/cart"
 	orderscheduler "github.com/abolfazlnorzad/steve/scheduler/order"
@@ -157,9 +158,10 @@ func main() {
 	categorySvc := categoryservice.NewBackofficeService(categoryRepo, mediaSvc, attrSvc)
 
 	articleRepo := mongodbarticle.New(mongoRepo)
+	articleViewRepo := redisarticleview.New(redisRepo)
 	articleVld := articlevalidator.New(articleRepo, articleRepo, mediaSvc)
 	articleSvc := articleservice.NewBackofficeService(articleRepo, mediaSvc, backOfficeMongoRepo)
-	storefrontSvc := articleservice.NewStorefrontService(articleRepo, mediaSvc, backOfficeMongoRepo)
+	storefrontSvc := articleservice.NewStorefrontService(articleRepo, mediaSvc, backOfficeMongoRepo, articleRepo, articleViewRepo)
 	storefrontVld := articlevalidator.NewStorefrontValidator(articleRepo)
 	articleHandler := articlehandler.New(translator, authSvc, cfg.Auth, aclSvc, articleSvc, articleVld, storefrontSvc, storefrontVld)
 
