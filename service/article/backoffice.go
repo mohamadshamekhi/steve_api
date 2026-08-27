@@ -65,6 +65,7 @@ func (s BackofficeService) Create(ctx context.Context, req articleparam.AddArtic
 		BackOfficeName:  backOfficeInfo.Name,
 		MediaUrl:        res.URL,
 		Alt:             req.Alt,
+		ViewCount:       a.ViewCount,
 		CreatedAt:       a.CreatedAt,
 		UpdatedAt:       a.UpdatedAt,
 	}
@@ -167,6 +168,7 @@ func (s BackofficeService) Update(ctx context.Context, req articleparam.UpdateAr
 		BackOfficeName:  backOfficeInfo.Name,
 		MediaUrl:        res.URL,
 		Alt:             article.Alt,
+		ViewCount:       article.ViewCount,
 		CreatedAt:       article.CreatedAt,
 		UpdatedAt:       article.UpdatedAt,
 	}
@@ -227,6 +229,7 @@ func (s BackofficeService) GetArticle(ctx context.Context, req articleparam.GetA
 		BackOfficeName:  backOfficeInfo.Name,
 		MediaUrl:        res.URL,
 		Alt:             article.Alt,
+		ViewCount:       article.ViewCount,
 		CreatedAt:       article.CreatedAt,
 		UpdatedAt:       article.UpdatedAt,
 	}
@@ -279,6 +282,7 @@ func (s BackofficeService) GetAll(ctx context.Context, req articleparam.AllArtic
 			BackOfficeName:  backOfficeInfo.Name,
 			MediaUrl:        urlMap.URLs[a.MediaID],
 			Alt:             a.Alt,
+			ViewCount:       a.ViewCount,
 			CreatedAt:       a.CreatedAt,
 			UpdatedAt:       a.UpdatedAt,
 		})
