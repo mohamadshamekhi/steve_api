@@ -9,6 +9,10 @@ type UserSendLoginCodeResponse struct {
 type UserVerifyLoginCodeRequest struct {
 	Code        string `json:"code"`
 	PhoneNumber string `json:"phone_number"`
+	// Ref is the optional referral/invite code the user arrived with
+	// (?ref=<code> on the invite link). Only used when this verification
+	// results in a brand-new account.
+	Ref string `json:"ref"`
 }
 
 type UserVerifyLoginCodeResponse struct {

@@ -80,6 +80,15 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.ListRole, Description: "لیست نقش های کاربری"},
 	{Name: key.CreateRole, Description: "ایجاد نقش کاربری"},
 	{Name: key.UpdateRole, Description: "ویرایش نقش کاربری"},
+	{Name: key.ListPartners, Description: "مشاهده لیست همکاران و درخواست‌های همکاری"},
+	{Name: key.ViewPartner, Description: "مشاهده جزئیات یک همکار"},
+	{Name: key.ApprovePartner, Description: "تایید درخواست همکاری و تعیین درصد تخفیف"},
+	{Name: key.RejectPartner, Description: "رد کردن درخواست همکاری"},
+	{Name: key.SuspendPartner, Description: "تعلیق یا رفع تعلیق یک همکار"},
+	{Name: key.UpdatePartnerPricing, Description: "ویرایش درصد تخفیف همکار و تنظیمات قیمت همکار روی محصولات"},
+	{Name: key.RecordPartnerHandover, Description: "ثبت تحویل حضوری کالای سفارش همکار"},
+	{Name: key.PartnerShopAccess, Description: "دسترسی همکار به پنل خرید همکاری (کاتالوگ و گزارش خرید)"},
+	{Name: key.PartnerShopOrder, Description: "ثبت سفارش توسط همکار در پنل خرید همکاری"},
 }
 
 func Run(permissionRepo *mongodbpermission.DB, roleRepo *mongodbrole.DB, backooficeRepo *mongodbbackoffice.DB) error {
@@ -181,6 +190,20 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 		key.UsedPhoneSpecialist: {
 			key.AccessAdminPanel,
 			key.ListUsedPhoneRequests, key.ViewUsedPhoneRequest, key.ApproveUsedPhone, key.RejectUsedPhone,
+		},
+
+		key.PartnerManager: {
+			key.AccessAdminPanel,
+			key.ListPartners, key.ViewPartner, key.ApprovePartner, key.RejectPartner,
+			key.SuspendPartner, key.UpdatePartnerPricing, key.RecordPartnerHandover,
+			key.ListProducts, key.ViewProduct,
+			key.ListOrders, key.ViewOrderDetails,
+		},
+
+		// The partner themselves: admin-panel login, but ONLY the partner shop.
+		key.Partner: {
+			key.AccessAdminPanel,
+			key.PartnerShopAccess, key.PartnerShopOrder,
 		},
 	}
 

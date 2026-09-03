@@ -54,8 +54,15 @@ type Order struct {
 	Shipping         Shipping          `bson:"shipping,omitempty"`
 	Status           OrderStatus       `bson:"status"`
 	PurchaseType     PurchaseType      `bson:"purchase_type"`
-	CreatedAt        time.Time         `bson:"created_at"`
-	UpdatedAt        time.Time         `bson:"updated_at"`
+	// Partner (colleague-sales) order metadata. Set when the order is placed
+	// from the partner panel; used for financial reporting and the in-person
+	// handover flow.
+	IsPartnerOrder bool       `bson:"is_partner_order,omitempty"`
+	PartnerID      string     `bson:"partner_id,omitempty"`
+	HandoverBy     string     `bson:"handover_by,omitempty"`
+	HandoverAt     *time.Time `bson:"handover_at,omitempty"`
+	CreatedAt      time.Time  `bson:"created_at"`
+	UpdatedAt      time.Time  `bson:"updated_at"`
 }
 
 func (o *Order) BeforeCreate() {

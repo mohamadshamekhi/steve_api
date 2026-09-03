@@ -7,6 +7,7 @@ import (
 	"github.com/abolfazlnorzad/steve/entity"
 	userparam "github.com/abolfazlnorzad/steve/param/user"
 	userauthparam "github.com/abolfazlnorzad/steve/param/user/auth"
+	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	"github.com/oklog/ulid/v2"
@@ -17,17 +18,19 @@ type StoreFrontService struct {
 	config        Config
 	repo          Repository
 	cacheProvider CacheProvider
+	referral      ReferralAttributor
 }
 type CacheProvider interface {
 	AddToBlocklist(ctx context.Context, kind string, JWTID string, ExpireAt time.Time) error
 }
 
-func NewStoreFrontService(config Config, repo Repository, authSvc authservice.Service, cacheProvider CacheProvider) StoreFrontService {
+func NewStoreFrontService(config Config, repo Repository, authSvc authservice.Service, cacheProvider CacheProvider, referral ReferralAttributor) StoreFrontService {
 	return StoreFrontService{
 		config:        config,
 		repo:          repo,
 		authSvc:       authSvc,
 		cacheProvider: cacheProvider,
+		referral:      referral,
 	}
 }
 
@@ -51,6 +54,13 @@ func (s StoreFrontService) VerifyOTPCode(ctx context.Context, req userauthparam.
 		return userauthparam.UserVerifyLoginCodeResponse{}, err
 	}
 	if resp {
+		// Detect a brand-new signup before the upsert so we can credit a referral.
+		existed, eErr := s.repo.CheckUserIsExistByPhoneNumber(ctx, req.PhoneNumber)
+		if eErr != nil {
+			logger.L().Error("userservice: referral new-user check failed", "err", eErr)
+			existed = true // fail safe: skip attribution, never block login
+		}
+
 		user, iErr := s.repo.GetOrCreateUser(ctx, req.PhoneNumber)
 		if iErr != nil {
 			return userauthparam.UserVerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(iErr)
@@ -59,6 +69,11 @@ func (s StoreFrontService) VerifyOTPCode(ctx context.Context, req userauthparam.
 		if gErr != nil {
 			return userauthparam.UserVerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(gErr)
 		}
+
+		if !existed && s.referral != nil {
+			s.attributeReferralAsync(user.ID, req.PhoneNumber, req.Ref)
+		}
+
 		return userauthparam.UserVerifyLoginCodeResponse{
 			Token: token,
 		}, nil
@@ -66,6 +81,19 @@ func (s StoreFrontService) VerifyOTPCode(ctx context.Context, req userauthparam.
 
 	return userauthparam.UserVerifyLoginCodeResponse{}, richerror.New(op).WithKind(richerror.KindUnauthorized).
 		WithMessageKey("validation.incorrect_opt_code")
+}
+
+// attributeReferralAsync runs the referral signup hook off the request
+// goroutine with its own context so a slow SMS or coupon write never adds
+// latency to — or fails — the login response.
+func (s StoreFrontService) attributeReferralAsync(userID, phoneNumber, refCode string) {
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := s.referral.AttributeSignup(ctx, userID, phoneNumber, refCode); err != nil {
+			logger.L().Error("userservice: referral attribution failed", "err", err, "user_id", userID)
+		}
+	}()
 }
 
 func (s StoreFrontService) UpdateProfile(ctx context.Context, req userparam.StoreFrontUpdateProfileRequest) (userparam.StoreFrontUpdateProfileResponse, error) {

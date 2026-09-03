@@ -329,5 +329,117 @@
   {
     "id": "discount.special_discount_is_exist_in_this_time",
     "translation": "در بازه زمانی داده شده ، تخفیف شگفت انگیز وحود دارد - توجه داشته باشید در هر بازه زمانی تنها یک تخفیف شگفت انگیز میتواند وجود داشته باشد"
+  },
+  {
+    "id": "partner.application_submitted",
+    "translation": "درخواست همکاری شما ثبت شد و پس از بررسی نتیجه اطلاع‌رسانی می‌شود."
+  },
+  {
+    "id": "partner.already_applied",
+    "translation": "شما یک درخواست همکاری فعال یا تاییدشده دارید."
+  },
+  {
+    "id": "partner.not_approved",
+    "translation": "دسترسی پنل همکاری برای شما فعال نیست."
+  },
+  {
+    "id": "partner.not_found",
+    "translation": "همکار موردنظر پیدا نشد."
+  },
+  {
+    "id": "partner.invalid_status_transition",
+    "translation": "این تغییر وضعیت برای همکار مجاز نیست."
+  },
+  {
+    "id": "partner.must_be_approved_for_pricing",
+    "translation": "برای تنظیم قیمت‌گذاری، همکار باید در وضعیت تاییدشده باشد."
+  },
+  {
+    "id": "partner.invalid_discount_percent",
+    "translation": "درصد تخفیف همکار نامعتبر است."
+  },
+  {
+    "id": "partner.program_disabled",
+    "translation": "برنامه فروش به همکار در حال حاضر غیرفعال است."
+  },
+  {
+    "id": "partner.variant_not_found",
+    "translation": "تنوع انتخاب‌شدهٔ محصول پیدا نشد."
+  },
+  {
+    "id": "partner.insufficient_stock",
+    "translation": "موجودی این محصول کافی نیست."
+  },
+  {
+    "id": "partner.cart_empty",
+    "translation": "سبد خرید شما خالی است."
+  },
+  {
+    "id": "partner.invalid_payment_method",
+    "translation": "روش پرداخت نامعتبر است."
+  },
+  {
+    "id": "partner.order_not_pending_payment",
+    "translation": "این سفارش در وضعیت در انتظار پرداخت نیست."
+  },
+  {
+    "id": "partner.order_not_ready_for_handover",
+    "translation": "تا پرداخت سفارش ثبت نشود، ثبت تحویل ممکن نیست."
+  },
+  {
+    "id": "partner.not_a_partner_order",
+    "translation": "این سفارش یک سفارش همکاری نیست."
+  },
+  {
+    "id": "attr.company_name",
+    "translation": "نام شرکت"
+  },
+  {
+    "id": "attr.national_id",
+    "translation": "کد ملی"
+  },
+  {
+    "id": "attr.business_field",
+    "translation": "حوزه فعالیت"
+  },
+  {
+    "id": "attr.city",
+    "translation": "شهر"
+  },
+  {
+    "id": "attr.discount_percent",
+    "translation": "درصد تخفیف"
+  },
+  {
+    "id": "attr.reason",
+    "translation": "دلیل"
+  },
+  {
+    "id": "referral.program_disabled",
+    "translation": "برنامه دعوت از دوستان در حال حاضر غیرفعال است."
+  },
+  {
+    "id": "referral.invite_sent",
+    "translation": "دعوت‌نامه برای این شماره پیامک شد."
+  },
+  {
+    "id": "referral.already_invited",
+    "translation": "برای این شماره قبلاً دعوت‌نامه ارسال شده است."
+  },
+  {
+    "id": "referral.cannot_invite_self",
+    "translation": "نمی‌توانید شماره خودتان را دعوت کنید."
+  },
+  {
+    "id": "referral.sms_failed",
+    "translation": "ارسال پیامک دعوت با خطا مواجه شد. لطفاً بعداً تلاش کنید."
+  },
+  {
+    "id": "referral.account_conflict",
+    "translation": "ساخت کد دعوت با خطا مواجه شد. لطفاً دوباره تلاش کنید."
+  },
+  {
+    "id": "referral.invite_recorded_sms_failed",
+    "translation": "دعوت ثبت شد اما ارسال پیامک ممکن نشد؛ لینک دعوت را دستی برای دوستتان بفرستید."
   }
 ]

@@ -22,9 +22,11 @@ import (
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	middleware2 "github.com/abolfazlnorzad/steve/delivery/http_server/middleware"
 	orderhandler "github.com/abolfazlnorzad/steve/delivery/http_server/order"
+	partnerhandler "github.com/abolfazlnorzad/steve/delivery/http_server/partner"
 	paymenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/payment"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
 	ratinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/rating"
+	referralhandler "github.com/abolfazlnorzad/steve/delivery/http_server/referral"
 	repairhandler "github.com/abolfazlnorzad/steve/delivery/http_server/repair"
 	searchhandler "github.com/abolfazlnorzad/steve/delivery/http_server/search"
 	sellhandler "github.com/abolfazlnorzad/steve/delivery/http_server/sell"
@@ -62,6 +64,8 @@ type Server struct {
 	bannerHandler         bannerhandler.Handler
 	paymentHandler        paymenthandler.Handler
 	searchHandler         searchhandler.Handler
+	partnerHandler        partnerhandler.Handler
+	referralHandler       referralhandler.Handler
 }
 
 func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler,
@@ -71,6 +75,7 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 	orderHandler orderhandler.Handler, shippingHandler shippinghandler.Handler, repairHandler repairhandler.Handler, sellHandler sellhandler.Handler,
 	aclHandler aclhandler.Handler, contactUsHandler contactushandler.Handler, ratingHandler ratinghandler.Handler,
 	bannerHandler bannerhandler.Handler, paymentHandler paymenthandler.Handler, searchHandler searchhandler.Handler,
+	partnerHandler partnerhandler.Handler, referralHandler referralhandler.Handler,
 ) Server {
 	return Server{
 		config:                cfg,
@@ -98,6 +103,8 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 		bannerHandler:         bannerHandler,
 		paymentHandler:        paymentHandler,
 		searchHandler:         searchHandler,
+		partnerHandler:        partnerHandler,
+		referralHandler:       referralHandler,
 	}
 }
 
@@ -179,6 +186,8 @@ func (s Server) Serve() {
 	s.bannerHandler.SetRoutes(s.Router)
 	s.paymentHandler.SetRoutes(s.Router)
 	s.searchHandler.SetRoutes(s.Router)
+	s.partnerHandler.SetRoutes(s.Router)
+	s.referralHandler.SetRoutes(s.Router)
 	// Start server
 	address := fmt.Sprintf(":%d", s.config.HTTPServer.Port)
 	fmt.Printf("start echo server on %s\n", address)

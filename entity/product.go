@@ -21,9 +21,18 @@ type Product struct {
 	Variants       []Variant        `bson:"variants"`
 	Specifications []Specification  `bson:"specifications,omitempty"`
 	SalesCount     uint             `bson:"sales_count"`
-	CreatedAt      time.Time        `bson:"created_at"`
-	UpdatedAt      time.Time        `bson:"updated_at"`
-	DeletedAt      time.Time        `bson:"deleted_at,omitempty"`
+	// PartnerEligible explicitly opts the product into partner (B2B) pricing.
+	// Decisive only in opt-in mode (partner.all_products_eligible = false).
+	PartnerEligible bool `bson:"partner_eligible,omitempty"`
+	// PartnerExcluded explicitly opts the product OUT of partner pricing, even
+	// in all-products mode. Admin's per-product exclusion.
+	PartnerExcluded bool `bson:"partner_excluded,omitempty"`
+	// PartnerDiscountPercent overrides the partner's global discount percent
+	// for this product. nil → fall back to Partner.DiscountPercent.
+	PartnerDiscountPercent *uint     `bson:"partner_discount_percent,omitempty"`
+	CreatedAt              time.Time `bson:"created_at"`
+	UpdatedAt              time.Time `bson:"updated_at"`
+	DeletedAt              time.Time `bson:"deleted_at,omitempty"`
 }
 type ProductGallery struct {
 	MediaID   string `bson:"media_id" json:"media_id"`

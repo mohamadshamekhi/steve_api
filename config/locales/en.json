@@ -22,5 +22,117 @@
   {
     "id": "product.variant_not_found",
     "translation": "Variant not found."
+  },
+  {
+    "id": "partner.application_submitted",
+    "translation": "Your partnership request has been submitted and you will be notified after review."
+  },
+  {
+    "id": "partner.already_applied",
+    "translation": "You already have a pending or approved partnership request."
+  },
+  {
+    "id": "partner.not_approved",
+    "translation": "Partner panel access is not active for your account."
+  },
+  {
+    "id": "partner.not_found",
+    "translation": "Partner not found."
+  },
+  {
+    "id": "partner.invalid_status_transition",
+    "translation": "This partner status change is not allowed."
+  },
+  {
+    "id": "partner.must_be_approved_for_pricing",
+    "translation": "The partner must be approved before pricing can be set."
+  },
+  {
+    "id": "partner.invalid_discount_percent",
+    "translation": "The partner discount percent is invalid."
+  },
+  {
+    "id": "partner.program_disabled",
+    "translation": "The colleague-sales program is currently disabled."
+  },
+  {
+    "id": "partner.variant_not_found",
+    "translation": "The selected product variant was not found."
+  },
+  {
+    "id": "partner.insufficient_stock",
+    "translation": "Not enough stock for this product."
+  },
+  {
+    "id": "partner.cart_empty",
+    "translation": "Your cart is empty."
+  },
+  {
+    "id": "partner.invalid_payment_method",
+    "translation": "Invalid payment method."
+  },
+  {
+    "id": "partner.order_not_pending_payment",
+    "translation": "This order is not awaiting payment."
+  },
+  {
+    "id": "partner.order_not_ready_for_handover",
+    "translation": "Handover cannot be recorded until the order is paid."
+  },
+  {
+    "id": "partner.not_a_partner_order",
+    "translation": "This order is not a partner order."
+  },
+  {
+    "id": "attr.company_name",
+    "translation": "company name"
+  },
+  {
+    "id": "attr.national_id",
+    "translation": "national id"
+  },
+  {
+    "id": "attr.business_field",
+    "translation": "business field"
+  },
+  {
+    "id": "attr.city",
+    "translation": "city"
+  },
+  {
+    "id": "attr.discount_percent",
+    "translation": "discount percent"
+  },
+  {
+    "id": "attr.reason",
+    "translation": "reason"
+  },
+  {
+    "id": "referral.program_disabled",
+    "translation": "The invite-a-friend program is currently disabled."
+  },
+  {
+    "id": "referral.invite_sent",
+    "translation": "The invitation was sent to this number by SMS."
+  },
+  {
+    "id": "referral.already_invited",
+    "translation": "An invitation has already been sent to this number."
+  },
+  {
+    "id": "referral.cannot_invite_self",
+    "translation": "You cannot invite your own number."
+  },
+  {
+    "id": "referral.sms_failed",
+    "translation": "Sending the invite SMS failed. Please try again later."
+  },
+  {
+    "id": "referral.account_conflict",
+    "translation": "Could not generate an invite code. Please try again."
+  },
+  {
+    "id": "referral.invite_recorded_sms_failed",
+    "translation": "The invite was recorded but the SMS could not be sent; share the invite link manually."
   }
 ]

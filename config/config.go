@@ -12,7 +12,9 @@ import (
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
+	partnerservice "github.com/abolfazlnorzad/steve/service/partner"
 	paymentservice "github.com/abolfazlnorzad/steve/service/payment"
+	referralservice "github.com/abolfazlnorzad/steve/service/referral"
 	userservice "github.com/abolfazlnorzad/steve/service/user"
 )
 
@@ -35,4 +37,6 @@ type Config struct {
 	OrderScheduler orderscheduler.Config    `koanf:"order_scheduler"`
 	CartScheduler  cartscheduler.Config     `koanf:"cart_scheduler"`
 	TelegramBot    telegrambot.Config       `koanf:"telegram_bot"`
+	Partner        partnerservice.Config    `koanf:"partner"`
+	Referral       referralservice.Config   `koanf:"referral"`
 }

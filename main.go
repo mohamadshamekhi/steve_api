@@ -30,9 +30,11 @@ import (
 	discounthandler "github.com/abolfazlnorzad/steve/delivery/http_server/discount"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	orderhandler "github.com/abolfazlnorzad/steve/delivery/http_server/order"
+	partnerhandler "github.com/abolfazlnorzad/steve/delivery/http_server/partner"
 	paymenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/payment"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
 	ratinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/rating"
+	referralhandler "github.com/abolfazlnorzad/steve/delivery/http_server/referral"
 	repairhandler "github.com/abolfazlnorzad/steve/delivery/http_server/repair"
 	searchhandler "github.com/abolfazlnorzad/steve/delivery/http_server/search"
 	sellhandler "github.com/abolfazlnorzad/steve/delivery/http_server/sell"
@@ -57,9 +59,11 @@ import (
 	mongodbdiscount "github.com/abolfazlnorzad/steve/repository/mongo/discount"
 	mongodbmedia "github.com/abolfazlnorzad/steve/repository/mongo/media"
 	mongodborder "github.com/abolfazlnorzad/steve/repository/mongo/order"
+	mongodbpartner "github.com/abolfazlnorzad/steve/repository/mongo/partner"
 	mongodbpayment "github.com/abolfazlnorzad/steve/repository/mongo/payment"
 	mongodbproduct "github.com/abolfazlnorzad/steve/repository/mongo/product"
 	mongodbrating "github.com/abolfazlnorzad/steve/repository/mongo/rating"
+	mongodbreferral "github.com/abolfazlnorzad/steve/repository/mongo/referral"
 	mongodbrepair "github.com/abolfazlnorzad/steve/repository/mongo/repair"
 	mongodbsell "github.com/abolfazlnorzad/steve/repository/mongo/sell"
 	mongodbshipping "github.com/abolfazlnorzad/steve/repository/mongo/shipping"
@@ -84,9 +88,11 @@ import (
 	fetcherservice "github.com/abolfazlnorzad/steve/service/fetcher"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 	orderservice "github.com/abolfazlnorzad/steve/service/order"
+	partnerservice "github.com/abolfazlnorzad/steve/service/partner"
 	paymentservice "github.com/abolfazlnorzad/steve/service/payment"
 	productservice "github.com/abolfazlnorzad/steve/service/product"
 	ratingservice "github.com/abolfazlnorzad/steve/service/rating"
+	referralservice "github.com/abolfazlnorzad/steve/service/referral"
 	repairservice "github.com/abolfazlnorzad/steve/service/repair"
 	searchservice "github.com/abolfazlnorzad/steve/service/search"
 	sellservice "github.com/abolfazlnorzad/steve/service/sell"
@@ -105,8 +111,10 @@ import (
 	discountvalidator "github.com/abolfazlnorzad/steve/validator/discount"
 	mediavalidator "github.com/abolfazlnorzad/steve/validator/media"
 	ordervalidator "github.com/abolfazlnorzad/steve/validator/order"
+	partnervalidator "github.com/abolfazlnorzad/steve/validator/partner"
 	productvalidator "github.com/abolfazlnorzad/steve/validator/product"
 	ratingvalidator "github.com/abolfazlnorzad/steve/validator/rating"
+	referralvalidator "github.com/abolfazlnorzad/steve/validator/referral"
 	repairvalidator "github.com/abolfazlnorzad/steve/validator/repair"
 	sellvalidator "github.com/abolfazlnorzad/steve/validator/sell"
 	settingvalidator "github.com/abolfazlnorzad/steve/validator/setting"
@@ -179,7 +187,15 @@ func main() {
 	backofficeHandler := backofficehandler.New(backOfficeSvc, backofficeValidation, translator, authSvc, cfg.Auth, aclSvc)
 	userRepo := mongodbuser.New(mongoRepo)
 	userVld := uservalidator.New(userRepo)
-	userSvc := userservice.NewStoreFrontService(cfg.User, userRepo, authSvc, redisotp)
+	// discountRepo is built here (ahead of the discount block below) so the
+	// referral service can mint reward/welcome coupons, and referralSvc is
+	// wired into the storefront user service for signup-time attribution.
+	discountRepo := mongodbdiscount.New(mongoRepo)
+	referralRepo := mongodbreferral.New(mongoRepo)
+	referralVld := referralvalidator.New()
+	referralSvc := referralservice.NewStorefrontService(cfg.Referral, referralRepo, discountRepo, userRepo, mp)
+	userSvc := userservice.NewStoreFrontService(cfg.User, userRepo, authSvc, redisotp, referralSvc)
+	referralHandler := referralhandler.New(referralSvc, referralVld, translator, authSvc, cfg.Auth)
 	backofficeUserSvc := userservice.NewBackofficeService(userRepo)
 	userHandler := userhandler.New(backofficeUserSvc, userSvc, userVld, translator, authSvc, cfg.Auth, aclSvc)
 	commentRepo := mongodbcomment.New(mongoRepo)
@@ -190,7 +206,6 @@ func main() {
 	commentSvc := commentservice.New(commentRepo, commenterFetecher, commentableFetecher)
 	storefrontCommentSvc := commentservice.NewStorefrontService(commentRepo, commentableFetecher, commenterFetecher)
 	commentHandler := commenthandler.New(commentSvc, translator, commentVld, authSvc, cfg.Auth, aclSvc, storefrontCommentSvc)
-	discountRepo := mongodbdiscount.New(mongoRepo)
 	discountVld := discountvalidator.New(discountRepo, categoryRepo, productRepo, userRepo)
 
 	cartRepo := mongodbcart.New(mongoRepo)
@@ -257,9 +272,17 @@ func main() {
 	searchSvc := searchservice.NewStorefrontService(productStorefrontSvc, storefrontSvc)
 	searchHandler := searchhandler.New(translator, searchSvc)
 
+	partnerRepo := mongodbpartner.New(mongoRepo)
+	partnerResolver := partnerservice.NewPartnerPriceResolver()
+	partnerStorefrontSvc := partnerservice.NewStorefrontService(partnerRepo, cfg.Partner, adminTelegramBot)
+	partnerShopSvc := partnerservice.NewShopService(partnerRepo, productRepo, orderRepo, cartRepo, orderRepo, productSvc, paymentSvc, partnerResolver, cfg.Partner)
+	partnerBackofficeSvc := partnerservice.NewBackofficeService(partnerRepo, productRepo, userRepo, backOfficeMongoRepo, orderRepo, paymentSvc, mp, cfg.Partner)
+	partnerVld := partnervalidator.New()
+	partnerHandler := partnerhandler.New(partnerStorefrontSvc, partnerShopSvc, partnerBackofficeSvc, partnerVld, translator, authSvc, cfg.Auth, aclSvc)
+
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
-		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler, paymentHandler, searchHandler)
+		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler, paymentHandler, searchHandler, partnerHandler, referralHandler)
 
 	orderScheduler := orderscheduler.New(cfg.OrderScheduler, orderBackofficeSvc)
 	cartScheduler := cartscheduler.New(cfg.CartScheduler, cartBackofficeSvc)

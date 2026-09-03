@@ -10,6 +10,11 @@ const (
 	FinancialManager     = "financial_manager"
 	RepairTechnician     = "repair_technician"
 	UsedPhoneSpecialist  = "used_phone_specialist"
+	// PartnerManager is admin staff who review and manage partners.
+	PartnerManager = "partner_manager"
+	// Partner is the colleague themselves — a heavily restricted backoffice
+	// account that can only use the partner shop and see its own purchases.
+	Partner = "partner"
 )
 const (
 	// --- دسترسی‌های کلی پنل ---
@@ -105,4 +110,17 @@ const (
 
 	// --- مدیریت تنظیمات ---
 	UpdateSettings = "settings:update"
+
+	// --- مدیریت همکاران (سمت کارمند) ---
+	ListPartners          = "partner:list"
+	ViewPartner           = "partner:view"
+	ApprovePartner        = "partner:approve"
+	RejectPartner         = "partner:reject"
+	SuspendPartner        = "partner:suspend"
+	UpdatePartnerPricing  = "partner:update_pricing"
+	RecordPartnerHandover = "partner:record_handover"
+
+	// --- پنل خرید همکار (سمت خود همکار) ---
+	PartnerShopAccess = "partner_shop:access"
+	PartnerShopOrder  = "partner_shop:order"
 )
