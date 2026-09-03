@@ -4,6 +4,9 @@ type UserSendLoginCodeRequest struct {
 	PhoneNumber string `json:"phone_number"`
 }
 type UserSendLoginCodeResponse struct {
+	// IsNewUser is true when no account exists for this phone number yet, so the
+	// frontend can show the "کد دعوت" (ref) field / onboarding on the next step.
+	IsNewUser bool `json:"is_new_user"`
 }
 
 type UserVerifyLoginCodeRequest struct {
@@ -17,4 +20,6 @@ type UserVerifyLoginCodeRequest struct {
 
 type UserVerifyLoginCodeResponse struct {
 	Token string `json:"token"`
+	// IsNewUser is true when this verification just created the account.
+	IsNewUser bool `json:"is_new_user"`
 }

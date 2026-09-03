@@ -42,8 +42,15 @@ func (s StoreFrontService) SendOTPCode(ctx context.Context, req userauthparam.Us
 		return userauthparam.UserSendLoginCodeResponse{}, richerror.New(op)
 	}
 
-	// return resp.
-	return userauthparam.UserSendLoginCodeResponse{}, nil
+	// Tell the frontend whether the next step is a sign-up (show the ref field)
+	// or a login. Non-fatal: on error assume existing user.
+	exists, eErr := s.repo.CheckUserIsExistByPhoneNumber(ctx, req.PhoneNumber)
+	if eErr != nil {
+		logger.L().Error("userservice: new-user check failed", "err", eErr)
+		exists = true
+	}
+
+	return userauthparam.UserSendLoginCodeResponse{IsNewUser: !exists}, nil
 }
 
 func (s StoreFrontService) VerifyOTPCode(ctx context.Context, req userauthparam.UserVerifyLoginCodeRequest) (userauthparam.UserVerifyLoginCodeResponse, error) {
@@ -75,7 +82,8 @@ func (s StoreFrontService) VerifyOTPCode(ctx context.Context, req userauthparam.
 		}
 
 		return userauthparam.UserVerifyLoginCodeResponse{
-			Token: token,
+			Token:     token,
+			IsNewUser: !existed,
 		}, nil
 	}
 
