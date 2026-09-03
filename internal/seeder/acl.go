@@ -89,6 +89,9 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.RecordPartnerHandover, Description: "ثبت تحویل حضوری کالای سفارش همکار"},
 	{Name: key.PartnerShopAccess, Description: "دسترسی همکار به پنل خرید همکاری (کاتالوگ و گزارش خرید)"},
 	{Name: key.PartnerShopOrder, Description: "ثبت سفارش توسط همکار در پنل خرید همکاری"},
+	{Name: key.ListReferrals, Description: "مشاهده لیست و آمار برنامه دعوت از دوستان"},
+	{Name: key.ViewReferral, Description: "مشاهده جزئیات دعوت‌های یک کاربر و کدهای تخفیف کسب‌شده"},
+	{Name: key.ManageReferral, Description: "ویرایش تنظیمات برنامه دعوت (نوع و مقدار تخفیف، آستانه پاداش)"},
 }
 
 func Run(permissionRepo *mongodbpermission.DB, roleRepo *mongodbrole.DB, backooficeRepo *mongodbbackoffice.DB) error {
@@ -161,6 +164,7 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 			key.AccessAdminPanel,
 			key.ListDiscounts, key.CreateDiscount, key.UpdateDiscount, key.DeleteDiscount,
 			key.ListUsers, key.ViewUserDetails,
+			key.ListReferrals, key.ViewReferral, key.ManageReferral,
 		},
 
 		key.CustomerSupportLead: {

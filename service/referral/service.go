@@ -26,6 +26,15 @@ type Repository interface {
 	CreateReward(ctx context.Context, rw entity.ReferralReward) error
 	MarkReferralJoined(ctx context.Context, referralID, referredUserID string) error
 	MarkReferralsRewarded(ctx context.Context, referralIDs []string, rewardBatchID string) error
+
+	// --- backoffice reads ---
+	AllAccounts(ctx context.Context, minJoined int, p commonparam.PaginationRequest) ([]entity.ReferralAccount, int64, error)
+	CountRewardsByReferrer(ctx context.Context, referrerUserID string) (int64, error)
+	Stats(ctx context.Context) (accounts, invites, joined, rewards int64, err error)
+
+	// --- admin-editable settings (single document) ---
+	GetSettings(ctx context.Context) (entity.ReferralSettings, error)
+	UpsertSettings(ctx context.Context, s entity.ReferralSettings) error
 }
 
 // DiscountProvider is the slice of the discount repo the referral domain needs
@@ -42,9 +51,11 @@ type UserProvider interface {
 	GetUserByID(ctx context.Context, id string) (entity.User, error)
 }
 
-// SMSSender sends a free-text SMS (invite links + reward notifications).
+// SMSSender sends a template ("pattern") SMS — the only kind MelliPayamak
+// accepts. text is the ordered list of {0},{1},… variable values for the
+// template registered under patternKey. Satisfied by *mellipayamak.Adapter.
 type SMSSender interface {
-	SendSimple(ctx context.Context, to string, message string) error
+	SendPatternSMS(ctx context.Context, to string, text []string, patternKey string) error
 }
 
 // StorefrontService is the single service for this domain: it powers the

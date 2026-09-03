@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/abolfazlnorzad/steve/adapter/mellipayamak"
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	referralparam "github.com/abolfazlnorzad/steve/param/referral"
@@ -24,6 +25,16 @@ func (s StorefrontService) programEnabled(op string) error {
 			WithMessageKey("referral.program_disabled")
 	}
 	return nil
+}
+
+// effective returns the runtime config: config/env defaults with any
+// admin-saved settings document overlaid on top.
+func (s StorefrontService) effective(ctx context.Context) Config {
+	st, err := s.repo.GetSettings(ctx)
+	if err != nil {
+		return s.cfg
+	}
+	return s.cfg.applySettings(st)
 }
 
 // GetMyLink returns the caller's permanent invite code + link, creating the
@@ -44,11 +55,11 @@ func (s StorefrontService) GetMyLink(ctx context.Context, userID string) (referr
 		return referralparam.GetMyLinkResponse{}, richerror.New(op).WithWarpError(err)
 	}
 
-	return s.buildLinkResponse(acc, len(rewards)), nil
+	return s.buildLinkResponse(s.effective(ctx), acc, len(rewards)), nil
 }
 
-func (s StorefrontService) buildLinkResponse(acc entity.ReferralAccount, rewardsEarned int) referralparam.GetMyLinkResponse {
-	threshold := s.cfg.rewardThreshold()
+func (s StorefrontService) buildLinkResponse(eff Config, acc entity.ReferralAccount, rewardsEarned int) referralparam.GetMyLinkResponse {
+	threshold := eff.rewardThreshold()
 	nextIn := threshold - acc.PendingProgress()
 	if nextIn <= 0 {
 		nextIn = threshold
@@ -119,9 +130,10 @@ func (s StorefrontService) InviteByPhone(ctx context.Context, userID string, req
 
 	// SMS delivery is best-effort: the invite is already recorded, so a provider
 	// failure must not fail the request — the frontend shows the link instead.
+	// Template: "... کد دعوت {0} ..." + site name. The invitee enters the code
+	// at the invite page (or we could get a link template approved separately).
 	smsSent := true
-	msg := fmt.Sprintf("سلام! از طرف شما به فروشگاه استیو دعوت شده‌اید. با این لینک ثبت‌نام کنید: %s", url)
-	if sErr := s.sms.SendSimple(ctx, phone, msg); sErr != nil {
+	if sErr := s.sms.SendPatternSMS(ctx, phone, []string{acc.Code}, mellipayamak.ReferralInviteKey); sErr != nil {
 		logger.L().Error("referral: failed to send invite sms", "err", sErr, "phone", phone)
 		smsSent = false
 	}
@@ -183,7 +195,7 @@ func (s StorefrontService) ListMyReferrals(ctx context.Context, userID string, r
 		items = append(items, item)
 	}
 
-	threshold := s.cfg.rewardThreshold()
+	threshold := s.effective(ctx).rewardThreshold()
 	nextIn := threshold - acc.PendingProgress()
 	if nextIn <= 0 {
 		nextIn = threshold

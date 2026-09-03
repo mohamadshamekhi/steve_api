@@ -13,19 +13,22 @@ const (
 	accountsCollectionName  = "referral_accounts"
 	referralsCollectionName = "referrals"
 	rewardsCollectionName   = "referral_rewards"
+	settingsCollectionName  = "referral_settings"
 )
 
-// DB holds the three collections the referral domain persists to.
+// DB holds the collections the referral domain persists to.
 type DB struct {
 	accounts  *mongo.Collection
 	referrals *mongo.Collection
 	rewards   *mongo.Collection
+	settings  *mongo.Collection
 }
 
 func New(c *mongodb.DB) *DB {
 	accounts := c.Connection().Collection(accountsCollectionName)
 	referrals := c.Connection().Collection(referralsCollectionName)
 	rewards := c.Connection().Collection(rewardsCollectionName)
+	settings := c.Connection().Collection(settingsCollectionName)
 
 	if _, err := accounts.Indexes().CreateMany(context.Background(), []mongo.IndexModel{
 		{Keys: bson.D{{Key: "user_id", Value: 1}}, Options: options.Index().SetUnique(true)},
@@ -48,5 +51,5 @@ func New(c *mongodb.DB) *DB {
 		panic(err)
 	}
 
-	return &DB{accounts: accounts, referrals: referrals, rewards: rewards}
+	return &DB{accounts: accounts, referrals: referrals, rewards: rewards, settings: settings}
 }

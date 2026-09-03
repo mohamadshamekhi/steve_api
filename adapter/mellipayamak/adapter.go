@@ -24,6 +24,12 @@ const (
 	SuccessPaymentKey = "payment"
 	BackofficeKey     = "backoffice"
 
+	// Referral program templates. Their bodyIds live under
+	// mellipayamak.patterns.* in config (or ST_MELLIPAYAMAK__PATTERNS__* env).
+	ReferralInviteKey  = "referral_invite"
+	ReferralWelcomeKey = "referral_welcome"
+	ReferralRewardKey  = "referral_reward"
+
 	endpointPattern = "SendByBaseNumber"
 	endpointSimple  = "SendSimpleSMS2"
 )

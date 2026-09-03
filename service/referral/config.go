@@ -1,5 +1,7 @@
 package referralservice
 
+import "github.com/abolfazlnorzad/steve/entity"
+
 // Config drives the "invite friends" program. Loaded via koanf with the
 // ST_REFERRAL__ env prefix — spell out every nested level, e.g.
 // ST_REFERRAL__REWARD_THRESHOLD=5, ST_REFERRAL__INVITE_BASE_URL=https://...
@@ -45,4 +47,36 @@ func (c Config) welcomeValidDays() int {
 		return 30
 	}
 	return c.WelcomeValidDays
+}
+
+// applySettings overlays an admin-saved settings document onto the config
+// defaults. Enabled and InviteBaseURL stay deployment-controlled (config/env
+// only); everything about the reward/welcome coupons becomes admin-editable.
+func (c Config) applySettings(s entity.ReferralSettings) Config {
+	c.RewardThreshold = s.RewardThreshold
+	c.RewardDiscountType = s.RewardDiscountType
+	c.RewardDiscountValue = s.RewardDiscountValue
+	c.RewardValidDays = s.RewardValidDays
+	c.RewardMinimumPurchaseAmount = s.RewardMinimumPurchaseAmount
+	c.WelcomeDiscountEnabled = s.WelcomeDiscountEnabled
+	c.WelcomeDiscountType = s.WelcomeDiscountType
+	c.WelcomeDiscountValue = s.WelcomeDiscountValue
+	c.WelcomeValidDays = s.WelcomeValidDays
+	return c
+}
+
+// toSettings projects the (effective) config into a settings document — used to
+// seed the admin editor with current values before any customisation.
+func (c Config) toSettings() entity.ReferralSettings {
+	return entity.ReferralSettings{
+		RewardThreshold:             c.rewardThreshold(),
+		RewardDiscountType:          c.RewardDiscountType,
+		RewardDiscountValue:         c.RewardDiscountValue,
+		RewardValidDays:             c.rewardValidDays(),
+		RewardMinimumPurchaseAmount: c.RewardMinimumPurchaseAmount,
+		WelcomeDiscountEnabled:      c.WelcomeDiscountEnabled,
+		WelcomeDiscountType:         c.WelcomeDiscountType,
+		WelcomeDiscountValue:        c.WelcomeDiscountValue,
+		WelcomeValidDays:            c.welcomeValidDays(),
+	}
 }

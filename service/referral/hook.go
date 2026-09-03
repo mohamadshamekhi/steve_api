@@ -2,10 +2,11 @@ package referralservice
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/abolfazlnorzad/steve/adapter/mellipayamak"
 	"github.com/abolfazlnorzad/steve/entity"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -95,32 +96,34 @@ func (s StorefrontService) AttributeSignup(ctx context.Context, newUserID, phone
 		return s.logHookErr(op, incErr, newUserID)
 	}
 
+	// Reward/welcome-coupon rules come from the admin-editable settings.
+	eff := s.effective(ctx)
+
 	// 7. Optional welcome coupon for the new user.
-	s.grantWelcomeCoupon(ctx, newUserID, phone)
+	s.grantWelcomeCoupon(ctx, eff, newUserID, phone)
 
 	// 8. Reward the referrer for every full batch of joins.
-	s.maybeGrantReward(ctx, updated)
+	s.maybeGrantReward(ctx, eff, updated)
 
 	return nil
 }
 
-func (s StorefrontService) grantWelcomeCoupon(ctx context.Context, newUserID, phone string) {
-	if !s.cfg.WelcomeDiscountEnabled {
+func (s StorefrontService) grantWelcomeCoupon(ctx context.Context, eff Config, newUserID, phone string) {
+	if !eff.WelcomeDiscountEnabled {
 		return
 	}
-	d, err := s.mintCoupon(ctx, newUserID, s.cfg.WelcomeDiscountType, s.cfg.WelcomeDiscountValue, 0, s.cfg.welcomeValidDays())
+	d, err := s.mintCoupon(ctx, newUserID, eff.WelcomeDiscountType, eff.WelcomeDiscountValue, 0, eff.welcomeValidDays())
 	if err != nil {
 		logger.L().Error("referral: failed to mint welcome coupon", "err", err, "user_id", newUserID)
 		return
 	}
-	msg := fmt.Sprintf("به فروشگاه استیو خوش آمدید! کد تخفیف خوش‌آمدگویی شما: %s", d.Code)
-	if sErr := s.sms.SendSimple(ctx, phone, msg); sErr != nil {
+	if sErr := s.sms.SendPatternSMS(ctx, phone, []string{d.Code}, mellipayamak.ReferralWelcomeKey); sErr != nil {
 		logger.L().Error("referral: failed to send welcome coupon sms", "err", sErr, "user_id", newUserID)
 	}
 }
 
-func (s StorefrontService) maybeGrantReward(ctx context.Context, acc entity.ReferralAccount) {
-	threshold := s.cfg.rewardThreshold()
+func (s StorefrontService) maybeGrantReward(ctx context.Context, eff Config, acc entity.ReferralAccount) {
+	threshold := eff.rewardThreshold()
 	if acc.PendingProgress() < threshold {
 		return
 	}
@@ -137,8 +140,8 @@ func (s StorefrontService) maybeGrantReward(ctx context.Context, acc entity.Refe
 		return
 	}
 
-	d, mErr := s.mintCoupon(ctx, acc.UserID, s.cfg.RewardDiscountType, s.cfg.RewardDiscountValue,
-		s.cfg.RewardMinimumPurchaseAmount, s.cfg.rewardValidDays())
+	d, mErr := s.mintCoupon(ctx, acc.UserID, eff.RewardDiscountType, eff.RewardDiscountValue,
+		eff.RewardMinimumPurchaseAmount, eff.rewardValidDays())
 	if mErr != nil {
 		logger.L().Error("referral: failed to mint reward coupon", "err", mErr, "user_id", acc.UserID)
 		return
@@ -172,8 +175,8 @@ func (s StorefrontService) maybeGrantReward(ctx context.Context, acc entity.Refe
 		logger.L().Error("referral: failed to load referrer for sms", "err", uErr, "user_id", acc.UserID)
 		return
 	}
-	msg := fmt.Sprintf("تبریک! %d نفر با لینک دعوت شما ثبت‌نام کردند. کد تخفیف شما: %s", threshold, d.Code)
-	if sErr := s.sms.SendSimple(ctx, referrer.PhoneNumber, msg); sErr != nil {
+	if sErr := s.sms.SendPatternSMS(ctx, referrer.PhoneNumber,
+		[]string{strconv.Itoa(threshold), d.Code}, mellipayamak.ReferralRewardKey); sErr != nil {
 		logger.L().Error("referral: failed to send reward sms", "err", sErr, "user_id", acc.UserID)
 	}
 }

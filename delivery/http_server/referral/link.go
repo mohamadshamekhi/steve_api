@@ -22,6 +22,14 @@ func pageFromQuery(c echo.Context) commonparam.PaginationRequest {
 	return commonparam.PaginationRequest{PageSize: uint(pageSize), PageNumber: uint(pageNumber)}
 }
 
+func intQuery(c echo.Context, name string) int {
+	v, err := strconv.Atoi(c.QueryParam(name))
+	if err != nil {
+		return 0
+	}
+	return v
+}
+
 func (h Handler) success(c echo.Context, data any) error {
 	lang := getLanguageFromHeader(c.Request().Header)
 	msg := h.translator.Translate(lang, "global.action_successful", nil)

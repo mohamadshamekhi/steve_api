@@ -90,6 +90,30 @@ func (r *Referral) BeforeCreate() {
 	}
 }
 
+// ReferralSettingsID is the fixed _id of the single settings document.
+const ReferralSettingsID = "singleton"
+
+// ReferralSettings is the admin-editable override of the referral program's
+// reward/welcome-coupon knobs. One document (_id == ReferralSettingsID); when it
+// doesn't exist the service falls back to config defaults.
+type ReferralSettings struct {
+	ID string `bson:"_id" json:"-"`
+
+	RewardThreshold             int    `bson:"reward_threshold" json:"reward_threshold"`
+	RewardDiscountType          string `bson:"reward_discount_type" json:"reward_discount_type"`
+	RewardDiscountValue         uint   `bson:"reward_discount_value" json:"reward_discount_value"`
+	RewardValidDays             int    `bson:"reward_valid_days" json:"reward_valid_days"`
+	RewardMinimumPurchaseAmount uint   `bson:"reward_minimum_purchase_amount" json:"reward_minimum_purchase_amount"`
+
+	WelcomeDiscountEnabled bool   `bson:"welcome_discount_enabled" json:"welcome_discount_enabled"`
+	WelcomeDiscountType    string `bson:"welcome_discount_type" json:"welcome_discount_type"`
+	WelcomeDiscountValue   uint   `bson:"welcome_discount_value" json:"welcome_discount_value"`
+	WelcomeValidDays       int    `bson:"welcome_valid_days" json:"welcome_valid_days"`
+
+	UpdatedAt time.Time `bson:"updated_at" json:"updated_at"`
+	UpdatedBy string    `bson:"updated_by,omitempty" json:"updated_by,omitempty"`
+}
+
 // ReferralReward is a discount code granted to a referrer after every N joins.
 type ReferralReward struct {
 	ID             string    `bson:"_id" json:"id"`

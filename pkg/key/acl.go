@@ -123,4 +123,9 @@ const (
 	// --- پنل خرید همکار (سمت خود همکار) ---
 	PartnerShopAccess = "partner_shop:access"
 	PartnerShopOrder  = "partner_shop:order"
+
+	// --- برنامه دعوت از دوستان (referral) ---
+	ListReferrals  = "referral:list"
+	ViewReferral   = "referral:view"
+	ManageReferral = "referral:manage"
 )
