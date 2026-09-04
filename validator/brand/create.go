@@ -16,6 +16,10 @@ func (v Validator) ValidateCreateBrandRequest(req brandparam.CreateBrandRequest)
 		validation.Field(&req.Name,
 			validation.Required.Error("validation.required"),
 			validation.By(v.brandIsUnique)),
+		validation.Field(&req.Slug,
+			validation.When(req.Slug != "",
+				validation.By(v.brandSlugIsUnique)),
+		),
 		validation.Field(&req.MediaID,
 			validation.Required.Error("validation.required"),
 			validation.By(v.mediaBrandIsExist),
@@ -66,6 +70,37 @@ func (v Validator) brandIsUnique(value any) error {
 		return errors.New("validation.brand_is_already_exist")
 	}
 	return nil
+}
+
+func (v Validator) brandSlugIsUnique(value any) error {
+	var slug string
+	switch v := value.(type) {
+	case string:
+		slug = v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		slug = *v
+	default:
+		return richerror.New("brandvalidator.brandSlugIsUnique.type_assertion").
+			WithKind(richerror.KindUnexpected).
+			WithWarpError(errors.New("unexpected type for brand slug"))
+	}
+
+	if slug == "" {
+		return nil
+	}
+
+	_, err := v.repo.FindBySlug(context.Background(), slug)
+	if err == nil {
+		return errors.New("validation.brand_slug_is_already_exist")
+	}
+	var rErr *richerror.RichError
+	if errors.As(err, &rErr) && rErr.Kind() == richerror.KindNotFound {
+		return nil
+	}
+	return err
 }
 
 func (v Validator) mediaBrandIsExist(value any) error {

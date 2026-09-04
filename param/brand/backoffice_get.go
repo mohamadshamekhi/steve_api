@@ -9,6 +9,7 @@ type GetBrandRequest struct {
 type GetBrandResponse struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
+	Slug        string `json:"slug"`
 	Description string `json:"description"`
 	Url         string `json:"url"`
 	IsFavorite  bool   `json:"is_favorite"`

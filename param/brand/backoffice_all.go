@@ -16,6 +16,7 @@ type GetAllBrandsParamResponse struct {
 type BrandInfo struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
+	Slug        string `json:"slug"`
 	Description string `json:"description"`
 	URL         string `json:"url"`
 	IsFavorite  bool   `json:"is_favorite"`

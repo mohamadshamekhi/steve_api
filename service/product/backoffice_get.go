@@ -97,6 +97,7 @@ func (s BackofficeService) GetProduct(ctx context.Context, req productparam.GetP
 		productInfo.Brand = brandparam.BrandInfo{
 			ID:          brandRes.ID,
 			Name:        brandRes.Name,
+			Slug:        brandRes.Slug,
 			Description: brandRes.Description,
 			URL:         brandRes.Url,
 		}

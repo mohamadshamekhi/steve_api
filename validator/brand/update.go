@@ -20,8 +20,13 @@ func (v Validator) ValidateUpdateBrandRequest(req brandparam.UpdateBrandRequest)
 				validation.Required.Error("validation.required"),
 				validation.By(v.brandNameIsUniqueForUpdate(req.BrandID)),
 			)),
+		validation.Field(&req.Slug,
+			validation.When(req.Slug != nil && *req.Slug != "",
+				validation.By(v.brandSlugIsUniqueForUpdate(req.BrandID)),
+			),
+		),
 		validation.Field(&req.Description,
-			validation.When(req.Name != nil,
+			validation.When(req.Description != nil,
 				validation.Required.Error("validation.required"),
 			),
 		),
@@ -50,6 +55,30 @@ func (v Validator) ValidateUpdateBrandRequest(req brandparam.UpdateBrandRequest)
 
 	//nolint
 	return nil
+}
+
+func (v Validator) brandSlugIsUniqueForUpdate(currentBrandID string) validation.RuleFunc {
+	return func(value interface{}) error {
+		slug, ok := value.(*string)
+		if !ok || slug == nil || *slug == "" {
+			return nil
+		}
+
+		existingBrand, err := v.repo.FindBySlug(context.Background(), *slug)
+		if err != nil {
+			var rErr *richerror.RichError
+			if errors.As(err, &rErr) && rErr.Kind() == richerror.KindNotFound {
+				return nil
+			}
+			return err
+		}
+
+		if existingBrand.ID != currentBrandID {
+			return errors.New("validation.brand_slug_is_already_exist")
+		}
+
+		return nil
+	}
 }
 
 func (v Validator) brandNameIsUniqueForUpdate(currentBrandID string) validation.RuleFunc {

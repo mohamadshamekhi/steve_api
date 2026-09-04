@@ -104,6 +104,7 @@ func (s StorefrontService) GetProduct(ctx context.Context, req productparam.Stor
 		res.Brand = brandparam.BrandInfo{
 			ID:          brandRes.ID,
 			Name:        brandRes.Name,
+			Slug:        brandRes.Slug,
 			Description: brandRes.Description,
 		}
 	}
@@ -202,6 +203,7 @@ func (s StorefrontService) GetProductBySlug(ctx context.Context, req productpara
 		res.Brand = brandparam.BrandInfo{
 			ID:          brandRes.ID,
 			Name:        brandRes.Name,
+			Slug:        brandRes.Slug,
 			Description: brandRes.Description,
 		}
 	}
