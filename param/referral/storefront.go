@@ -34,7 +34,8 @@ type InviteByPhoneResponse struct {
 	// offer a "copy link" fallback when the SMS could not be delivered.
 	URL string `json:"url"`
 	// SMSSent reports whether the invite SMS was actually accepted by the
-	// provider. When false, the invite is still recorded; show the link.
+	// provider. When false the invite is NOT recorded (referral_id is empty) so
+	// it can be retried; show the link for manual sharing.
 	SMSSent bool `json:"sms_sent"`
 }
 

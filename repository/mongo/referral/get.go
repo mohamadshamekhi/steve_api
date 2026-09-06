@@ -47,26 +47,19 @@ func (d DB) FindPendingInviteByPhone(ctx context.Context, phone string) (entity.
 	return r, nil
 }
 
-// FindPendingInviteByReferrerAndPhone returns an outstanding invite this referrer
-// already sent to this number, so a repeat call reuses the row (and re-sends the
-// SMS) instead of creating a duplicate.
-func (d DB) FindPendingInviteByReferrerAndPhone(ctx context.Context, referrerUserID, phone string) (entity.Referral, error) {
-	const op = "mongodbreferral.FindPendingInviteByReferrerAndPhone"
-	var r entity.Referral
-	filter := bson.M{
-		"referrer_user_id": referrerUserID,
-		"invited_phone":    phone,
-		"status":           entity.ReferralStatusInvited,
+// ExistsInviteByPhone reports whether any referral row (from any referrer, in any
+// status) has already targeted this phone number.
+func (d DB) ExistsInviteByPhone(ctx context.Context, phone string) (bool, error) {
+	const op = "mongodbreferral.ExistsInviteByPhone"
+	err := d.referrals.FindOne(ctx, bson.M{"invited_phone": phone}).Err()
+	if err == nil {
+		return true, nil
 	}
-	if err := d.referrals.FindOne(ctx, filter).Decode(&r); err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return r, richerror.New(op).WithWarpError(err).
-				WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
-		}
-		return r, richerror.New(op).WithWarpError(err).
-			WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return false, nil
 	}
-	return r, nil
+	return false, richerror.New(op).WithWarpError(err).
+		WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
 }
 
 // ListUnrewardedJoined returns joined referrals with no reward batch yet, oldest

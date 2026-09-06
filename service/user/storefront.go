@@ -8,6 +8,7 @@ import (
 	userparam "github.com/abolfazlnorzad/steve/param/user"
 	userauthparam "github.com/abolfazlnorzad/steve/param/user/auth"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
+	"github.com/abolfazlnorzad/steve/pkg/phonenumber"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	"github.com/oklog/ulid/v2"
@@ -37,6 +38,8 @@ func NewStoreFrontService(config Config, repo Repository, authSvc authservice.Se
 func (s StoreFrontService) SendOTPCode(ctx context.Context, req userauthparam.UserSendLoginCodeRequest) (userauthparam.UserSendLoginCodeResponse, error) {
 	const op = "userservice.SendOTPCode"
 
+	req.PhoneNumber = phonenumber.Normalize(req.PhoneNumber)
+
 	err := s.authSvc.GenerateOTPCode(ctx, req.PhoneNumber, s.config.Prefix)
 	if err != nil {
 		return userauthparam.UserSendLoginCodeResponse{}, richerror.New(op)
@@ -55,6 +58,8 @@ func (s StoreFrontService) SendOTPCode(ctx context.Context, req userauthparam.Us
 
 func (s StoreFrontService) VerifyOTPCode(ctx context.Context, req userauthparam.UserVerifyLoginCodeRequest) (userauthparam.UserVerifyLoginCodeResponse, error) {
 	const op = "userservice.VerifyOTPCode"
+
+	req.PhoneNumber = phonenumber.Normalize(req.PhoneNumber)
 
 	resp, err := s.authSvc.VerifyOTPCode(ctx, req.PhoneNumber, req.Code, s.config.Prefix)
 	if err != nil {

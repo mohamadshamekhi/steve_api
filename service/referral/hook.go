@@ -124,26 +124,33 @@ func (s StorefrontService) grantWelcomeCoupon(ctx context.Context, eff Config, n
 
 func (s StorefrontService) maybeGrantReward(ctx context.Context, eff Config, acc entity.ReferralAccount) {
 	threshold := eff.rewardThreshold()
-	if acc.PendingProgress() < threshold {
+
+	// Atomically reserve a batch: bumps rewarded_count only if a full batch of
+	// unrewarded joins exists right now. Two signup hooks racing for the same
+	// referrer can't both pass this — the loser gets ok == false.
+	_, ok, err := s.repo.TryConsumeRewardBatch(ctx, acc.UserID, threshold)
+	if err != nil {
+		logger.L().Error("referral: failed to reserve reward batch", "err", err, "user_id", acc.UserID)
 		return
+	}
+	if !ok {
+		return
+	}
+
+	release := func(stage string, cause error) {
+		logger.L().Error("referral: rolling back reward reservation", "stage", stage, "err", cause, "user_id", acc.UserID)
+		if rErr := s.repo.ReleaseRewardBatch(ctx, acc.UserID, threshold); rErr != nil {
+			logger.L().Error("referral: failed to release reward reservation", "err", rErr, "user_id", acc.UserID)
+		}
 	}
 
 	batch, err := s.repo.ListUnrewardedJoined(ctx, acc.UserID, threshold)
 	if err != nil {
-		logger.L().Error("referral: failed to list unrewarded joins", "err", err, "user_id", acc.UserID)
+		release("list-unrewarded", err)
 		return
 	}
 	if len(batch) < threshold {
-		// Counters and rows drifted; don't grant on an incomplete batch.
-		logger.L().Error("referral: unrewarded batch smaller than threshold",
-			"user_id", acc.UserID, "have", len(batch), "threshold", threshold)
-		return
-	}
-
-	d, mErr := s.mintCoupon(ctx, acc.UserID, eff.RewardDiscountType, eff.RewardDiscountValue,
-		eff.RewardMinimumPurchaseAmount, eff.rewardValidDays())
-	if mErr != nil {
-		logger.L().Error("referral: failed to mint reward coupon", "err", mErr, "user_id", acc.UserID)
+		release("incomplete-batch", nil)
 		return
 	}
 
@@ -152,22 +159,41 @@ func (s StorefrontService) maybeGrantReward(ctx context.Context, eff Config, acc
 		ids = append(ids, r.ID)
 	}
 
-	reward := entity.ReferralReward{
-		ReferrerUserID: acc.UserID,
-		DiscountID:     d.ID,
-		DiscountCode:   d.Code,
-		ReferralIDs:    ids,
-	}
+	reward := entity.ReferralReward{ReferrerUserID: acc.UserID, ReferralIDs: ids}
 	reward.BeforeCreate()
-	if cErr := s.repo.CreateReward(ctx, reward); cErr != nil {
-		logger.L().Error("referral: failed to persist reward", "err", cErr, "user_id", acc.UserID)
+
+	// Claim the rows before minting anything. If we can't claim the full batch,
+	// another grant already took some of these rows — back out cleanly.
+	claimed, cErr := s.repo.MarkReferralsRewarded(ctx, ids, reward.ID)
+	if cErr != nil {
+		release("stamp-rows", cErr)
 		return
 	}
-	if rErr := s.repo.MarkReferralsRewarded(ctx, ids, reward.ID); rErr != nil {
-		logger.L().Error("referral: failed to stamp rewarded referrals", "err", rErr, "user_id", acc.UserID)
+	if claimed < int64(threshold) {
+		if uErr := s.repo.UnmarkReferralsRewarded(ctx, reward.ID); uErr != nil {
+			logger.L().Error("referral: failed to unstamp partial batch", "err", uErr, "user_id", acc.UserID)
+		}
+		release("lost-row-race", nil)
+		return
 	}
-	if _, incErr := s.repo.IncrementAccountCounters(ctx, acc.UserID, 0, threshold); incErr != nil {
-		logger.L().Error("referral: failed to bump rewarded_count", "err", incErr, "user_id", acc.UserID)
+
+	d, mErr := s.mintCoupon(ctx, acc.UserID, eff.RewardDiscountType, eff.RewardDiscountValue,
+		eff.RewardMinimumPurchaseAmount, eff.rewardValidDays())
+	if mErr != nil {
+		if uErr := s.repo.UnmarkReferralsRewarded(ctx, reward.ID); uErr != nil {
+			logger.L().Error("referral: failed to unstamp after mint failure", "err", uErr, "user_id", acc.UserID)
+		}
+		release("mint-coupon", mErr)
+		return
+	}
+
+	reward.DiscountID = d.ID
+	reward.DiscountCode = d.Code
+	if cErr := s.repo.CreateReward(ctx, reward); cErr != nil {
+		// Coupon is already minted and rows are already claimed and the counter
+		// is bumped — the grant is effectively done; just the audit row is
+		// missing. Log and keep going so the user still gets their SMS.
+		logger.L().Error("referral: failed to persist reward audit row", "err", cErr, "user_id", acc.UserID, "code", d.Code)
 	}
 
 	referrer, uErr := s.userRepo.GetUserByID(ctx, acc.UserID)

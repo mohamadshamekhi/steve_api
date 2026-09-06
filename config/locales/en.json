@@ -124,6 +124,10 @@
     "translation": "An invitation has already been sent to this number."
   },
   {
+    "id": "referral.already_registered",
+    "translation": "This number is already registered; an invitation cannot be sent to it."
+  },
+  {
     "id": "referral.cannot_invite_self",
     "translation": "You cannot invite your own number."
   },
@@ -137,6 +141,6 @@
   },
   {
     "id": "referral.invite_recorded_sms_failed",
-    "translation": "The invite was recorded but the SMS could not be sent; share the invite link manually."
+    "translation": "The invite SMS could not be sent; share the invite link manually and try again later."
   }
 ]

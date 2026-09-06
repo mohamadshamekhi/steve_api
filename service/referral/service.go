@@ -14,10 +14,12 @@ type Repository interface {
 	FindAccountByCode(ctx context.Context, code string) (entity.ReferralAccount, error)
 	CreateAccount(ctx context.Context, a entity.ReferralAccount) error
 	IncrementAccountCounters(ctx context.Context, userID string, joinedDelta, rewardedDelta int) (entity.ReferralAccount, error)
+	TryConsumeRewardBatch(ctx context.Context, userID string, threshold int) (entity.ReferralAccount, bool, error)
+	ReleaseRewardBatch(ctx context.Context, userID string, threshold int) error
 
 	FindReferralByReferredUserID(ctx context.Context, referredUserID string) (entity.Referral, error)
 	FindPendingInviteByPhone(ctx context.Context, phone string) (entity.Referral, error)
-	FindPendingInviteByReferrerAndPhone(ctx context.Context, referrerUserID, phone string) (entity.Referral, error)
+	ExistsInviteByPhone(ctx context.Context, phone string) (bool, error)
 	ListUnrewardedJoined(ctx context.Context, referrerUserID string, limit int) ([]entity.Referral, error)
 	ListReferralsByReferrer(ctx context.Context, referrerUserID string, p commonparam.PaginationRequest) ([]entity.Referral, int64, error)
 	ListRewardsByReferrer(ctx context.Context, referrerUserID string) ([]entity.ReferralReward, error)
@@ -25,7 +27,8 @@ type Repository interface {
 	CreateReferral(ctx context.Context, r entity.Referral) error
 	CreateReward(ctx context.Context, rw entity.ReferralReward) error
 	MarkReferralJoined(ctx context.Context, referralID, referredUserID string) error
-	MarkReferralsRewarded(ctx context.Context, referralIDs []string, rewardBatchID string) error
+	MarkReferralsRewarded(ctx context.Context, referralIDs []string, rewardBatchID string) (int64, error)
+	UnmarkReferralsRewarded(ctx context.Context, rewardBatchID string) error
 
 	// --- backoffice reads ---
 	AllAccounts(ctx context.Context, minJoined int, p commonparam.PaginationRequest) ([]entity.ReferralAccount, int64, error)
@@ -49,6 +52,7 @@ type DiscountProvider interface {
 type UserProvider interface {
 	FindManyByIDs(ctx context.Context, ids []string) ([]entity.User, error)
 	GetUserByID(ctx context.Context, id string) (entity.User, error)
+	CheckUserIsExistByPhoneNumber(ctx context.Context, phoneNumber string) (bool, error)
 }
 
 // SMSSender sends a template ("pattern") SMS — the only kind MelliPayamak

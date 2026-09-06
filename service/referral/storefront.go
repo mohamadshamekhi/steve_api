@@ -13,6 +13,7 @@ import (
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	referralparam "github.com/abolfazlnorzad/steve/param/referral"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
+	"github.com/abolfazlnorzad/steve/pkg/phonenumber"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 )
 
@@ -99,46 +100,52 @@ func (s StorefrontService) InviteByPhone(ctx context.Context, userID string, req
 			WithKind(richerror.KindBadRequest).WithMessageKey("referral.cannot_invite_self")
 	}
 
+	// Can't invite someone who already has an account.
+	if exists, uErr := s.userRepo.CheckUserIsExistByPhoneNumber(ctx, phone); uErr != nil {
+		return referralparam.InviteByPhoneResponse{}, richerror.New(op).WithWarpError(uErr)
+	} else if exists {
+		return referralparam.InviteByPhoneResponse{}, richerror.New(op).
+			WithKind(richerror.KindBadRequest).WithMessageKey("referral.already_registered")
+	}
+
+	// Can't invite a number that anyone (this referrer or another) already invited.
+	if invited, iErr := s.repo.ExistsInviteByPhone(ctx, phone); iErr != nil {
+		return referralparam.InviteByPhoneResponse{}, richerror.New(op).WithWarpError(iErr)
+	} else if invited {
+		return referralparam.InviteByPhoneResponse{}, richerror.New(op).
+			WithKind(richerror.KindBadRequest).WithMessageKey("referral.already_invited")
+	}
+
 	acc, err := s.getOrCreateAccount(ctx, userID)
 	if err != nil {
 		return referralparam.InviteByPhoneResponse{}, richerror.New(op).WithWarpError(err)
 	}
 
-	// Reuse an invite this referrer already sent to this number (e.g. a first
-	// attempt where the SMS failed), otherwise record a fresh one.
-	var referralID string
-	if existing, fErr := s.repo.FindPendingInviteByReferrerAndPhone(ctx, userID, phone); fErr == nil {
-		referralID = existing.ID
-	} else if richerror.GetKind(fErr) == richerror.KindNotFound {
-		r := entity.Referral{
-			ReferrerUserID: userID,
-			Code:           acc.Code,
-			Source:         entity.ReferralSourceSMS,
-			Status:         entity.ReferralStatusInvited,
-			InvitedPhone:   phone,
-		}
-		r.BeforeCreate()
-		if cErr := s.repo.CreateReferral(ctx, r); cErr != nil {
-			return referralparam.InviteByPhoneResponse{}, richerror.New(op).WithWarpError(cErr)
-		}
-		referralID = r.ID
-	} else {
-		return referralparam.InviteByPhoneResponse{}, richerror.New(op).WithWarpError(fErr)
-	}
-
 	url := s.buildURL(acc.Code)
 
-	// SMS delivery is best-effort: the invite is already recorded, so a provider
-	// failure must not fail the request — the frontend shows the link instead.
-	// Template: "... کد دعوت {0} ..." + site name. The invitee enters the code
-	// at the invite page (or we could get a link template approved separately).
-	smsSent := true
+	// Send the SMS *before* recording the invite: if the provider rejects it we
+	// don't want a phantom "invited" row that permanently blocks this number from
+	// ever being invited again (by this referrer or anyone else). On failure the
+	// caller still gets the link to share manually and can retry later.
+	// Template: "... کد دعوت {0} ..." + site name.
 	if sErr := s.sms.SendPatternSMS(ctx, phone, []string{acc.Code}, mellipayamak.ReferralInviteKey); sErr != nil {
 		logger.L().Error("referral: failed to send invite sms", "err", sErr, "phone", phone)
-		smsSent = false
+		return referralparam.InviteByPhoneResponse{URL: url, SMSSent: false}, nil
 	}
 
-	return referralparam.InviteByPhoneResponse{ReferralID: referralID, URL: url, SMSSent: smsSent}, nil
+	r := entity.Referral{
+		ReferrerUserID: userID,
+		Code:           acc.Code,
+		Source:         entity.ReferralSourceSMS,
+		Status:         entity.ReferralStatusInvited,
+		InvitedPhone:   phone,
+	}
+	r.BeforeCreate()
+	if cErr := s.repo.CreateReferral(ctx, r); cErr != nil {
+		return referralparam.InviteByPhoneResponse{}, richerror.New(op).WithWarpError(cErr)
+	}
+
+	return referralparam.InviteByPhoneResponse{ReferralID: r.ID, URL: url, SMSSent: true}, nil
 }
 
 // ListMyReferrals returns the paginated "who joined via my link" list.
@@ -286,7 +293,7 @@ func generateCode() (string, error) {
 }
 
 func normalizePhone(p string) string {
-	return strings.TrimSpace(p)
+	return phonenumber.Normalize(p)
 }
 
 func maskPhone(p string) string {

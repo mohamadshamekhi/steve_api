@@ -22,7 +22,7 @@ func Default() Config {
 		},
 		Referral: referralservice.Config{
 			Enabled:                true,
-			InviteBaseURL:          "https://stevemobile.ir/invite",
+			InviteBaseURL:          "https://stevemobile.com/invite",
 			RewardThreshold:        5,
 			RewardDiscountType:     "percentage",
 			RewardDiscountValue:    10,
