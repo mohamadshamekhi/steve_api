@@ -152,14 +152,16 @@ func (s BackofficeService) GetCategory(ctx context.Context, req categoryparam.Ge
 	}
 	return categoryparam.GetCategoryResponse{
 		Category: categoryparam.CategoryInfo{
-			ID:           category.ID,
-			Name:         category.Name,
-			Description:  category.Description,
-			URL:          m.URL,
-			Ancestors:    category.Ancestors,
-			Level:        category.Level,
-			Slug:         category.Slug,
-			AttributeSet: r.Attr.Attributes,
+			ID:             category.ID,
+			Name:           category.Name,
+			Description:    category.Description,
+			URL:            m.URL,
+			ParentID:       strPtrOrNil(category.ParentID),
+			Ancestors:      category.Ancestors,
+			Level:          category.Level,
+			Slug:           category.Slug,
+			AttributeSetID: strPtrOrNil(category.AttributeSetID),
+			AttributeSet:   r.Attr.Attributes,
 		},
 	}, nil
 }
@@ -192,14 +194,16 @@ func (s BackofficeService) GetAll(ctx context.Context, req categoryparam.GetAllC
 		r, _ := s.AttrProvider.FindByID(ctx, attributeparam.GetAttributeRequest{ID: c.AttributeSetID})
 
 		categoriesInfo = append(categoriesInfo, categoryparam.CategoryInfo{
-			ID:           c.ID,
-			Name:         c.Name,
-			Description:  c.Description,
-			URL:          urlMap.URLs[c.MediaID],
-			Level:        c.Level,
-			Ancestors:    c.Ancestors,
-			Slug:         c.Slug,
-			AttributeSet: r.Attr.Attributes,
+			ID:             c.ID,
+			Name:           c.Name,
+			Description:    c.Description,
+			URL:            urlMap.URLs[c.MediaID],
+			Level:          c.Level,
+			ParentID:       strPtrOrNil(c.ParentID),
+			Ancestors:      c.Ancestors,
+			Slug:           c.Slug,
+			AttributeSetID: strPtrOrNil(c.AttributeSetID),
+			AttributeSet:   r.Attr.Attributes,
 		})
 	}
 
@@ -276,6 +280,62 @@ func (s BackofficeService) Update(ctx context.Context, req categoryparam.UpdateC
 		category.MediaID = *req.MediaID
 	}
 
+	if req.AttributeSetID != nil {
+		category.AttributeSetID = *req.AttributeSetID
+	}
+
+	if req.ParentID != nil && *req.ParentID != category.ParentID {
+		newParentID := *req.ParentID
+
+		if newParentID == "" {
+			category.ParentID = ""
+			category.Level = 0
+			category.Ancestors = []entity.Ancestor{}
+		} else {
+			if newParentID == category.ID {
+				return categoryparam.UpdateCategoryResponse{}, richerror.New(op).
+					WithKind(richerror.KindInvalid).
+					WithMessageKey("global.validation_failed").
+					WithMeta(map[string]any{"parent_id": newParentID})
+			}
+
+			p, fErr := s.repo.FindByID(ctx, newParentID)
+			if fErr != nil {
+				var rErr *richerror.RichError
+				if errors.As(fErr, &rErr) && rErr.Kind() == richerror.KindNotFound {
+					return categoryparam.UpdateCategoryResponse{}, richerror.New(op).
+						WithKind(richerror.KindInvalid).
+						WithMessageKey("global.not-found").
+						WithMeta(map[string]any{"parent_id": newParentID})
+				}
+				return categoryparam.UpdateCategoryResponse{}, richerror.New(op).WithWarpError(fErr)
+			}
+
+			// guard against making a descendant the new parent (would create a cycle)
+			for _, a := range p.Ancestors {
+				if a.ID == category.ID {
+					return categoryparam.UpdateCategoryResponse{}, richerror.New(op).
+						WithKind(richerror.KindInvalid).
+						WithMessageKey("global.validation_failed").
+						WithMeta(map[string]any{"parent_id": newParentID})
+				}
+			}
+
+			ancestors := make([]entity.Ancestor, 0, len(p.Ancestors)+1)
+			ancestors = append(ancestors, p.Ancestors...)
+			ancestors = append(ancestors, entity.Ancestor{
+				ID:    p.ID,
+				Name:  p.Name,
+				Slug:  p.Slug,
+				Level: p.Level,
+			})
+
+			category.ParentID = newParentID
+			category.Ancestors = ancestors
+			category.Level = p.Level + 1
+		}
+	}
+
 	if uErr := s.repo.Update(ctx, category); uErr != nil {
 		return categoryparam.UpdateCategoryResponse{}, richerror.New(op).WithWarpError(uErr).WithKind(richerror.KindUnexpected)
 	}
@@ -292,6 +352,13 @@ func (s BackofficeService) Update(ctx context.Context, req categoryparam.UpdateC
 	}
 
 	return categoryparam.UpdateCategoryResponse{}, nil
+}
+
+func strPtrOrNil(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }
 
 func generateSlug(name string) string {
