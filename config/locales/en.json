@@ -142,5 +142,141 @@
   {
     "id": "referral.invite_recorded_sms_failed",
     "translation": "The invite SMS could not be sent; share the invite link manually and try again later."
+  },
+  {
+    "id": "supplier.not_found",
+    "translation": "Supplier not found."
+  },
+  {
+    "id": "purchase.not_found",
+    "translation": "Purchase invoice not found."
+  },
+  {
+    "id": "purchase.only_draft_editable",
+    "translation": "Only a draft purchase invoice can be edited. Cancel and re-enter a confirmed one."
+  },
+  {
+    "id": "purchase.only_draft_confirmable",
+    "translation": "Only a draft purchase invoice can be confirmed."
+  },
+  {
+    "id": "purchase.already_canceled",
+    "translation": "This purchase invoice is already canceled."
+  },
+  {
+    "id": "purchase.items_required",
+    "translation": "A purchase invoice needs at least one item."
+  },
+  {
+    "id": "purchase.service_cannot_be_purchased",
+    "translation": "A service cannot be purchased from a supplier."
+  },
+  {
+    "id": "product.insufficient_stock",
+    "translation": "Not enough stock for this product."
+  },
+  {
+    "id": "inventory.adjustment_quantity_required",
+    "translation": "The adjustment quantity must be non-zero."
+  },
+  {
+    "id": "inventory.adjustment_exceeds_stock",
+    "translation": "The adjustment exceeds the current stock."
+  },
+  {
+    "id": "inventory.variant_not_stock_tracked",
+    "translation": "This variant does not hold stock and cannot be adjusted."
+  },
+  {
+    "id": "inventory.invalid_stock_mode",
+    "translation": "Invalid stock mode."
+  },
+  {
+    "id": "product.not_sellable_in_person",
+    "translation": "This item is not available for in-person sale."
+  },
+  {
+    "id": "cart.item_not_found",
+    "translation": "Item not found in the cart."
+  },
+  {
+    "id": "cart.not_found",
+    "translation": "No active cart found."
+  },
+  {
+    "id": "product.invalid_kind",
+    "translation": "Invalid product kind."
+  },
+  {
+    "id": "validation.min",
+    "translation": "The value is below the allowed minimum."
+  },
+  {
+    "id": "order.manual_discount_exceeds_total",
+    "translation": "The manual discount exceeds the invoice total."
+  },
+  {
+    "id": "product.service_single_variant",
+    "translation": "A service can have only one price. Edit the service itself to change it."
+  },
+  {
+    "id": "product.service_variant_not_deletable",
+    "translation": "A service's price cannot be deleted. Edit the service itself to change it."
+  },
+  {
+    "id": "expense.not_found",
+    "translation": "Expense not found."
+  },
+  {
+    "id": "cash.not_found",
+    "translation": "Cash transaction not found."
+  },
+  {
+    "id": "cash.auto_transaction_not_deletable",
+    "translation": "This transaction was recorded automatically from another document (order, purchase, expense or return) and cannot be deleted; record a manual correction instead."
+  },
+  {
+    "id": "sales_return.not_found",
+    "translation": "Sales return not found."
+  },
+  {
+    "id": "sales_return.item_not_in_order",
+    "translation": "This item does not exist in the selected order."
+  },
+  {
+    "id": "sales_return.quantity_exceeds_sold",
+    "translation": "The returned quantity exceeds what was sold (including previous returns)."
+  },
+  {
+    "id": "sales_return.refund_exceeds_items_amount",
+    "translation": "The refund amount exceeds the value of the returned items."
+  },
+  {
+    "id": "order.delivery_not_found",
+    "translation": "Invalid order delivery code."
+  },
+  {
+    "id": "order.delivery_already_confirmed",
+    "translation": "Delivery of this order has already been confirmed."
+  },
+  {
+    "id": "order.delivery_not_confirmable",
+    "translation": "This order is not in a state where delivery can be confirmed."
+  },
+  {
+    "id": "order.delivery_phone_mismatch",
+    "translation": "The phone number does not match the order owner's number."
+  },
+  {
+    "id": "order.delivery_too_many_attempts",
+    "translation": "Too many attempts. Please try again in a few minutes."
+  },
+  {
+    "id": "order.delivery_otp_sent",
+    "translation": "A verification code was sent to your phone."
+  },
+  {
+    "id": "order.delivery_confirmed",
+    "translation": "Order delivery confirmed successfully."
   }
 ]

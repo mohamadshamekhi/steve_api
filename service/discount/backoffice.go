@@ -672,6 +672,10 @@ func (s BackofficeService) validateCartItems(ctx context.Context, cart entity.Ca
 
 	var variantIDs []string
 	for _, item := range cart.Items {
+		// A hand-typed counter line has no variant behind it.
+		if item.IsCustom {
+			continue
+		}
 		variantIDs = append(variantIDs, item.VariantID)
 	}
 	resp, pErr := s.productInfoProvider.GetVariantsByIDs(ctx, productparam.GetVariantsByIDsRequest{IDs: variantIDs})
@@ -681,11 +685,20 @@ func (s BackofficeService) validateCartItems(ctx context.Context, cart entity.Ca
 
 	for _, item := range cart.Items {
 		nItem := entity.CheckoutItemResult{CartItem: item}
+		// There is nothing to check on a hand-typed line: its price and its
+		// availability are whatever the salesperson typed at the counter.
+		if item.IsCustom {
+			summary.Items = append(summary.Items, nItem)
+			continue
+		}
 		variant, ok := resp.Variants[item.VariantID]
 		if !ok {
 			return richerror.New(op).WithWarpError(fmt.Errorf("could not find variant %s for product %s", item.VariantID, item.ProductID))
 		}
-		if variant.Quantity < uint64(item.Quantity) {
+		// An on-demand variant, a backorderable one and a service are all
+		// sellable without stock on the shelf, so "warehouse count is lower
+		// than the order" no longer means the line cannot be sold.
+		if !variant.CanSell(uint64(item.Quantity)) {
 			nItem.HasStockIssue = true
 			summary.IsReady = false
 		}
@@ -703,7 +716,15 @@ func (s BackofficeService) validateCartItems(ctx context.Context, cart entity.Ca
 func (s BackofficeService) calculateFinalPriceBackoffice(ctx context.Context, cart entity.Cart, summary *entity.CheckoutSummary, allValidDiscounts []entity.Discount, userCode string) error {
 	const op = "orderservice.calculateFinalPrice"
 
-	productCategories, err := s.productInfoProvider.GetProductCategoriesForCartItems(ctx, productparam.GetProductCategoriesForCartItemsRequest{Items: cart.Items})
+	// Only catalog lines have categories to match a campaign against.
+	catalogItems := make([]entity.CartItem, 0, len(cart.Items))
+	for _, item := range cart.Items {
+		if item.IsCustom {
+			continue
+		}
+		catalogItems = append(catalogItems, item)
+	}
+	productCategories, err := s.productInfoProvider.GetProductCategoriesForCartItems(ctx, productparam.GetProductCategoriesForCartItemsRequest{Items: catalogItems})
 	if err != nil {
 		return richerror.New(op).WithWarpError(err)
 	}
@@ -723,6 +744,11 @@ func (s BackofficeService) calculateFinalPriceBackoffice(ctx context.Context, ca
 	appliedDiscountsMap := make(map[string]entity.AppliedDiscount)
 
 	for i, item := range summary.Items {
+		// A hand-typed line is priced by hand; campaigns never touch it, and
+		// the counter discount is applied later, at registration.
+		if item.IsCustom {
+			continue
+		}
 		var itemTotalDiscount int64 = 0
 		itemBasePrice := item.PriceAtTime * int64(item.Quantity)
 

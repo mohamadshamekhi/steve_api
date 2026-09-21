@@ -24,6 +24,7 @@ require (
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/redis/go-redis/v9 v9.11.0
 	github.com/robfig/cron/v3 v3.0.0
+	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/xuri/excelize/v2 v2.9.1
 	github.com/yaa110/go-persian-calendar v1.3.0
 	go.mongodb.org/mongo-driver v1.17.4

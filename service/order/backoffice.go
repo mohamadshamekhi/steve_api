@@ -25,6 +25,8 @@ type BackofficeService struct {
 	productProvider  ProductProvider
 	discountProvider DiscountProvider
 	cartProvider     CartProvider
+	inventory        InventoryRecorder
+	cash             CashRecorder
 }
 
 func NewBackofficeService(repo OrderReadWriter, userProvider UserProvider, productProvider ProductProvider, discountProvider DiscountProvider, cartProvider CartProvider) BackofficeService {
@@ -33,6 +35,89 @@ func NewBackofficeService(repo OrderReadWriter, userProvider UserProvider, produ
 
 func (s *BackofficeService) SetPaymentProvider(p PaymentProvider) {
 	s.paymentProvider = p
+}
+
+// SetInventoryRecorder wires the stock ledger in after construction.
+func (s *BackofficeService) SetInventoryRecorder(r InventoryRecorder) {
+	s.inventory = r
+}
+
+// SetCashRecorder wires the cashbox in after construction.
+func (s *BackofficeService) SetCashRecorder(r CashRecorder) {
+	s.cash = r
+}
+
+// recordCashIn books a settled counter sale as money received. Online orders
+// are settled by the payment gateway flow, not here.
+func (s BackofficeService) recordCashIn(ctx context.Context, order entity.Order, method entity.PaymentMethod) {
+	if s.cash == nil || order.FinalAmount == 0 {
+		return
+	}
+	if method == "" {
+		method = entity.PaymentMethodCash
+	}
+
+	t := entity.CashTransaction{
+		Direction:   entity.CashIn,
+		Method:      method,
+		Amount:      uint64(order.FinalAmount),
+		Description: "فروش حضوری",
+		RefType:     entity.CashRefOrder,
+		RefID:       order.ID,
+		OccurredAt:  time.Now(),
+	}
+	if err := s.cash.Record(ctx, t); err != nil {
+		logger.L().Error("failed to record order payment in cashbox", "order_id", order.ID, "err", err)
+	}
+}
+
+// enrichSourcing resolves where each checkout line will be sourced from and
+// what it costs. The backoffice checkout builds its summary through the
+// discount service, which knows nothing about stock, so the sourcing has to
+// be attached here before the order is frozen.
+func (s BackofficeService) enrichSourcing(ctx context.Context, summary *entity.CheckoutSummary) {
+	if len(summary.Items) == 0 {
+		return
+	}
+
+	variantIDs := make([]string, 0, len(summary.Items))
+	for _, item := range summary.Items {
+		variantIDs = append(variantIDs, item.VariantID)
+	}
+
+	resp, err := s.productProvider.GetVariantsByIDs(ctx, productparam.GetVariantsByIDsRequest{IDs: variantIDs})
+	if err != nil {
+		logger.L().Error("failed to resolve variants for order sourcing", "err", err)
+		return
+	}
+
+	for i := range summary.Items {
+		variant, ok := resp.Variants[summary.Items[i].VariantID]
+		if !ok {
+			continue
+		}
+		applySourcing(&summary.Items[i], variant)
+	}
+}
+
+// recordSale books the sale in the ledger without failing the order.
+func (s BackofficeService) recordSale(ctx context.Context, order entity.Order) {
+	if s.inventory == nil {
+		return
+	}
+	if err := s.inventory.RecordOrderSale(ctx, order); err != nil {
+		logger.L().Error("failed to record inventory movements for order", "order_id", order.ID, "err", err)
+	}
+}
+
+// recordReturn books stock coming back from a cancelled order.
+func (s BackofficeService) recordReturn(ctx context.Context, order entity.Order, item entity.OrderItem) {
+	if s.inventory == nil {
+		return
+	}
+	if err := s.inventory.RecordOrderReturn(ctx, order, item); err != nil {
+		logger.L().Error("failed to record inventory return", "order_id", order.ID, "variant_id", item.VariantID, "err", err)
+	}
 }
 
 func (s BackofficeService) GetAll(ctx context.Context, req orderparam.GetAllOrderRequest) (orderparam.GetAllOrderResponse, error) {
@@ -150,20 +235,32 @@ func (s BackofficeService) CancelExpiredPendingOrders(ctx context.Context, req o
 	g, gCtx := errgroup.WithContext(ctx)
 
 	for _, order := range orders {
+		order := order
 		orderID := order.ID
 		g.Go(func() error {
 			var cErr error
 			for _, item := range order.Items {
+				// Only what actually left the warehouse comes back: a service
+				// line and an externally-sourced unit were never in stock.
+				returnQty := item.StockQuantity
+				if item.Supply == "" {
+					returnQty = item.Quantity
+				}
+				if item.GetKind() == entity.ProductKindService || returnQty == 0 {
+					continue
+				}
+
 				_, cErr = s.productProvider.UpdateVariantQuantity(gCtx,
 					productparam.UpdateProductVariantQuantityAfterCancelOrderRequest{
 						ProductID: item.ProductID,
 						VariantID: item.VariantID,
-						Quantity:  item.Quantity,
+						Quantity:  returnQty,
 					})
 				if cErr != nil {
 					logger.L().Error("failed to update variant quantity", "Variant_id", item.VariantID, "err", cErr)
 					return cErr
 				}
+				s.recordReturn(gCtx, order, item)
 			}
 
 			if cErr = s.repo.UpdateOrderStatus(gCtx, orderID, entity.OrderStatusCancelled); err != nil {
@@ -203,13 +300,25 @@ func (s BackofficeService) RegisterOrderBackoffice(ctx context.Context, req orde
 			ProductName:       item.ProductName,
 			VariantAttributes: item.VariantAttributes,
 			PriceAtTime:       item.PriceAtTime,
+			IsCustom:          item.IsCustom,
+			Kind:              item.Kind,
+			UnitCost:          item.UnitCost,
+			ManualDiscount:    item.ManualDiscount,
 		})
 	}
+	// The invoice-level counter discount lives on the cart, but the panel may
+	// also decide it at the moment of registration; an explicit value in the
+	// request wins and is what gets recorded.
+	cartManualDiscount := myActiveCart.Cart.ManualDiscount
+	if req.ManualDiscountAmount != nil {
+		cartManualDiscount = *req.ManualDiscountAmount
+	}
 	cart := entity.Cart{
-		ID:     myActiveCart.Cart.ID,
-		UserID: myActiveCart.Cart.UserID,
-		Items:  cartItem,
-		Status: entity.CartStatus(myActiveCart.Cart.Status),
+		ID:             myActiveCart.Cart.ID,
+		UserID:         myActiveCart.Cart.UserID,
+		Items:          cartItem,
+		Status:         entity.CartStatus(myActiveCart.Cart.Status),
+		ManualDiscount: cartManualDiscount,
 	}
 	summary, err := s.discountProvider.ApplyDiscountToCart(ctx, cart, req.DiscountCode)
 	if err != nil {
@@ -222,14 +331,22 @@ func (s BackofficeService) RegisterOrderBackoffice(ctx context.Context, req orde
 			WithMeta(map[string]any{"summary": summary})
 	}
 
+	s.enrichSourcing(ctx, &summary)
+	applyCustomLines(&summary)
+	orderManualDiscount, mErr := applyManualDiscounts(&summary, cartManualDiscount)
+	if mErr != nil {
+		return orderparam.RegisterOrderBackofficeResponse{}, richerror.New(op).WithWarpError(mErr)
+	}
+
 	newOrder := entity.Order{
-		UserID:           req.UserID,
-		CartID:           cart.ID,
-		Items:            buildOrderItems(summary.Items),
-		SubtotalAmount:   uint(summary.Subtotal),
-		AppliedDiscounts: summary.AppliedDiscounts,
-		FinalAmount:      uint(summary.FinalPrice),
-		Status:           entity.OrderStatusPendingPayment,
+		UserID:               req.UserID,
+		CartID:               cart.ID,
+		Items:                buildOrderItems(summary.Items),
+		SubtotalAmount:       uint(summary.Subtotal),
+		AppliedDiscounts:     summary.AppliedDiscounts,
+		ManualDiscountAmount: orderManualDiscount,
+		FinalAmount:          uint(summary.FinalPrice),
+		Status:               entity.OrderStatusPendingPayment,
 	}
 	newOrder.BeforeCreate()
 	newOrder.PurchaseType = entity.PurchaseTypeInPerson
@@ -242,14 +359,20 @@ func (s BackofficeService) RegisterOrderBackoffice(ctx context.Context, req orde
 	}
 
 	var orderItemInfo []orderparam.OrderItemInfo
+	var itemsManualDiscount uint
 	for _, item := range summary.Items {
+		itemsManualDiscount += item.ManualDiscount
 		orderItemInfo = append(orderItemInfo, orderparam.OrderItemInfo{
 			ProductID:         item.ProductID,
 			VariantID:         item.VariantID,
 			Quantity:          uint(item.Quantity),
+			ProductName:       item.ProductName,
 			VariantAttributes: item.VariantAttributes,
 			TotalPriceAtTime:  uint(item.PriceAtTime),
 			DiscountAmount:    item.DiscountAmount,
+			ManualDiscount:    item.ManualDiscount,
+			IsCustom:          item.IsCustom,
+			Kind:              item.Kind,
 		})
 	}
 
@@ -260,7 +383,9 @@ func (s BackofficeService) RegisterOrderBackoffice(ctx context.Context, req orde
 		Items:               orderItemInfo,
 		SubtotalAmount:      newOrder.SubtotalAmount,
 		AppliedDiscounts:    newOrder.AppliedDiscounts,
-		TotalDiscountAmount: newOrder.SubtotalAmount - summary.DiscountedSubtotal,
+		TotalDiscountAmount: newOrder.SubtotalAmount - newOrder.FinalAmount,
+		ItemsManualDiscount: itemsManualDiscount,
+		ManualDiscount:      newOrder.ManualDiscountAmount,
 		FinalAmount:         newOrder.FinalAmount,
 		Status:              newOrder.Status,
 	}
@@ -289,6 +414,8 @@ func (s BackofficeService) CompleteOrderBackoffice(ctx context.Context, req orde
 	if _, err = s.productProvider.UpdateProductVariantQuantityAfterRegisterOrder(ctx, productparam.UpdateProductVariantQuantityAfterRegisterOrderRequest{Order: order}); err != nil {
 		return orderparam.CompletedOrderBackofficeResponse{}, richerror.New(op).WithWarpError(err)
 	}
+	s.recordSale(ctx, order)
+	s.recordCashIn(ctx, order, req.PaymentMethod)
 	if _, err = s.discountProvider.UpdateDiscountUsageAfterRegisterOrder(ctx, discountparam.UpdateDiscountUsageAfterRegisterOrderRequest{AppliedDiscount: order.AppliedDiscounts}); err != nil {
 		return orderparam.CompletedOrderBackofficeResponse{}, richerror.New(op).WithWarpError(err)
 	}
@@ -335,4 +462,81 @@ func (s BackofficeService) CheckPendingExist(ctx context.Context, req orderparam
 	return orderparam.CheckPendingExistResponse{
 		Order: &orderInfo,
 	}, err
+}
+
+// applyCustomLines freezes sourcing onto the hand-typed lines of an in-person
+// invoice. They never passed through the catalog, so enrichSourcing has
+// nothing to resolve them from: a service line ships nothing, and a part
+// bought from another shop is external supply costing whatever the
+// salesperson typed.
+func applyCustomLines(summary *entity.CheckoutSummary) {
+	for i := range summary.Items {
+		item := &summary.Items[i]
+		if !item.IsCustom {
+			continue
+		}
+		item.Kind = item.CartItem.GetKind()
+		item.CostAtTime = item.UnitCost
+		if item.Kind == entity.ProductKindService {
+			item.Supply = entity.SupplySourceService
+			continue
+		}
+		item.Supply = entity.SupplySourceExternal
+		item.ExternalQuantity = uint(item.Quantity)
+	}
+}
+
+// applyManualDiscounts subtracts what was given away by hand at the counter:
+// first the per-line discounts, on top of whatever campaign discount each line
+// already earned, then one discount on the invoice as a whole.
+//
+// A discount larger than what is left to pay is refused rather than clamped:
+// it means the salesperson mistyped, or a campaign already took the line down,
+// and silently charging a different amount than the panel showed would be
+// worse than making them re-enter it.
+func applyManualDiscounts(summary *entity.CheckoutSummary, invoiceLevel uint) (uint, error) {
+	const op = "orderservice.applyManualDiscounts"
+
+	var totalLineDiscount int64
+	for i := range summary.Items {
+		item := &summary.Items[i]
+
+		manual := int64(item.ManualDiscount)
+		if manual <= 0 {
+			item.ManualDiscount = 0
+			continue
+		}
+
+		remaining := item.LineTotal() - int64(item.DiscountAmount)
+		if manual > remaining {
+			return 0, richerror.New(op).
+				WithKind(richerror.KindInvalid).
+				WithMessageKey("order.manual_discount_exceeds_total").
+				WithMeta(map[string]any{
+					"variant_id": item.VariantID,
+					"line_total": item.LineTotal(),
+					"payable":    remaining,
+					"requested":  manual,
+				})
+		}
+
+		item.DiscountAmount += uint(manual)
+		totalLineDiscount += manual
+	}
+
+	summary.FinalPrice -= totalLineDiscount
+
+	applied := int64(invoiceLevel)
+	if applied > summary.FinalPrice {
+		return 0, richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("order.manual_discount_exceeds_total").
+			WithMeta(map[string]any{
+				"payable":   summary.FinalPrice,
+				"requested": applied,
+			})
+	}
+	summary.FinalPrice -= applied
+
+	return uint(applied), nil
 }

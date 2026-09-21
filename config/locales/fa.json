@@ -329,7 +329,7 @@
   {
     "id": "discount.applicable_to_product_required",
     "translation": "لطفا حداقل یک محصول انتخاب کنید"
-  } ,
+  },
   {
     "id": "discount.special_discount_is_exist_in_this_time",
     "translation": "در بازه زمانی داده شده ، تخفیف شگفت انگیز وحود دارد - توجه داشته باشید در هر بازه زمانی تنها یک تخفیف شگفت انگیز میتواند وجود داشته باشد"
@@ -449,5 +449,141 @@
   {
     "id": "referral.invite_recorded_sms_failed",
     "translation": "ارسال پیامک دعوت ممکن نشد؛ لینک دعوت را دستی برای دوستتان بفرستید و بعداً دوباره تلاش کنید."
+  },
+  {
+    "id": "supplier.not_found",
+    "translation": "تأمین‌کننده مورد نظر یافت نشد."
+  },
+  {
+    "id": "purchase.not_found",
+    "translation": "فاکتور خرید مورد نظر یافت نشد."
+  },
+  {
+    "id": "purchase.only_draft_editable",
+    "translation": "فقط فاکتور خرید پیش‌نویس قابل ویرایش است. برای اصلاح فاکتور تأیید‌شده، آن را لغو و دوباره ثبت کنید."
+  },
+  {
+    "id": "purchase.only_draft_confirmable",
+    "translation": "فقط فاکتور خرید پیش‌نویس قابل تأیید است."
+  },
+  {
+    "id": "purchase.already_canceled",
+    "translation": "این فاکتور خرید قبلاً لغو شده است."
+  },
+  {
+    "id": "purchase.items_required",
+    "translation": "فاکتور خرید حداقل باید یک قلم کالا داشته باشد."
+  },
+  {
+    "id": "purchase.service_cannot_be_purchased",
+    "translation": "خدمات قابل خرید از تأمین‌کننده نیست و در انبار ثبت نمی‌شود."
+  },
+  {
+    "id": "product.insufficient_stock",
+    "translation": "موجودی این محصول برای ثبت سفارش کافی نیست."
+  },
+  {
+    "id": "inventory.adjustment_quantity_required",
+    "translation": "تعداد اصلاح موجودی باید مخالف صفر باشد."
+  },
+  {
+    "id": "inventory.adjustment_exceeds_stock",
+    "translation": "تعداد کسر شده از موجودی فعلی انبار بیشتر است."
+  },
+  {
+    "id": "inventory.variant_not_stock_tracked",
+    "translation": "این محصول موجودی انبار ندارد و قابل اصلاح موجودی نیست."
+  },
+  {
+    "id": "inventory.invalid_stock_mode",
+    "translation": "حالت موجودی نامعتبر است."
+  },
+  {
+    "id": "product.not_sellable_in_person",
+    "translation": "این قلم برای فروش حضوری در دسترس نیست."
+  },
+  {
+    "id": "cart.item_not_found",
+    "translation": "این آیتم در سبد خرید پیدا نشد."
+  },
+  {
+    "id": "cart.not_found",
+    "translation": "سبد خرید فعالی پیدا نشد."
+  },
+  {
+    "id": "product.invalid_kind",
+    "translation": "نوع کالا نامعتبر است."
+  },
+  {
+    "id": "validation.min",
+    "translation": "مقدار وارد شده کمتر از حد مجاز است."
+  },
+  {
+    "id": "order.manual_discount_exceeds_total",
+    "translation": "مبلغ تخفیف دستی از مبلغ فاکتور بیشتر است."
+  },
+  {
+    "id": "product.service_single_variant",
+    "translation": "برای خدمات فقط یک قیمت قابل ثبت است. برای تغییر قیمت، خود خدمت را ویرایش کنید."
+  },
+  {
+    "id": "product.service_variant_not_deletable",
+    "translation": "قیمت یک خدمت قابل حذف نیست. برای تغییر قیمت، خود خدمت را ویرایش کنید."
+  },
+  {
+    "id": "expense.not_found",
+    "translation": "هزینه مورد نظر یافت نشد."
+  },
+  {
+    "id": "cash.not_found",
+    "translation": "تراکنش صندوق مورد نظر یافت نشد."
+  },
+  {
+    "id": "cash.auto_transaction_not_deletable",
+    "translation": "این تراکنش به‌صورت خودکار از سند دیگری (سفارش، فاکتور خرید، هزینه یا مرجوعی) ثبت شده و قابل حذف نیست؛ برای اصلاح، تراکنش دستی جدید ثبت کنید."
+  },
+  {
+    "id": "sales_return.not_found",
+    "translation": "مرجوعی مورد نظر یافت نشد."
+  },
+  {
+    "id": "sales_return.item_not_in_order",
+    "translation": "این کالا در سفارش انتخاب‌شده وجود ندارد."
+  },
+  {
+    "id": "sales_return.quantity_exceeds_sold",
+    "translation": "تعداد مرجوعی از تعداد فروخته‌شده (با احتساب مرجوعی‌های قبلی) بیشتر است."
+  },
+  {
+    "id": "sales_return.refund_exceeds_items_amount",
+    "translation": "مبلغ استرداد از ارزش کالاهای برگشتی بیشتر است."
+  },
+  {
+    "id": "order.delivery_not_found",
+    "translation": "کد تحویل سفارش نامعتبر است."
+  },
+  {
+    "id": "order.delivery_already_confirmed",
+    "translation": "تحویل این سفارش قبلاً تأیید شده است."
+  },
+  {
+    "id": "order.delivery_not_confirmable",
+    "translation": "این سفارش در وضعیتی نیست که بتوان تحویل آن را تأیید کرد."
+  },
+  {
+    "id": "order.delivery_phone_mismatch",
+    "translation": "شماره موبایل وارد شده با شماره ثبت‌کننده‌ی سفارش یکسان نیست."
+  },
+  {
+    "id": "order.delivery_too_many_attempts",
+    "translation": "تعداد تلاش‌ها بیش از حد مجاز است. لطفاً چند دقیقه‌ی دیگر دوباره تلاش کنید."
+  },
+  {
+    "id": "order.delivery_otp_sent",
+    "translation": "کد تأیید به شماره موبایل شما ارسال شد."
+  },
+  {
+    "id": "order.delivery_confirmed",
+    "translation": "تحویل سفارش با موفقیت تأیید شد."
   }
 ]

@@ -65,6 +65,22 @@ type ProductProvider interface {
 	UpdateProductSalesCountAfterRegisterOrder(ctx context.Context, req productparam.UpdateProductSalesCountAfterRegisterOrderRequest) (productparam.UpdateProductSalesCountAfterRegisterOrderResponse, error)
 }
 
+// InventoryRecorder writes the accounting/inventory ledger for a sale. It is
+// deliberately fire-and-forget at the call sites: an order is a fact even if
+// its bookkeeping line fails to land, and the ledger can be rebuilt from the
+// orders themselves.
+type InventoryRecorder interface {
+	RecordOrderSale(ctx context.Context, order entity.Order) error
+	RecordOrderReturn(ctx context.Context, order entity.Order, item entity.OrderItem) error
+}
+
+// CashRecorder books money hitting the till when a counter sale is settled.
+// Like InventoryRecorder it is optional and fire-and-forget: the sale stands
+// even if its cash line does not land.
+type CashRecorder interface {
+	Record(ctx context.Context, t entity.CashTransaction) error
+}
+
 type DiscountProvider interface {
 	GetByCode(ctx context.Context, req discountparam.GetSingleDiscountByCodeRequest) (discountparam.GetSingleDiscountByCodeResponse, error)
 	GetValidDiscountsForCart(ctx context.Context, req discountparam.GetValidDiscountsForSpecificCartRequest) (discountparam.GetValidDiscountsForSpecificCartResponse, error)

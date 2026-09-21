@@ -13,7 +13,7 @@ func (v Validator) ValidateAddItemToCartRequest(req cartparam.AddItemToCartReque
 
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.ProductID, validation.Required.Error("validation.required"),
-			validation.By(v.checkProductIsValid)),
+			validation.By(v.checkProductIsSellableOnWebsite)),
 		validation.Field(&req.VariantID, validation.Required.Error("validation.required"), validation.By(v.checkVariantIsValid(req.ProductID))),
 	); err != nil {
 

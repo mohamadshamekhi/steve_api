@@ -19,6 +19,11 @@ const (
 type Cart struct {
 	ID string `json:"id" bson:"_id"`
 
+	// ManualDiscount is a discount given on the invoice as a whole at the
+	// counter, in Toman. It is applied after per-line discounts, to whatever
+	// is left of the total.
+	ManualDiscount uint `bson:"manual_discount,omitempty"`
+
 	UserID string `bson:"user_id,omitempty"`
 
 	SessionID string `bson:"session_id,omitempty"`
@@ -43,6 +48,40 @@ type CartItem struct {
 	VariantAttributes []VariantAttribute `bson:"variant_attributes"`
 
 	PriceAtTime int64 `bson:"price_at_time"`
+
+	// --- counter (in-person) invoice lines ---
+
+	// IsCustom marks a line typed by hand at the counter — a repair fee, an
+	// Apple ID, a part bought from the shop next door — that has no catalog
+	// product behind it. Such a line has an empty ProductID and a generated
+	// VariantID that only identifies it inside this cart.
+	IsCustom bool `bson:"is_custom,omitempty"`
+
+	// Kind is carried only by custom lines; a catalog line resolves its kind
+	// from the variant at checkout time.
+	Kind ProductKind `bson:"kind,omitempty"`
+
+	// UnitCost is what one unit of a hand-added part cost the shop, so the
+	// profit report stays honest for goods that never entered the warehouse.
+	UnitCost uint `bson:"unit_cost,omitempty"`
+
+	// ManualDiscount is the discount the salesperson granted on this line at
+	// the counter, in Toman, for the whole line (not per unit). It is applied
+	// on top of any campaign discount the line already earned.
+	ManualDiscount uint `bson:"manual_discount,omitempty"`
+}
+
+// GetKind normalises a cart line whose kind was never set.
+func (i CartItem) GetKind() ProductKind {
+	if i.Kind == "" {
+		return ProductKindPhysical
+	}
+	return i.Kind
+}
+
+// LineTotal is the gross price of the line, before any discount.
+func (i CartItem) LineTotal() int64 {
+	return i.PriceAtTime * int64(i.Quantity)
 }
 
 func (c *Cart) BeforeCreate() {
@@ -70,6 +109,20 @@ type CheckoutItemResult struct {
 	HasPriceChanged bool  `json:"has_price_changed"`
 	CurrentPrice    int64 `json:"current_price"`
 	DiscountAmount  uint  `json:"discount_amount"`
+
+	// --- sourcing & cost, resolved while validating the cart ---
+
+	// Kind marks a service line, which holds no stock and ships nothing.
+	Kind ProductKind `json:"kind,omitempty"`
+	// CostAtTime is the unit cost basis frozen for this checkout.
+	CostAtTime uint `json:"cost_at_time,omitempty"`
+	// Supply says how the units will be sourced.
+	Supply SupplySource `json:"supply,omitempty"`
+	// StockQuantity / ExternalQuantity split Quantity across shop stock and
+	// an external supplier (the "11th unit comes from next door" case).
+	StockQuantity    uint   `json:"stock_quantity,omitempty"`
+	ExternalQuantity uint   `json:"external_quantity,omitempty"`
+	SupplierID       string `json:"supplier_id,omitempty"`
 }
 
 type CheckoutSummary struct {

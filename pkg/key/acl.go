@@ -128,4 +128,54 @@ const (
 	ListReferrals  = "referral:list"
 	ViewReferral   = "referral:view"
 	ManageReferral = "referral:manage"
+
+	// --- مدیریت تأمین‌کنندگان ---
+	ListSuppliers  = "supplier:list"
+	ViewSupplier   = "supplier:view"
+	CreateSupplier = "supplier:create"
+	UpdateSupplier = "supplier:update"
+	DeleteSupplier = "supplier:delete"
+
+	// --- مدیریت فاکتورهای خرید ---
+	ListPurchases   = "purchase:list"
+	ViewPurchase    = "purchase:view"
+	CreatePurchase  = "purchase:create"
+	UpdatePurchase  = "purchase:update"
+	ConfirmPurchase = "purchase:confirm"
+	CancelPurchase  = "purchase:cancel"
+
+	// --- انبارداری ---
+	ViewInventory   = "inventory:view"
+	AdjustInventory = "inventory:adjust"
+	// UpdateStockConfig covers per-variant stock mode / backorder / supplier
+	// / cost settings.
+	UpdateStockConfig = "inventory:update_stock_config"
+
+	// --- هزینه‌های عملیاتی ---
+	ListExpenses  = "expense:list"
+	ViewExpense   = "expense:view"
+	CreateExpense = "expense:create"
+	UpdateExpense = "expense:update"
+	DeleteExpense = "expense:delete"
+
+	// --- صندوق و نقدینگی ---
+	ViewCash   = "cash:view"
+	CreateCash = "cash:create"
+	DeleteCash = "cash:delete"
+
+	// --- برگشت از فروش (مرجوعی) ---
+	ListSalesReturns  = "sales_return:list"
+	ViewSalesReturn   = "sales_return:view"
+	CreateSalesReturn = "sales_return:create"
+	RefundSalesReturn = "sales_return:refund"
+
+	// --- گزارش‌های مالی ---
+	ViewProfitReport    = "report:profit"
+	ViewInventoryReport = "report:inventory"
+	// ViewProfitLossReport is the full صورت سود و زیان (فروش، بهای تمام‌شده،
+	// هزینه‌ها، سود خالص) — wider than the gross-profit report above.
+	ViewProfitLossReport   = "report:profit_loss"
+	ViewSupplierLedger     = "report:supplier_ledger"
+	ViewCashReport         = "report:cash"
+	ExportFinancialReports = "report:export"
 )

@@ -6,6 +6,33 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
+// ProductKind separates a real, stockable good from a service the shop
+// performs (repair, Apple-ID creation, ...). Services never touch inventory.
+type ProductKind string
+
+const (
+	ProductKindPhysical ProductKind = "physical" // کالا
+	ProductKindService  ProductKind = "service"  // خدمات (تعمیر، ساخت اپل‌آیدی، ...)
+)
+
+func (k ProductKind) IsValid() bool {
+	return k == ProductKindPhysical || k == ProductKindService
+}
+
+// SalesChannel says where an item may be sold. A product that is only
+// `in_person` is invisible on the storefront but still usable in backoffice
+// invoices and in the shop's accounting.
+type SalesChannel string
+
+const (
+	SalesChannelWebsite  SalesChannel = "website"   // فروش در وب‌سایت
+	SalesChannelInPerson SalesChannel = "in_person" // فقط فروش حضوری / فاکتور
+)
+
+func (c SalesChannel) IsValid() bool {
+	return c == SalesChannelWebsite || c == SalesChannelInPerson
+}
+
 type Product struct {
 	ID             string           `bson:"_id"`
 	Name           string           `bson:"name"`
@@ -21,6 +48,12 @@ type Product struct {
 	Variants       []Variant        `bson:"variants"`
 	Specifications []Specification  `bson:"specifications,omitempty"`
 	SalesCount     uint             `bson:"sales_count"`
+	// Kind distinguishes a stockable good from a service. Empty value is read
+	// as ProductKindPhysical so pre-existing documents keep working.
+	Kind ProductKind `bson:"kind,omitempty"`
+	// SalesChannels lists where this item may be sold. Empty is read as
+	// [website, in_person] for backward compatibility with old documents.
+	SalesChannels []SalesChannel `bson:"sales_channels,omitempty"`
 	// PartnerEligible explicitly opts the product into partner (B2B) pricing.
 	// Decisive only in opt-in mode (partner.all_products_eligible = false).
 	PartnerEligible bool `bson:"partner_eligible,omitempty"`
@@ -48,6 +81,12 @@ func (p *Product) BeforeCreate() {
 	p.ID = ulid.Make().String()
 	now := time.Now()
 	p.IsPublished = false
+	if p.Kind == "" {
+		p.Kind = ProductKindPhysical
+	}
+	if len(p.SalesChannels) == 0 {
+		p.SalesChannels = []SalesChannel{SalesChannelWebsite, SalesChannelInPerson}
+	}
 	p.CreatedAt = now
 	p.UpdatedAt = now
 
@@ -73,4 +112,82 @@ func (p Product) GetMainGallery() ProductGallery {
 		}
 	}
 	return p.Gallery[0]
+}
+
+// GetKind normalises the zero value of documents written before the field
+// existed.
+func (p Product) GetKind() ProductKind {
+	if p.Kind == "" {
+		return ProductKindPhysical
+	}
+	return p.Kind
+}
+
+// IsService reports whether this item is a service (no stock, no shipping).
+func (p Product) IsService() bool {
+	return p.GetKind() == ProductKindService
+}
+
+// GetSalesChannels normalises the zero value of documents written before the
+// field existed: they were website+in-person products.
+func (p Product) GetSalesChannels() []SalesChannel {
+	if len(p.SalesChannels) == 0 {
+		return []SalesChannel{SalesChannelWebsite, SalesChannelInPerson}
+	}
+	return p.SalesChannels
+}
+
+// HasChannel reports whether the product may be sold through ch.
+func (p Product) HasChannel(ch SalesChannel) bool {
+	for _, c := range p.GetSalesChannels() {
+		if c == ch {
+			return true
+		}
+	}
+	return false
+}
+
+// IsSellableOnWebsite is the storefront gate: published, not deleted and
+// explicitly opted into the website channel.
+func (p Product) IsSellableOnWebsite() bool {
+	return p.IsPublished && p.DeletedAt.IsZero() && p.HasChannel(SalesChannelWebsite)
+}
+
+// IsSellableInPerson is the backoffice-invoice gate. It deliberately ignores
+// IsPublished: an item the shop sells over the counter needs no storefront
+// page.
+func (p Product) IsSellableInPerson() bool {
+	return p.DeletedAt.IsZero() && p.HasChannel(SalesChannelInPerson)
+}
+
+// ServiceVariant returns the single pricing row a service is stored with.
+//
+// A service is modelled as a Product with exactly one variant so that carts,
+// orders, invoices and the accounting ledger — all of which address a line as
+// product + variant — keep working unchanged. That variant is an
+// implementation detail: callers should reach a service's price through here
+// rather than indexing into Variants.
+func (p Product) ServiceVariant() (Variant, bool) {
+	if !p.IsService() || len(p.Variants) == 0 {
+		return Variant{}, false
+	}
+	return p.Variants[0], true
+}
+
+// ServicePrice is the price of a service, or zero for a good.
+func (p Product) ServicePrice() uint64 {
+	v, ok := p.ServiceVariant()
+	if !ok {
+		return 0
+	}
+	return v.Price
+}
+
+// NewServiceVariant builds the implicit pricing row for a service.
+func NewServiceVariant(price uint64) Variant {
+	return Variant{
+		Price:     price,
+		Quantity:  0,
+		StockMode: StockModeNone,
+	}
 }

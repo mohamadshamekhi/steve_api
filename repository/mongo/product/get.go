@@ -264,14 +264,14 @@ func (d DB) GetFilterableAttributes(ctx context.Context, categoryID string) ([]p
 	pipeline := mongo.Pipeline{
 
 		bson.D{
-			{"$match", bson.M{
+			{"$match", withWebsiteChannel(bson.M{
 				"$or": []bson.M{
 					{"category_id": categoryID},
 					{"ancestors._id": categoryID},
 				},
 				"is_published": true,
 				"deleted_at":   bson.M{"$exists": false},
-			}},
+			})},
 		},
 		bson.D{
 			{"$unwind", "$specifications"},
@@ -312,6 +312,7 @@ func (d DB) GetFilterMobileListWithMainInfo(ctx context.Context, name *string, b
 	}
 	filter["deleted_at"] = bson.M{"$exists": false}
 	filter["is_published"] = true
+	filter = withWebsiteChannel(filter)
 	projection := bson.M{
 		"id":             1,
 		"name":           1,
@@ -342,12 +343,12 @@ func (d DB) GetMinAdnMaxPriceOfProductWithSpecialCategory(ctx context.Context, c
 	const op = "productrepo.GetMinAdnMaxPriceOfProductWithSpecialCategory"
 
 	pipeline := mongo.Pipeline{
-		{{Key: "$match", Value: bson.M{
+		{{Key: "$match", Value: withWebsiteChannel(bson.M{
 			"category_id":  categoryID,
 			"deleted_at":   bson.M{"$exists": false},
 			"is_published": true,
 			"variants":     bson.M{"$exists": true, "$ne": bson.A{}},
-		}}},
+		})}},
 		{{Key: "$unwind", Value: "$variants"}},
 		{{Key: "$group", Value: bson.M{
 			"_id": nil,

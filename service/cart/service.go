@@ -32,6 +32,11 @@ type ListResult struct {
 
 type CartBackofficeWrite interface {
 	CartWriter
+	// UpsertCustomItem adds or rewrites a hand-typed in-person invoice line
+	// and returns the id that identifies it inside the cart.
+	UpsertCustomItem(ctx context.Context, userID string, item entity.CartItem) (string, error)
+	SetItemManualDiscount(ctx context.Context, userID string, variantID string, amount uint) error
+	SetCartManualDiscount(ctx context.Context, userID string, amount uint) error
 	GetAll(ctx context.Context, filter cartparam.BackofficeFilterCart, pagination commonparam.PaginationRequest) (ListResult, error)
 }
 
@@ -57,4 +62,5 @@ type URepository interface {
 
 type ProductProvider interface {
 	UpdateVariantQuantity(ctx context.Context, req productparam.UpdateProductVariantQuantityAfterCancelOrderRequest) (productparam.UpdateProductVariantQuantityAfterCancelOrderResponse, error)
+	GetVariantsByIDs(ctx context.Context, req productparam.GetVariantsByIDsRequest) (productparam.GetVariantsByIDsResponse, error)
 }

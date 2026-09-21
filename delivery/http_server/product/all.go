@@ -28,6 +28,8 @@ func (h Handler) All(c echo.Context) error {
 	isSecondHand := c.QueryParam("is_second_hand")
 	brandID := c.QueryParam("brand_id")
 	categoryID := c.QueryParam("category_id")
+	kind := c.QueryParam("kind")
+	salesChannel := c.QueryParam("sales_channel")
 	req := productparam.GetAllProductsRequest{
 		Pagination: commonparam.PaginationRequest{
 			PageSize:   uint(pageSize),
@@ -35,7 +37,8 @@ func (h Handler) All(c echo.Context) error {
 		},
 		Filter: commonparam.FilterRequest{
 			Filter: []map[string]any{{"en_title": ENTitle}, {"name": name}, {"brand_id": brandID},
-				{"category_id": categoryID}, {"is_published": isPub}, {"is_second_hand": isSecondHand}},
+				{"category_id": categoryID}, {"is_published": isPub}, {"is_second_hand": isSecondHand},
+				{"kind": kind}, {"sales_channel": salesChannel}},
 		},
 	}
 

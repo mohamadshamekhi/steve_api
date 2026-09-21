@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/abolfazlnorzad/steve/config"
+	accountinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/accounting"
 	aclhandler "github.com/abolfazlnorzad/steve/delivery/http_server/acl/handler"
 	articlehandler "github.com/abolfazlnorzad/steve/delivery/http_server/article"
 	attributehandler "github.com/abolfazlnorzad/steve/delivery/http_server/attribute"
@@ -19,18 +20,23 @@ import (
 	commenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/comment"
 	contactushandler "github.com/abolfazlnorzad/steve/delivery/http_server/contactus"
 	discounthandler "github.com/abolfazlnorzad/steve/delivery/http_server/discount"
+	inventoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/inventory"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	middleware2 "github.com/abolfazlnorzad/steve/delivery/http_server/middleware"
 	orderhandler "github.com/abolfazlnorzad/steve/delivery/http_server/order"
+	orderdeliveryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/orderdelivery"
 	partnerhandler "github.com/abolfazlnorzad/steve/delivery/http_server/partner"
 	paymenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/payment"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
+	purchasehandler "github.com/abolfazlnorzad/steve/delivery/http_server/purchase"
 	ratinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/rating"
 	referralhandler "github.com/abolfazlnorzad/steve/delivery/http_server/referral"
 	repairhandler "github.com/abolfazlnorzad/steve/delivery/http_server/repair"
+	salesreturnhandler "github.com/abolfazlnorzad/steve/delivery/http_server/salesreturn"
 	searchhandler "github.com/abolfazlnorzad/steve/delivery/http_server/search"
 	sellhandler "github.com/abolfazlnorzad/steve/delivery/http_server/sell"
 	shippinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/shipping"
+	supplierhandler "github.com/abolfazlnorzad/steve/delivery/http_server/supplier"
 	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
@@ -66,6 +72,12 @@ type Server struct {
 	searchHandler         searchhandler.Handler
 	partnerHandler        partnerhandler.Handler
 	referralHandler       referralhandler.Handler
+	supplierHandler       supplierhandler.Handler
+	purchaseHandler       purchasehandler.Handler
+	inventoryHandler      inventoryhandler.Handler
+	accountingHandler     accountinghandler.Handler
+	salesReturnHandler    salesreturnhandler.Handler
+	orderDeliveryHandler  orderdeliveryhandler.Handler
 }
 
 func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler,
@@ -76,6 +88,11 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 	aclHandler aclhandler.Handler, contactUsHandler contactushandler.Handler, ratingHandler ratinghandler.Handler,
 	bannerHandler bannerhandler.Handler, paymentHandler paymenthandler.Handler, searchHandler searchhandler.Handler,
 	partnerHandler partnerhandler.Handler, referralHandler referralhandler.Handler,
+	supplierHandler supplierhandler.Handler, purchaseHandler purchasehandler.Handler,
+	inventoryHandler inventoryhandler.Handler,
+	accountingHandler accountinghandler.Handler,
+	salesReturnHandler salesreturnhandler.Handler,
+	orderDeliveryHandler orderdeliveryhandler.Handler,
 ) Server {
 	return Server{
 		config:                cfg,
@@ -105,6 +122,12 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 		searchHandler:         searchHandler,
 		partnerHandler:        partnerHandler,
 		referralHandler:       referralHandler,
+		supplierHandler:       supplierHandler,
+		purchaseHandler:       purchaseHandler,
+		inventoryHandler:      inventoryHandler,
+		accountingHandler:     accountingHandler,
+		salesReturnHandler:    salesReturnHandler,
+		orderDeliveryHandler:  orderDeliveryHandler,
 	}
 }
 
@@ -188,6 +211,12 @@ func (s Server) Serve() {
 	s.searchHandler.SetRoutes(s.Router)
 	s.partnerHandler.SetRoutes(s.Router)
 	s.referralHandler.SetRoutes(s.Router)
+	s.supplierHandler.SetRoutes(s.Router)
+	s.purchaseHandler.SetRoutes(s.Router)
+	s.inventoryHandler.SetRoutes(s.Router)
+	s.accountingHandler.SetRoutes(s.Router)
+	s.salesReturnHandler.SetRoutes(s.Router)
+	s.orderDeliveryHandler.SetRoutes(s.Router)
 	// Start server
 	address := fmt.Sprintf(":%d", s.config.HTTPServer.Port)
 	fmt.Printf("start echo server on %s\n", address)

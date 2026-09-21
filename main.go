@@ -15,6 +15,7 @@ import (
 	"github.com/abolfazlnorzad/steve/adapter/telegrambot"
 	"github.com/abolfazlnorzad/steve/config"
 	httpserver "github.com/abolfazlnorzad/steve/delivery/http_server"
+	accountinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/accounting"
 	aclhandler "github.com/abolfazlnorzad/steve/delivery/http_server/acl/handler"
 	articlehandler "github.com/abolfazlnorzad/steve/delivery/http_server/article"
 	attributehandler "github.com/abolfazlnorzad/steve/delivery/http_server/attribute"
@@ -28,17 +29,22 @@ import (
 	commenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/comment"
 	contactushandler "github.com/abolfazlnorzad/steve/delivery/http_server/contactus"
 	discounthandler "github.com/abolfazlnorzad/steve/delivery/http_server/discount"
+	inventoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/inventory"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
 	orderhandler "github.com/abolfazlnorzad/steve/delivery/http_server/order"
+	orderdeliveryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/orderdelivery"
 	partnerhandler "github.com/abolfazlnorzad/steve/delivery/http_server/partner"
 	paymenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/payment"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
+	purchasehandler "github.com/abolfazlnorzad/steve/delivery/http_server/purchase"
 	ratinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/rating"
 	referralhandler "github.com/abolfazlnorzad/steve/delivery/http_server/referral"
 	repairhandler "github.com/abolfazlnorzad/steve/delivery/http_server/repair"
+	salesreturnhandler "github.com/abolfazlnorzad/steve/delivery/http_server/salesreturn"
 	searchhandler "github.com/abolfazlnorzad/steve/delivery/http_server/search"
 	sellhandler "github.com/abolfazlnorzad/steve/delivery/http_server/sell"
 	shippinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/shipping"
+	supplierhandler "github.com/abolfazlnorzad/steve/delivery/http_server/supplier"
 	userhandler "github.com/abolfazlnorzad/steve/delivery/http_server/user"
 	"github.com/abolfazlnorzad/steve/internal/seeder"
 	"github.com/abolfazlnorzad/steve/pkg/i18n"
@@ -53,25 +59,32 @@ import (
 	mongodbbanner "github.com/abolfazlnorzad/steve/repository/mongo/banner"
 	mongodbbrand "github.com/abolfazlnorzad/steve/repository/mongo/brand"
 	mongodbcart "github.com/abolfazlnorzad/steve/repository/mongo/cart"
+	mongodbcash "github.com/abolfazlnorzad/steve/repository/mongo/cash"
 	mongodbcategory "github.com/abolfazlnorzad/steve/repository/mongo/category"
 	mongodbcomment "github.com/abolfazlnorzad/steve/repository/mongo/comment"
 	mongodbcontactus "github.com/abolfazlnorzad/steve/repository/mongo/contactus"
 	mongodbdiscount "github.com/abolfazlnorzad/steve/repository/mongo/discount"
+	mongodbexpense "github.com/abolfazlnorzad/steve/repository/mongo/expense"
+	mongodbinventory "github.com/abolfazlnorzad/steve/repository/mongo/inventory"
 	mongodbmedia "github.com/abolfazlnorzad/steve/repository/mongo/media"
 	mongodborder "github.com/abolfazlnorzad/steve/repository/mongo/order"
 	mongodbpartner "github.com/abolfazlnorzad/steve/repository/mongo/partner"
 	mongodbpayment "github.com/abolfazlnorzad/steve/repository/mongo/payment"
 	mongodbproduct "github.com/abolfazlnorzad/steve/repository/mongo/product"
+	mongodbpurchase "github.com/abolfazlnorzad/steve/repository/mongo/purchase"
 	mongodbrating "github.com/abolfazlnorzad/steve/repository/mongo/rating"
 	mongodbreferral "github.com/abolfazlnorzad/steve/repository/mongo/referral"
 	mongodbrepair "github.com/abolfazlnorzad/steve/repository/mongo/repair"
+	mongodbsalesreturn "github.com/abolfazlnorzad/steve/repository/mongo/salesreturn"
 	mongodbsell "github.com/abolfazlnorzad/steve/repository/mongo/sell"
 	mongodbshipping "github.com/abolfazlnorzad/steve/repository/mongo/shipping"
+	mongodbsupplier "github.com/abolfazlnorzad/steve/repository/mongo/supplier"
 	mongodbuser "github.com/abolfazlnorzad/steve/repository/mongo/user"
 	redisarticleview "github.com/abolfazlnorzad/steve/repository/redis/articleview"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
 	cartscheduler "github.com/abolfazlnorzad/steve/scheduler/cart"
 	orderscheduler "github.com/abolfazlnorzad/steve/scheduler/order"
+	accountingservice "github.com/abolfazlnorzad/steve/service/accounting"
 	aclservice "github.com/abolfazlnorzad/steve/service/acl"
 	permissionservice "github.com/abolfazlnorzad/steve/service/acl/permission"
 	roleservice "github.com/abolfazlnorzad/steve/service/acl/role"
@@ -86,18 +99,25 @@ import (
 	contactusservice "github.com/abolfazlnorzad/steve/service/contactus"
 	discountservice "github.com/abolfazlnorzad/steve/service/discount"
 	fetcherservice "github.com/abolfazlnorzad/steve/service/fetcher"
+	inventoryservice "github.com/abolfazlnorzad/steve/service/inventory"
 	mediaservice "github.com/abolfazlnorzad/steve/service/media"
 	orderservice "github.com/abolfazlnorzad/steve/service/order"
+	orderdeliveryservice "github.com/abolfazlnorzad/steve/service/orderdelivery"
+	ordernotifyservice "github.com/abolfazlnorzad/steve/service/ordernotify"
 	partnerservice "github.com/abolfazlnorzad/steve/service/partner"
 	paymentservice "github.com/abolfazlnorzad/steve/service/payment"
 	productservice "github.com/abolfazlnorzad/steve/service/product"
+	purchaseservice "github.com/abolfazlnorzad/steve/service/purchase"
 	ratingservice "github.com/abolfazlnorzad/steve/service/rating"
 	referralservice "github.com/abolfazlnorzad/steve/service/referral"
 	repairservice "github.com/abolfazlnorzad/steve/service/repair"
+	salesreturnservice "github.com/abolfazlnorzad/steve/service/salesreturn"
 	searchservice "github.com/abolfazlnorzad/steve/service/search"
 	sellservice "github.com/abolfazlnorzad/steve/service/sell"
 	settingservice "github.com/abolfazlnorzad/steve/service/setting"
+	supplierservice "github.com/abolfazlnorzad/steve/service/supplier"
 	userservice "github.com/abolfazlnorzad/steve/service/user"
+	accountingvalidator "github.com/abolfazlnorzad/steve/validator/accounting"
 	articlevalidator "github.com/abolfazlnorzad/steve/validator/article"
 	attributevalidator "github.com/abolfazlnorzad/steve/validator/attribute"
 	attributedefinitionvalidator "github.com/abolfazlnorzad/steve/validator/attributedefinition"
@@ -109,15 +129,20 @@ import (
 	commentvalidator "github.com/abolfazlnorzad/steve/validator/comment"
 	contactusvalidator "github.com/abolfazlnorzad/steve/validator/contactus"
 	discountvalidator "github.com/abolfazlnorzad/steve/validator/discount"
+	inventoryvalidator "github.com/abolfazlnorzad/steve/validator/inventory"
 	mediavalidator "github.com/abolfazlnorzad/steve/validator/media"
 	ordervalidator "github.com/abolfazlnorzad/steve/validator/order"
+	orderdeliveryvalidator "github.com/abolfazlnorzad/steve/validator/orderdelivery"
 	partnervalidator "github.com/abolfazlnorzad/steve/validator/partner"
 	productvalidator "github.com/abolfazlnorzad/steve/validator/product"
+	purchasevalidator "github.com/abolfazlnorzad/steve/validator/purchase"
 	ratingvalidator "github.com/abolfazlnorzad/steve/validator/rating"
 	referralvalidator "github.com/abolfazlnorzad/steve/validator/referral"
 	repairvalidator "github.com/abolfazlnorzad/steve/validator/repair"
+	salesreturnvalidator "github.com/abolfazlnorzad/steve/validator/salesreturn"
 	sellvalidator "github.com/abolfazlnorzad/steve/validator/sell"
 	settingvalidator "github.com/abolfazlnorzad/steve/validator/setting"
+	suppliervalidator "github.com/abolfazlnorzad/steve/validator/supplier"
 	uservalidator "github.com/abolfazlnorzad/steve/validator/user"
 	"golang.org/x/sync/errgroup"
 )
@@ -218,7 +243,10 @@ func main() {
 
 	discountHandler := discounthandler.New(discountbackofficeSvc, translator, discountVld, authSvc, cfg.Auth, aclSvc)
 	cartBackofficeSvc := cartservice.NewBackofficeService(cartRepo, userRepo, productRepo, productSvc)
-	orderRepo := mongodborder.New(mongoRepo)
+	// Every status change goes through this decorator so the customer is
+	// SMS'd no matter which flow moved the order.
+	orderRepo := ordernotifyservice.WrapOrderRepo(mongodborder.New(mongoRepo))
+	orderRepo.SetNotifier(ordernotifyservice.New(cfg.OrderNotify, orderRepo, discountRepo, userRepo, mp))
 	orderVld := ordervalidator.New(discountbackofficeSvc, cartRepo)
 	shippingRepo := mongodbshipping.New(mongoRepo)
 	shippingVld := settingvalidator.NewShippingValidator(shippingRepo)
@@ -281,9 +309,47 @@ func main() {
 	partnerVld := partnervalidator.New()
 	partnerHandler := partnerhandler.New(partnerStorefrontSvc, partnerShopSvc, partnerBackofficeSvc, partnerVld, translator, authSvc, cfg.Auth, aclSvc)
 
+	// --- inventory / purchasing / suppliers (انبارداری و حسابداری) ---
+	supplierRepo := mongodbsupplier.New(mongoRepo)
+	inventoryRepo := mongodbinventory.New(mongoRepo)
+	purchaseRepo := mongodbpurchase.New(mongoRepo)
+
+	supplierSvc := supplierservice.NewBackofficeService(supplierRepo)
+	inventorySvc := inventoryservice.NewBackofficeService(inventoryRepo, productRepo)
+	purchaseSvc := purchaseservice.NewBackofficeService(purchaseRepo, inventorySvc, productRepo, supplierRepo)
+
+	// The order services record every sale in the stock ledger. Wired after
+	// construction so the order domain keeps no hard dependency on inventory.
+	orderSvc.SetInventoryRecorder(inventorySvc)
+	orderBackofficeSvc.SetInventoryRecorder(inventorySvc)
+
+	// --- accounting: expenses, cashbox, returns, financial reports ---
+	expenseRepo := mongodbexpense.New(mongoRepo)
+	cashRepo := mongodbcash.New(mongoRepo)
+	salesReturnRepo := mongodbsalesreturn.New(mongoRepo)
+
+	salesReturnSvc := salesreturnservice.NewBackofficeService(salesReturnRepo, orderRepo, inventorySvc, productRepo)
+	accountingSvc := accountingservice.NewBackofficeService(expenseRepo, cashRepo, inventorySvc, salesReturnSvc, purchaseRepo)
+
+	// Everything that moves money tells the cashbox. Wired after
+	// construction so no domain depends on accounting at build time.
+	salesReturnSvc.SetCashRecorder(accountingSvc)
+	purchaseSvc.SetCashRecorder(accountingSvc)
+	orderBackofficeSvc.SetCashRecorder(accountingSvc)
+
+	supplierHandler := supplierhandler.New(supplierSvc, translator, suppliervalidator.New(), authSvc, cfg.Auth, aclSvc)
+	purchaseHandler := purchasehandler.New(purchaseSvc, translator, purchasevalidator.New(), authSvc, cfg.Auth, aclSvc)
+	inventoryHandler := inventoryhandler.New(inventorySvc, translator, inventoryvalidator.New(), authSvc, cfg.Auth, aclSvc)
+	accountingHandler := accountinghandler.New(accountingSvc, translator, accountingvalidator.New(), authSvc, cfg.Auth, aclSvc)
+	salesReturnHandler := salesreturnhandler.New(salesReturnSvc, translator, salesreturnvalidator.New(), authSvc, cfg.Auth, aclSvc)
+
+	orderDeliverySvc := orderdeliveryservice.New(cfg.OrderDelivery, orderRepo, userRepo, authSvc, redisotp)
+	orderDeliveryHandler := orderdeliveryhandler.New(orderDeliverySvc, orderdeliveryvalidator.New(), translator, authSvc, cfg.Auth, aclSvc)
+
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
-		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler, paymentHandler, searchHandler, partnerHandler, referralHandler)
+		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler, paymentHandler, searchHandler, partnerHandler, referralHandler,
+		supplierHandler, purchaseHandler, inventoryHandler, accountingHandler, salesReturnHandler, orderDeliveryHandler)
 
 	orderScheduler := orderscheduler.New(cfg.OrderScheduler, orderBackofficeSvc)
 	cartScheduler := cartscheduler.New(cfg.CartScheduler, cartBackofficeSvc)

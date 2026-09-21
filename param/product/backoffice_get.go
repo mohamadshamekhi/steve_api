@@ -16,18 +16,23 @@ type GetProductResponse struct {
 }
 
 type ProductInfo struct {
-	ID           string                     `json:"_id"`
-	Name         string                     `json:"name"`
-	ENTitle      string                     `json:"en_title"`
-	Slug         string                     `json:"slug"`
-	Brand        brandparam.BrandInfo       `json:"brand"`
-	Category     categoryparam.CategoryInfo `json:"category"`
-	Gallery      []entity.ProductGallery    `json:"gallery"`
-	IsPublished  bool                       `json:"is_published"`
-	IsSecondHand bool                       `json:"is_second_hand"`
-	Description  string                     `json:"description"`
-	Rating       float64                    `json:"rating"`
-	Discount     []ProductDiscount          `json:"discount"`
+	ID            string                     `json:"_id"`
+	Name          string                     `json:"name"`
+	ENTitle       string                     `json:"en_title"`
+	Slug          string                     `json:"slug"`
+	Brand         brandparam.BrandInfo       `json:"brand"`
+	Category      categoryparam.CategoryInfo `json:"category"`
+	Gallery       []entity.ProductGallery    `json:"gallery"`
+	IsPublished   bool                       `json:"is_published"`
+	IsSecondHand  bool                       `json:"is_second_hand"`
+	Kind          entity.ProductKind         `json:"kind"`
+	SalesChannels []entity.SalesChannel      `json:"sales_channels"`
+	// Price is the fee of a service. Omitted for goods, which price per
+	// variant in Variants instead.
+	Price       uint64            `json:"price,omitempty"`
+	Description string            `json:"description"`
+	Rating      float64           `json:"rating"`
+	Discount    []ProductDiscount `json:"discount"`
 
 	Variants       []entity.Variant `json:"variants"`
 	Specifications []Specification  `json:"specifications,omitempty"`

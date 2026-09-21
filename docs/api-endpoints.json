@@ -8,247 +8,1712 @@
       "backoffice+ACL:<key>": "کاربر پنل ادمین + بررسی مجوز نقش با کلید key.<key>"
     },
     "base_path_note": "همه‌ی پاسخ‌ها در قالب APIResponse ({message, data}) برگردانده می‌شوند.",
-    "last_updated": "2026-09-07"
+    "last_updated": "2026-09-21"
   },
-
   "auth": [
-    { "method": "POST", "path": "/user/send-otp", "auth": "public", "in": "{phone_number}", "out": "{message}", "desc": "ارسال کد OTP ورود کاربر فروشگاه" },
-    { "method": "POST", "path": "/user/verify-otp", "auth": "public", "in": "{phone_number, code}", "out": "{access_token, refresh_token, user}", "desc": "تأیید OTP و صدور توکن کاربر" },
-    { "method": "POST", "path": "/user/logout", "auth": "user", "in": "-", "out": "{message}", "desc": "خروج و بلاک‌لیست کردن توکن" },
-    { "method": "POST", "path": "/user/me", "auth": "user", "in": "-", "out": "{user}", "desc": "اطلاعات کاربر جاری" },
-    { "method": "POST", "path": "/back-office/send-otp", "auth": "public", "in": "{phone_number}", "out": "{message}", "desc": "ارسال OTP ورود کاربر پنل ادمین" },
-    { "method": "POST", "path": "/back-office/verify-otp", "auth": "public", "in": "{phone_number, code}", "out": "{access_token, refresh_token}", "desc": "تأیید OTP و صدور توکن ادمین" }
+    {
+      "method": "POST",
+      "path": "/user/send-otp",
+      "auth": "public",
+      "in": "{phone_number}",
+      "out": "{message}",
+      "desc": "ارسال کد OTP ورود کاربر فروشگاه"
+    },
+    {
+      "method": "POST",
+      "path": "/user/verify-otp",
+      "auth": "public",
+      "in": "{phone_number, code}",
+      "out": "{access_token, refresh_token, user}",
+      "desc": "تأیید OTP و صدور توکن کاربر"
+    },
+    {
+      "method": "POST",
+      "path": "/user/logout",
+      "auth": "user",
+      "in": "-",
+      "out": "{message}",
+      "desc": "خروج و بلاک‌لیست کردن توکن"
+    },
+    {
+      "method": "POST",
+      "path": "/user/me",
+      "auth": "user",
+      "in": "-",
+      "out": "{user}",
+      "desc": "اطلاعات کاربر جاری"
+    },
+    {
+      "method": "POST",
+      "path": "/back-office/send-otp",
+      "auth": "public",
+      "in": "{phone_number}",
+      "out": "{message}",
+      "desc": "ارسال OTP ورود کاربر پنل ادمین"
+    },
+    {
+      "method": "POST",
+      "path": "/back-office/verify-otp",
+      "auth": "public",
+      "in": "{phone_number, code}",
+      "out": "{access_token, refresh_token}",
+      "desc": "تأیید OTP و صدور توکن ادمین"
+    }
   ],
-
   "user": [
-    { "method": "PATCH", "path": "/user/:id/update-profile", "auth": "user", "in": "{first_name, last_name, ...}", "out": "{message}", "desc": "ویرایش پروفایل کاربر" },
-    { "method": "POST", "path": "/user/add-address", "auth": "user", "in": "{address, city, postal_code, ...}", "out": "{message}", "desc": "افزودن آدرس" },
-    { "method": "POST", "path": "/user/update-address/:id", "auth": "user", "in": "{address, city, ...}", "out": "{message}", "desc": "ویرایش آدرس" },
-    { "method": "GET", "path": "/user", "auth": "backoffice+ACL:ListUsers", "in": "?page_number&page_size&filter", "out": "{users[], pagination}", "desc": "لیست کاربران (ادمین)" },
-    { "method": "POST", "path": "/backoffice/user/upsert", "auth": "backoffice+ACL:UpdateUser", "in": "{phone_number, first_name, ...}", "out": "{message}", "desc": "ایجاد/به‌روزرسانی کاربر توسط ادمین" },
-    { "method": "PATCH", "path": "/backoffice/user/:id", "auth": "backoffice+ACL:UpdateUser", "in": "{first_name?, last_name?, ...}", "out": "{message}", "desc": "ویرایش کاربر توسط ادمین" }
+    {
+      "method": "PATCH",
+      "path": "/user/:id/update-profile",
+      "auth": "user",
+      "in": "{first_name, last_name, ...}",
+      "out": "{message}",
+      "desc": "ویرایش پروفایل کاربر"
+    },
+    {
+      "method": "POST",
+      "path": "/user/add-address",
+      "auth": "user",
+      "in": "{address, city, postal_code, ...}",
+      "out": "{message}",
+      "desc": "افزودن آدرس"
+    },
+    {
+      "method": "POST",
+      "path": "/user/update-address/:id",
+      "auth": "user",
+      "in": "{address, city, ...}",
+      "out": "{message}",
+      "desc": "ویرایش آدرس"
+    },
+    {
+      "method": "GET",
+      "path": "/user",
+      "auth": "backoffice+ACL:ListUsers",
+      "in": "?page_number&page_size&filter",
+      "out": "{users[], pagination}",
+      "desc": "لیست کاربران (ادمین)"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/user/upsert",
+      "auth": "backoffice+ACL:UpdateUser",
+      "in": "{phone_number, first_name, ...}",
+      "out": "{message}",
+      "desc": "ایجاد/به‌روزرسانی کاربر توسط ادمین"
+    },
+    {
+      "method": "PATCH",
+      "path": "/backoffice/user/:id",
+      "auth": "backoffice+ACL:UpdateUser",
+      "in": "{first_name?, last_name?, ...}",
+      "out": "{message}",
+      "desc": "ویرایش کاربر توسط ادمین"
+    }
   ],
-
   "backoffice_user": [
-    { "method": "GET", "path": "/back-office", "auth": "backoffice+ACL:ListBackofficeUsers", "in": "?page_number&page_size", "out": "{users[], pagination}", "desc": "لیست کاربران پنل" },
-    { "method": "POST", "path": "/back-office/add-new-backoffice-user", "auth": "backoffice+ACL:CreateBackofficeUser", "in": "{phone_number, name, role_id}", "out": "{message}", "desc": "افزودن کاربر پنل" },
-    { "method": "PATCH", "path": "/back-office/update/:id", "auth": "backoffice+ACL:UpdateBackofficeUser", "in": "{name?, role_id?}", "out": "{message}", "desc": "ویرایش کاربر پنل" },
-    { "method": "GET", "path": "/back-office/me", "auth": "backoffice", "in": "-", "out": "{profile}", "desc": "پروفایل ادمین جاری" },
-    { "method": "POST", "path": "/back-office/logout", "auth": "backoffice", "in": "-", "out": "{message}", "desc": "خروج ادمین" },
-    { "method": "GET", "path": "/back-office/:id", "auth": "backoffice+ACL:ViewBackofficeUser", "in": "-", "out": "{user}", "desc": "جزئیات یک کاربر پنل" }
+    {
+      "method": "GET",
+      "path": "/back-office",
+      "auth": "backoffice+ACL:ListBackofficeUsers",
+      "in": "?page_number&page_size",
+      "out": "{users[], pagination}",
+      "desc": "لیست کاربران پنل"
+    },
+    {
+      "method": "POST",
+      "path": "/back-office/add-new-backoffice-user",
+      "auth": "backoffice+ACL:CreateBackofficeUser",
+      "in": "{phone_number, name, role_id}",
+      "out": "{message}",
+      "desc": "افزودن کاربر پنل"
+    },
+    {
+      "method": "PATCH",
+      "path": "/back-office/update/:id",
+      "auth": "backoffice+ACL:UpdateBackofficeUser",
+      "in": "{name?, role_id?}",
+      "out": "{message}",
+      "desc": "ویرایش کاربر پنل"
+    },
+    {
+      "method": "GET",
+      "path": "/back-office/me",
+      "auth": "backoffice",
+      "in": "-",
+      "out": "{profile}",
+      "desc": "پروفایل ادمین جاری"
+    },
+    {
+      "method": "POST",
+      "path": "/back-office/logout",
+      "auth": "backoffice",
+      "in": "-",
+      "out": "{message}",
+      "desc": "خروج ادمین"
+    },
+    {
+      "method": "GET",
+      "path": "/back-office/:id",
+      "auth": "backoffice+ACL:ViewBackofficeUser",
+      "in": "-",
+      "out": "{user}",
+      "desc": "جزئیات یک کاربر پنل"
+    }
   ],
-
   "acl": [
-    { "method": "GET", "path": "/acl/permissions", "auth": "backoffice+ACL:ListPermissions", "in": "-", "out": "{permissions[]}", "desc": "لیست همه‌ی مجوزها" },
-    { "method": "GET", "path": "/acl/roles", "auth": "backoffice+ACL:ListRole", "in": "-", "out": "{roles[]}", "desc": "لیست همه‌ی نقش‌ها" }
+    {
+      "method": "GET",
+      "path": "/acl/permissions",
+      "auth": "backoffice+ACL:ListPermissions",
+      "in": "-",
+      "out": "{permissions[]}",
+      "desc": "لیست همه‌ی مجوزها"
+    },
+    {
+      "method": "GET",
+      "path": "/acl/roles",
+      "auth": "backoffice+ACL:ListRole",
+      "in": "-",
+      "out": "{roles[]}",
+      "desc": "لیست همه‌ی نقش‌ها"
+    }
   ],
-
   "product": [
-    { "method": "POST", "path": "/product/create", "auth": "backoffice+ACL:CreateProduct", "in": "{name, category_id, brand_id, ...}", "out": "{message}", "desc": "ایجاد محصول" },
-    { "method": "GET", "path": "/product/:id", "auth": "backoffice+ACL:ViewProduct", "in": "-", "out": "{product}", "desc": "جزئیات محصول (ادمین)" },
-    { "method": "GET", "path": "/product", "auth": "backoffice+ACL:ListProducts", "in": "?page&filters", "out": "{products[], pagination}", "desc": "لیست محصولات (ادمین)" },
-    { "method": "GET", "path": "/product/export-excel", "auth": "backoffice+ACL:ExportProducts", "in": "?filters", "out": "فایل اکسل", "desc": "خروجی اکسل محصولات" },
-    { "method": "PATCH", "path": "/product/:id", "auth": "backoffice+ACL:UpdateProduct", "in": "{name?, price?, ...}", "out": "{message}", "desc": "ویرایش محصول" },
-    { "method": "PATCH", "path": "/product/publish/:id", "auth": "backoffice+ACL:UpdateProduct", "in": "-", "out": "{message}", "desc": "انتشار محصول" },
-    { "method": "PATCH", "path": "/product/un-publish/:id", "auth": "backoffice+ACL:UpdateProduct", "in": "-", "out": "{message}", "desc": "لغو انتشار محصول" },
-    { "method": "DELETE", "path": "/product/:id", "auth": "backoffice+ACL:DeleteProduct", "in": "-", "out": "{message}", "desc": "حذف محصول" },
-    { "method": "PATCH", "path": "/product/add-product-gallery", "auth": "backoffice+ACL:UpdateProduct", "in": "{product_id, media_ids[]}", "out": "{message}", "desc": "افزودن تصویر به گالری" },
-    { "method": "PATCH", "path": "/product/set-primary", "auth": "backoffice+ACL:UpdateProduct", "in": "{product_id, media_id}", "out": "{message}", "desc": "تعیین تصویر اصلی" },
-    { "method": "PATCH", "path": "/product/delete-product-gallery", "auth": "backoffice+ACL:UpdateProduct", "in": "{product_id, media_id}", "out": "{message}", "desc": "حذف تصویر از گالری" },
-    { "method": "PATCH", "path": "/product/:id/update-attrs", "auth": "backoffice+ACL:UpdateProduct", "in": "{attributes[]}", "out": "{message}", "desc": "به‌روزرسانی ویژگی‌های محصول" },
-    { "method": "PATCH", "path": "/product/:id/update-single-attr/:key", "auth": "backoffice+ACL:UpdateProduct", "in": "{value}", "out": "{message}", "desc": "به‌روزرسانی یک ویژگی" },
-    { "method": "PATCH", "path": "/product/:id/add-variant", "auth": "backoffice+ACL:UpdateProduct", "in": "{sku, price, attributes, ...}", "out": "{message}", "desc": "افزودن واریانت" },
-    { "method": "PATCH", "path": "/product/:id/update-variant/:varid", "auth": "backoffice+ACL:UpdateProduct", "in": "{price?, stock?, ...}", "out": "{message}", "desc": "ویرایش واریانت" },
-    { "method": "PATCH", "path": "/product/:id/delete-variant/:varid", "auth": "backoffice+ACL:UpdateProduct", "in": "-", "out": "{message}", "desc": "حذف واریانت" },
-    { "method": "PATCH", "path": "/product/bulk-update-variants", "auth": "backoffice+ACL:UpdateProduct", "in": "{variants[]}", "out": "{message}", "desc": "ویرایش گروهی واریانت‌ها" },
-    { "method": "GET", "path": "/product/storefront/with-auto-discount", "auth": "public", "in": "?page", "out": "{products[]}", "desc": "محصولات دارای تخفیف خودکار" },
-    { "method": "GET", "path": "/product/storefront", "auth": "public", "in": "?filters&page", "out": "{products[], filters, pagination}", "desc": "لیست فیلترپذیر محصولات فروشگاه" },
-    { "method": "GET", "path": "/product/storefront/get-mobile-list-wth-main-info", "auth": "public", "in": "?page", "out": "{products[]}", "desc": "لیست سبک محصولات برای موبایل" },
-    { "method": "GET", "path": "/product/storefront/get-products-with-special-discount", "auth": "public", "in": "?page", "out": "{products[]}", "desc": "محصولات با تخفیف ویژه" },
-    { "method": "GET", "path": "/product/storefront/:id", "auth": "public", "in": "-", "out": "{product}", "desc": "جزئیات محصول فروشگاه با id" },
-    { "method": "GET", "path": "/product/storefront/get-by-slug/:slug", "auth": "public", "in": "-", "out": "{product}", "desc": "جزئیات محصول فروشگاه با slug" }
+    {
+      "method": "POST",
+      "path": "/product/create",
+      "auth": "backoffice+ACL:CreateProduct",
+      "in": "{name, category_id, brand_id, ..., kind?('physical'|'service'), sales_channels?(['website','in_person']), price?(اجباری برای kind=service)}",
+      "out": "{product: {id, name, en_title, slug, brand_id, category_id, kind, sales_channels, is_published, is_second_hand, description, price?, variant_id?}}",
+      "desc": "ثبت محصول یا خدمت. برای kind=service فیلد price اجباری است و واریانت قیمت خودکار ساخته می‌شود؛ brand_id/category_id اختیاری‌اند"
+    },
+    {
+      "method": "GET",
+      "path": "/product/:id",
+      "auth": "backoffice+ACL:ViewProduct",
+      "in": "-",
+      "out": "{product}",
+      "desc": "جزئیات محصول (ادمین)"
+    },
+    {
+      "method": "GET",
+      "path": "/product",
+      "auth": "backoffice+ACL:ListProducts",
+      "in": "?page&filters &kind=physical|service &sales_channel=website|in_person",
+      "out": "{products[], pagination}",
+      "desc": "لیست محصولات (ادمین) — فیلتر kind برای جدا کردن لیست خدمات از کالاها"
+    },
+    {
+      "method": "GET",
+      "path": "/product/export-excel",
+      "auth": "backoffice+ACL:ExportProducts",
+      "in": "?filters",
+      "out": "فایل اکسل",
+      "desc": "خروجی اکسل محصولات"
+    },
+    {
+      "method": "PATCH",
+      "path": "/product/:id",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "{name?, price?, ..., kind?, sales_channels?, price?(فقط برای خدمات)}",
+      "out": "{product: {id, ..., kind, sales_channels, price?, variant_id?}}",
+      "desc": "ویرایش محصول"
+    },
+    {
+      "method": "PATCH",
+      "path": "/product/publish/:id",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "-",
+      "out": "{message}",
+      "desc": "انتشار محصول"
+    },
+    {
+      "method": "PATCH",
+      "path": "/product/un-publish/:id",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "-",
+      "out": "{message}",
+      "desc": "لغو انتشار محصول"
+    },
+    {
+      "method": "DELETE",
+      "path": "/product/:id",
+      "auth": "backoffice+ACL:DeleteProduct",
+      "in": "-",
+      "out": "{message}",
+      "desc": "حذف محصول"
+    },
+    {
+      "method": "PATCH",
+      "path": "/product/add-product-gallery",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "{product_id, media_ids[]}",
+      "out": "{message}",
+      "desc": "افزودن تصویر به گالری"
+    },
+    {
+      "method": "PATCH",
+      "path": "/product/set-primary",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "{product_id, media_id}",
+      "out": "{message}",
+      "desc": "تعیین تصویر اصلی"
+    },
+    {
+      "method": "PATCH",
+      "path": "/product/delete-product-gallery",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "{product_id, media_id}",
+      "out": "{message}",
+      "desc": "حذف تصویر از گالری"
+    },
+    {
+      "method": "PATCH",
+      "path": "/product/:id/update-attrs",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "{attributes[]}",
+      "out": "{message}",
+      "desc": "به‌روزرسانی ویژگی‌های محصول"
+    },
+    {
+      "method": "PATCH",
+      "path": "/product/:id/update-single-attr/:key",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "{value}",
+      "out": "{message}",
+      "desc": "به‌روزرسانی یک ویژگی"
+    },
+    {
+      "method": "PATCH",
+      "path": "/product/:id/add-variant",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "{sku, price, attributes, ..., stock_mode?, allow_backorder?, backorder_limit?, supplier_id?, supply_cost?, avg_cost?, stock_mode?('tracked'|'on_demand'|'none'), allow_backorder?, backorder_limit?, supplier_id?, supply_cost?, avg_cost?}",
+      "out": "{message}",
+      "desc": "افزودن واریانت — stock_mode=on_demand یعنی در مغازه ندارم و لحظه‌ای تأمین می‌کنم؛ allow_backorder یعنی بعد از اتمام موجودی هم قابل فروش است — برای kind=service رد می‌شود (خطای product.service_single_variant)"
+    },
+    {
+      "method": "PATCH",
+      "path": "/product/:id/update-variant/:varid",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "{price?, stock?, ..., stock_mode?, allow_backorder?, backorder_limit?, supplier_id?, supply_cost?, avg_cost?, stock_mode?, allow_backorder?, backorder_limit?, supplier_id?, supply_cost?, avg_cost?}",
+      "out": "{message}",
+      "desc": "ویرایش واریانت"
+    },
+    {
+      "method": "PATCH",
+      "path": "/product/:id/delete-variant/:varid",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "-, stock_mode?, allow_backorder?, backorder_limit?, supplier_id?, supply_cost?, avg_cost?}",
+      "out": "{message}",
+      "desc": "حذف واریانت — برای kind=service رد می‌شود (خطای product.service_variant_not_deletable)"
+    },
+    {
+      "method": "PATCH",
+      "path": "/product/bulk-update-variants",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "{variants[], stock_mode?, allow_backorder?, backorder_limit?, supplier_id?, supply_cost?, avg_cost?} (هر آیتم: stock_mode?, allow_backorder?, backorder_limit?, supplier_id?, supply_cost?, avg_cost?)",
+      "out": "{message}",
+      "desc": "ویرایش گروهی واریانت‌ها"
+    },
+    {
+      "method": "GET",
+      "path": "/product/storefront/with-auto-discount",
+      "auth": "public",
+      "in": "?page",
+      "out": "{products[]}",
+      "desc": "محصولات دارای تخفیف خودکار"
+    },
+    {
+      "method": "GET",
+      "path": "/product/storefront",
+      "auth": "public",
+      "in": "?filters&page",
+      "out": "{products[], filters, pagination}",
+      "desc": "لیست فیلترپذیر محصولات فروشگاه"
+    },
+    {
+      "method": "GET",
+      "path": "/product/storefront/get-mobile-list-wth-main-info",
+      "auth": "public",
+      "in": "?page",
+      "out": "{products[]}",
+      "desc": "لیست سبک محصولات برای موبایل"
+    },
+    {
+      "method": "GET",
+      "path": "/product/storefront/get-products-with-special-discount",
+      "auth": "public",
+      "in": "?page",
+      "out": "{products[]}",
+      "desc": "محصولات با تخفیف ویژه"
+    },
+    {
+      "method": "GET",
+      "path": "/product/storefront/:id",
+      "auth": "public",
+      "in": "-",
+      "out": "{product}",
+      "desc": "جزئیات محصول فروشگاه با id"
+    },
+    {
+      "method": "GET",
+      "path": "/product/storefront/get-by-slug/:slug",
+      "auth": "public",
+      "in": "-",
+      "out": "{product}",
+      "desc": "جزئیات محصول فروشگاه با slug"
+    }
   ],
-
   "category": [
-    { "method": "POST", "path": "/category/create", "auth": "backoffice+ACL:CreateCategory", "in": "{name, parent_id?, media_id, attribute_set_id?}", "out": "{message}", "desc": "ایجاد دسته‌بندی" },
-    { "method": "GET", "path": "/category/:id", "auth": "backoffice+ACL:ListCategories", "in": "-", "out": "{category:{id,name,parent_id,attribute_set_id,ancestors,attribute_set,...}}", "desc": "جزئیات دسته‌بندی (ادمین)" },
-    { "method": "GET", "path": "/category", "auth": "backoffice+ACL:ListCategories", "in": "?page_number&page_size&name", "out": "{categories[]:{id,name,level,parent_id,...}, pagination}", "desc": "لیست فلت دسته‌بندی‌ها (ادمین)" },
-    { "method": "PATCH", "path": "/category/:id", "auth": "backoffice+ACL:UpdateCategory", "in": "{name?, media_id?, description?, parent_id?, attribute_set_id?}", "out": "{message}", "desc": "ویرایش دسته‌بندی" },
-    { "method": "DELETE", "path": "/category/:id", "auth": "backoffice+ACL:DeleteCategory", "in": "-", "out": "{message}", "desc": "حذف دسته‌بندی" },
-    { "method": "GET", "path": "/category/storefront", "auth": "public", "in": "?page_number&page_size&name", "out": "{categories[], pagination}", "desc": "لیست دسته‌بندی‌های فروشگاه" },
-    { "method": "GET", "path": "/category/storefront/get-filter/:category-id", "auth": "public", "in": "-", "out": "{filters[]}", "desc": "فیلترهای قابل استفاده برای یک دسته" }
+    {
+      "method": "POST",
+      "path": "/category/create",
+      "auth": "backoffice+ACL:CreateCategory",
+      "in": "{name, parent_id?, media_id, attribute_set_id?}",
+      "out": "{message}",
+      "desc": "ایجاد دسته‌بندی"
+    },
+    {
+      "method": "GET",
+      "path": "/category/:id",
+      "auth": "backoffice+ACL:ListCategories",
+      "in": "-",
+      "out": "{category:{id,name,parent_id,attribute_set_id,ancestors,attribute_set,...}}",
+      "desc": "جزئیات دسته‌بندی (ادمین)"
+    },
+    {
+      "method": "GET",
+      "path": "/category",
+      "auth": "backoffice+ACL:ListCategories",
+      "in": "?page_number&page_size&name",
+      "out": "{categories[]:{id,name,level,parent_id,...}, pagination}",
+      "desc": "لیست فلت دسته‌بندی‌ها (ادمین)"
+    },
+    {
+      "method": "PATCH",
+      "path": "/category/:id",
+      "auth": "backoffice+ACL:UpdateCategory",
+      "in": "{name?, media_id?, description?, parent_id?, attribute_set_id?}",
+      "out": "{message}",
+      "desc": "ویرایش دسته‌بندی"
+    },
+    {
+      "method": "DELETE",
+      "path": "/category/:id",
+      "auth": "backoffice+ACL:DeleteCategory",
+      "in": "-",
+      "out": "{message}",
+      "desc": "حذف دسته‌بندی"
+    },
+    {
+      "method": "GET",
+      "path": "/category/storefront",
+      "auth": "public",
+      "in": "?page_number&page_size&name",
+      "out": "{categories[], pagination}",
+      "desc": "لیست دسته‌بندی‌های فروشگاه"
+    },
+    {
+      "method": "GET",
+      "path": "/category/storefront/get-filter/:category-id",
+      "auth": "public",
+      "in": "-",
+      "out": "{filters[]}",
+      "desc": "فیلترهای قابل استفاده برای یک دسته"
+    }
   ],
-
   "brand": [
-    { "method": "POST", "path": "/brand/create", "auth": "backoffice+ACL:CreateBrand", "in": "{name, media_id, ...}", "out": "{message}", "desc": "ایجاد برند" },
-    { "method": "GET", "path": "/brand/:id", "auth": "backoffice+ACL:ListBrands", "in": "-", "out": "{brand}", "desc": "جزئیات برند" },
-    { "method": "GET", "path": "/brand", "auth": "backoffice+ACL:ListBrands", "in": "?page&name", "out": "{brands[], pagination}", "desc": "لیست برندها (ادمین)" },
-    { "method": "PATCH", "path": "/brand/:id", "auth": "backoffice+ACL:UpdateBrand", "in": "{name?, media_id?}", "out": "{message}", "desc": "ویرایش برند" },
-    { "method": "DELETE", "path": "/brand/:id", "auth": "backoffice+ACL:DeleteBrand", "in": "-", "out": "{message}", "desc": "حذف برند" },
-    { "method": "GET", "path": "/brand/storefront", "auth": "public", "in": "?page&name", "out": "{brands[], pagination}", "desc": "لیست برندهای فروشگاه" }
+    {
+      "method": "POST",
+      "path": "/brand/create",
+      "auth": "backoffice+ACL:CreateBrand",
+      "in": "{name, media_id, ...}",
+      "out": "{message}",
+      "desc": "ایجاد برند"
+    },
+    {
+      "method": "GET",
+      "path": "/brand/:id",
+      "auth": "backoffice+ACL:ListBrands",
+      "in": "-",
+      "out": "{brand}",
+      "desc": "جزئیات برند"
+    },
+    {
+      "method": "GET",
+      "path": "/brand",
+      "auth": "backoffice+ACL:ListBrands",
+      "in": "?page&name",
+      "out": "{brands[], pagination}",
+      "desc": "لیست برندها (ادمین)"
+    },
+    {
+      "method": "PATCH",
+      "path": "/brand/:id",
+      "auth": "backoffice+ACL:UpdateBrand",
+      "in": "{name?, media_id?}",
+      "out": "{message}",
+      "desc": "ویرایش برند"
+    },
+    {
+      "method": "DELETE",
+      "path": "/brand/:id",
+      "auth": "backoffice+ACL:DeleteBrand",
+      "in": "-",
+      "out": "{message}",
+      "desc": "حذف برند"
+    },
+    {
+      "method": "GET",
+      "path": "/brand/storefront",
+      "auth": "public",
+      "in": "?page&name",
+      "out": "{brands[], pagination}",
+      "desc": "لیست برندهای فروشگاه"
+    }
   ],
-
   "attribute": [
-    { "method": "POST", "path": "/attribute/create", "auth": "backoffice+ACL:CreateBrand", "in": "{name, attribute_definition_ids[]}", "out": "{message}", "desc": "ایجاد ستِ ویژگی" },
-    { "method": "GET", "path": "/attribute", "auth": "public", "in": "?page", "out": "{attributes[]:{id,name,attributes[]}, pagination}", "desc": "لیست ست‌های ویژگی" },
-    { "method": "PATCH", "path": "/attribute/:id", "auth": "backoffice+ACL:UpdateBrand", "in": "{name?, attribute_definition_ids?}", "out": "{message}", "desc": "ویرایش ستِ ویژگی" },
-    { "method": "DELETE", "path": "/attribute/:id", "auth": "backoffice+ACL:DeleteBrand", "in": "-", "out": "{message}", "desc": "حذف ستِ ویژگی" }
+    {
+      "method": "POST",
+      "path": "/attribute/create",
+      "auth": "backoffice+ACL:CreateBrand",
+      "in": "{name, attribute_definition_ids[]}",
+      "out": "{message}",
+      "desc": "ایجاد ستِ ویژگی"
+    },
+    {
+      "method": "GET",
+      "path": "/attribute",
+      "auth": "public",
+      "in": "?page",
+      "out": "{attributes[]:{id,name,attributes[]}, pagination}",
+      "desc": "لیست ست‌های ویژگی"
+    },
+    {
+      "method": "PATCH",
+      "path": "/attribute/:id",
+      "auth": "backoffice+ACL:UpdateBrand",
+      "in": "{name?, attribute_definition_ids?}",
+      "out": "{message}",
+      "desc": "ویرایش ستِ ویژگی"
+    },
+    {
+      "method": "DELETE",
+      "path": "/attribute/:id",
+      "auth": "backoffice+ACL:DeleteBrand",
+      "in": "-",
+      "out": "{message}",
+      "desc": "حذف ستِ ویژگی"
+    }
   ],
-
   "attribute_definition": [
-    { "method": "POST", "path": "/attribute-definition/create", "auth": "backoffice+ACL:CreateBrand", "in": "{key, label, type, options?}", "out": "{message}", "desc": "ایجاد تعریف ویژگی" },
-    { "method": "GET", "path": "/attribute-definition", "auth": "public", "in": "?page", "out": "{definitions[], pagination}", "desc": "لیست تعاریف ویژگی" },
-    { "method": "PATCH", "path": "/attribute-definition/:id", "auth": "backoffice+ACL:UpdateBrand", "in": "{label?, options?}", "out": "{message}", "desc": "ویرایش تعریف ویژگی" },
-    { "method": "DELETE", "path": "/attribute-definition/:id", "auth": "backoffice+ACL:DeleteBrand", "in": "-", "out": "{message}", "desc": "حذف تعریف ویژگی" }
+    {
+      "method": "POST",
+      "path": "/attribute-definition/create",
+      "auth": "backoffice+ACL:CreateBrand",
+      "in": "{key, label, type, options?}",
+      "out": "{message}",
+      "desc": "ایجاد تعریف ویژگی"
+    },
+    {
+      "method": "GET",
+      "path": "/attribute-definition",
+      "auth": "public",
+      "in": "?page",
+      "out": "{definitions[], pagination}",
+      "desc": "لیست تعاریف ویژگی"
+    },
+    {
+      "method": "PATCH",
+      "path": "/attribute-definition/:id",
+      "auth": "backoffice+ACL:UpdateBrand",
+      "in": "{label?, options?}",
+      "out": "{message}",
+      "desc": "ویرایش تعریف ویژگی"
+    },
+    {
+      "method": "DELETE",
+      "path": "/attribute-definition/:id",
+      "auth": "backoffice+ACL:DeleteBrand",
+      "in": "-",
+      "out": "{message}",
+      "desc": "حذف تعریف ویژگی"
+    }
   ],
-
   "cart": [
-    { "method": "POST", "path": "/cart/add-item", "auth": "user", "in": "{variant_id, quantity}", "out": "{cart}", "desc": "افزودن آیتم به سبد" },
-    { "method": "POST", "path": "/cart/remove-item", "auth": "user", "in": "{variant_id}", "out": "{cart}", "desc": "کم کردن یک واحد از آیتم" },
-    { "method": "GET", "path": "/cart/get-active", "auth": "user", "in": "-", "out": "{cart}", "desc": "سبد فعال کاربر" },
-    { "method": "POST", "path": "/cart/calc-cart", "auth": "user", "in": "{discount_code?, shipping_id?}", "out": "{summary}", "desc": "محاسبه‌ی مبلغ سبد" },
-    { "method": "POST", "path": "/cart/delete-item", "auth": "user", "in": "{variant_id}", "out": "{cart}", "desc": "حذف کامل آیتم از سبد" },
-    { "method": "POST", "path": "/cart/accept-price-changing", "auth": "user", "in": "{cart_id}", "out": "{cart}", "desc": "تأیید تغییر قیمت اقلام سبد" },
-    { "method": "GET", "path": "/cart/backoffice/all", "auth": "backoffice+ACL:ListCarts", "in": "?page&filters", "out": "{carts[], pagination}", "desc": "لیست سبدها (ادمین)" },
-    { "method": "GET", "path": "/cart/backoffice/cart/:id", "auth": "backoffice+ACL:ViewCartDetails", "in": "-", "out": "{cart}", "desc": "جزئیات یک سبد" },
-    { "method": "GET", "path": "/backoffice/cart/get-active/:id", "auth": "backoffice+ACL:ViewCartDetails", "in": "-", "out": "{cart}", "desc": "سبد فعال یک کاربر (بر اساس userID)" },
-    { "method": "POST", "path": "/backoffice/cart/create", "auth": "backoffice+ACL:CreateCarts", "in": "{user_id}", "out": "{cart}", "desc": "ایجاد سبد برای کاربر توسط ادمین" },
-    { "method": "POST", "path": "/backoffice/cart/add-item", "auth": "backoffice+ACL:UpdateCarts", "in": "{cart_id, variant_id, quantity}", "out": "{cart}", "desc": "افزودن آیتم به سبد (ادمین)" },
-    { "method": "POST", "path": "/backoffice/cart/remove-item", "auth": "backoffice+ACL:UpdateCarts", "in": "{cart_id, variant_id}", "out": "{cart}", "desc": "کم کردن آیتم (ادمین)" },
-    { "method": "POST", "path": "/backoffice/cart/delete-item", "auth": "backoffice+ACL:UpdateCarts", "in": "{cart_id, variant_id}", "out": "{cart}", "desc": "حذف آیتم (ادمین)" },
-    { "method": "PATCH", "path": "/backoffice/cart/update-status/:id", "auth": "backoffice+ACL:UpdateCarts", "in": "{status}", "out": "{message}", "desc": "تغییر وضعیت سبد" }
+    {
+      "method": "POST",
+      "path": "/cart/add-item",
+      "auth": "user",
+      "in": "{variant_id, quantity}",
+      "out": "{cart}",
+      "desc": "افزودن آیتم به سبد"
+    },
+    {
+      "method": "POST",
+      "path": "/cart/remove-item",
+      "auth": "user",
+      "in": "{variant_id}",
+      "out": "{cart}",
+      "desc": "کم کردن یک واحد از آیتم"
+    },
+    {
+      "method": "GET",
+      "path": "/cart/get-active",
+      "auth": "user",
+      "in": "-",
+      "out": "{cart}",
+      "desc": "سبد فعال کاربر"
+    },
+    {
+      "method": "POST",
+      "path": "/cart/calc-cart",
+      "auth": "user",
+      "in": "{discount_code?, shipping_id?}",
+      "out": "{summary}",
+      "desc": "محاسبه‌ی مبلغ سبد"
+    },
+    {
+      "method": "POST",
+      "path": "/cart/delete-item",
+      "auth": "user",
+      "in": "{variant_id}",
+      "out": "{cart}",
+      "desc": "حذف کامل آیتم از سبد"
+    },
+    {
+      "method": "POST",
+      "path": "/cart/accept-price-changing",
+      "auth": "user",
+      "in": "{cart_id}",
+      "out": "{cart}",
+      "desc": "تأیید تغییر قیمت اقلام سبد"
+    },
+    {
+      "method": "GET",
+      "path": "/cart/backoffice/all",
+      "auth": "backoffice+ACL:ListCarts",
+      "in": "?page&filters",
+      "out": "{carts[], pagination}",
+      "desc": "لیست سبدها (ادمین)"
+    },
+    {
+      "method": "GET",
+      "path": "/cart/backoffice/cart/:id",
+      "auth": "backoffice+ACL:ViewCartDetails",
+      "in": "-",
+      "out": "{cart}",
+      "desc": "جزئیات یک سبد"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/cart/get-active/:id",
+      "auth": "backoffice+ACL:ViewCartDetails",
+      "in": "-",
+      "out": "{cart: {id, status, user_id, items[{product_id, variant_id, product_name, quantity, price_at_time, url, is_custom, kind, unit_cost, manual_discount}], subtotal, items_manual_discount, manual_discount, payable_amount}}",
+      "desc": "سبد فعال یک کاربر (بر اساس userID) — آیتم‌های is_custom سطرهای دستی فاکتور حضوری‌اند و product_id/url ندارند"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/cart/create",
+      "auth": "backoffice+ACL:CreateCarts",
+      "in": "{user_id}",
+      "out": "{cart}",
+      "desc": "ایجاد سبد برای کاربر توسط ادمین"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/cart/add-item",
+      "auth": "backoffice+ACL:UpdateCarts",
+      "in": "{user_id, product_id, variant_id}",
+      "out": "{message}",
+      "desc": "افزودن آیتم کاتالوگ به سبد فعال کاربر (ادمین) — هر بار صدا زدن تعداد را +۱ می‌کند"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/cart/remove-item",
+      "auth": "backoffice+ACL:UpdateCarts",
+      "in": "{user_id, product_id, variant_id}",
+      "out": "{message}",
+      "desc": "کم کردن یک واحد از آیتم کاتالوگ؛ با رسیدن تعداد به صفر سطر حذف می‌شود"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/cart/delete-item",
+      "auth": "backoffice+ACL:UpdateCarts",
+      "in": "{user_id, variant_id}",
+      "out": "{message}",
+      "desc": "حذف کامل یک سطر سبد — برای سطر دستی فاکتور حضوری هم همین استفاده می‌شود"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/cart/custom-item",
+      "auth": "backoffice+ACL:UpdateCarts",
+      "in": "{user_id, variant_id?, title, unit_price, quantity, kind?(physical|service), unit_cost?}",
+      "out": "{variant_id}",
+      "desc": "افزودن/ویرایش آیتم دستی فاکتور حضوری (هزینه تعمیر، اپل‌آیدی، قطعه خریداری‌شده از بیرون). بدون variant_id آیتم جدید می‌سازد و id آن را برمی‌گرداند؛ با variant_id همان سطر را (عنوان/قیمت/تعداد) بازنویسی می‌کند — دکمه‌های +/- هم از همین استفاده می‌کنند."
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/cart/item-discount",
+      "auth": "backoffice+ACL:UpdateCarts",
+      "in": "{user_id, variant_id, amount}",
+      "out": "{message}",
+      "desc": "تخفیف دستی روی یک سطر فاکتور (مبلغ کل سطر، تومان). amount=0 یعنی حذف تخفیف."
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/cart/discount",
+      "auth": "backoffice+ACL:UpdateCarts",
+      "in": "{user_id, amount}",
+      "out": "{message}",
+      "desc": "تخفیف دستی روی کل فاکتور حضوری (بعد از تخفیف‌های سطری اعمال می‌شود). amount=0 یعنی حذف تخفیف."
+    },
+    {
+      "method": "PATCH",
+      "path": "/backoffice/cart/update-status/:id",
+      "auth": "backoffice+ACL:UpdateCarts",
+      "in": "{cart_Id, status}",
+      "out": "{message}",
+      "desc": "تغییر وضعیت سبد"
+    }
   ],
-
   "order": [
-    { "method": "POST", "path": "/order/register", "auth": "user", "in": "{address_id, shipping_id, discount_code?}", "out": "{order}", "desc": "ثبت سفارش از سبد کاربر" },
-    { "method": "GET", "path": "/order/all", "auth": "backoffice", "in": "?page&filters", "out": "{orders[], pagination}", "desc": "لیست همه‌ی سفارش‌ها (ادمین)" },
-    { "method": "GET", "path": "/order/storefront/all", "auth": "user", "in": "?page", "out": "{orders[], pagination}", "desc": "سفارش‌های کاربر جاری" },
-    { "method": "GET", "path": "/order/storefront/user-order/statics", "auth": "user", "in": "-", "out": "{counts by status}", "desc": "آمار سفارش‌های کاربر" },
-    { "method": "PATCH", "path": "/order/update-status/:id", "auth": "backoffice+ACL:UpdateOrderStatus", "in": "{status}", "out": "{message}", "desc": "تغییر وضعیت سفارش" },
-    { "method": "POST", "path": "/backoffice/order/register", "auth": "backoffice+ACL:CreateOrder", "in": "{user_id, items[], ...}", "out": "{order}", "desc": "ثبت سفارش توسط ادمین" },
-    { "method": "POST", "path": "/backoffice/order/complete-order", "auth": "backoffice+ACL:CreateOrder", "in": "{order_id, payment_info}", "out": "{message}", "desc": "تکمیل/نهایی‌سازی سفارش توسط ادمین" },
-    { "method": "GET", "path": "/backoffice/order/check-pending-exist/:id", "auth": "backoffice+ACL:ViewOrderDetails", "in": "-", "out": "{exists}", "desc": "بررسی وجود سفارش در انتظار برای کاربر" }
+    {
+      "method": "POST",
+      "path": "/order/register",
+      "auth": "user",
+      "in": "{address_id, shipping_id, discount_code?}",
+      "out": "{order}",
+      "desc": "ثبت سفارش از سبد کاربر"
+    },
+    {
+      "method": "GET",
+      "path": "/order/all",
+      "auth": "backoffice",
+      "in": "?page&filters",
+      "out": "{orders[], pagination}",
+      "desc": "لیست همه‌ی سفارش‌ها (ادمین)"
+    },
+    {
+      "method": "GET",
+      "path": "/order/storefront/all",
+      "auth": "user",
+      "in": "?page",
+      "out": "{orders[], pagination}",
+      "desc": "سفارش‌های کاربر جاری"
+    },
+    {
+      "method": "GET",
+      "path": "/order/storefront/user-order/statics",
+      "auth": "user",
+      "in": "-",
+      "out": "{counts by status}",
+      "desc": "آمار سفارش‌های کاربر"
+    },
+    {
+      "method": "PATCH",
+      "path": "/order/update-status/:id",
+      "auth": "backoffice+ACL:UpdateOrderStatus",
+      "in": "{status}",
+      "out": "{message}",
+      "desc": "تغییر وضعیت سفارش"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/order/register",
+      "auth": "backoffice+ACL:CreateOrder",
+      "in": "{user_id, discount_code?, manual_discount_amount?}",
+      "out": "{order}",
+      "desc": "ثبت سفارش توسط ادمین — manual_discount_amount تخفیف دستی کل فاکتور است و اگر فرستاده شود جای مقدار ذخیره‌شده روی سبد را می‌گیرد."
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/order/complete-order",
+      "auth": "backoffice+ACL:CreateOrder",
+      "in": "{order_id, payment_info, payment_method?}",
+      "out": "{message}",
+      "desc": "تکمیل/نهایی‌سازی سفارش توسط ادمین — payment_method برای ثبت دریافت در صندوق"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/order/check-pending-exist/:id",
+      "auth": "backoffice+ACL:ViewOrderDetails",
+      "in": "-",
+      "out": "{exists}",
+      "desc": "بررسی وجود سفارش در انتظار برای کاربر"
+    }
   ],
-
   "payment": [
-    { "method": "POST", "path": "/payment/storefront/start", "auth": "user", "in": "{order_id}", "out": "{payment_url}", "desc": "شروع پرداخت (Zarinpal)" },
-    { "method": "POST", "path": "/payment/storefront/verify", "auth": "user", "in": "{authority, status}", "out": "{result}", "desc": "تأیید پرداخت" }
+    {
+      "method": "POST",
+      "path": "/payment/storefront/start",
+      "auth": "user",
+      "in": "{order_id}",
+      "out": "{payment_url}",
+      "desc": "شروع پرداخت (Zarinpal)"
+    },
+    {
+      "method": "POST",
+      "path": "/payment/storefront/verify",
+      "auth": "user",
+      "in": "{authority, status}",
+      "out": "{result}",
+      "desc": "تأیید پرداخت"
+    }
   ],
-
   "discount": [
-    { "method": "POST", "path": "/discount/create", "auth": "backoffice+ACL:CreateDiscount", "in": "{code, type, value, ...}", "out": "{message}", "desc": "ایجاد کد/قانون تخفیف" },
-    { "method": "GET", "path": "/discount/:id", "auth": "backoffice+ACL:ListDiscounts", "in": "-", "out": "{discount}", "desc": "جزئیات تخفیف" },
-    { "method": "GET", "path": "/discount", "auth": "backoffice+ACL:ListDiscounts", "in": "?page&filters", "out": "{discounts[], pagination}", "desc": "لیست تخفیف‌ها" },
-    { "method": "PATCH", "path": "/discount/:id", "auth": "backoffice+ACL:UpdateDiscount", "in": "{value?, expires_at?, ...}", "out": "{message}", "desc": "ویرایش تخفیف" }
+    {
+      "method": "POST",
+      "path": "/discount/create",
+      "auth": "backoffice+ACL:CreateDiscount",
+      "in": "{code, type, value, ...}",
+      "out": "{message}",
+      "desc": "ایجاد کد/قانون تخفیف"
+    },
+    {
+      "method": "GET",
+      "path": "/discount/:id",
+      "auth": "backoffice+ACL:ListDiscounts",
+      "in": "-",
+      "out": "{discount}",
+      "desc": "جزئیات تخفیف"
+    },
+    {
+      "method": "GET",
+      "path": "/discount",
+      "auth": "backoffice+ACL:ListDiscounts",
+      "in": "?page&filters",
+      "out": "{discounts[], pagination}",
+      "desc": "لیست تخفیف‌ها"
+    },
+    {
+      "method": "PATCH",
+      "path": "/discount/:id",
+      "auth": "backoffice+ACL:UpdateDiscount",
+      "in": "{value?, expires_at?, ...}",
+      "out": "{message}",
+      "desc": "ویرایش تخفیف"
+    }
   ],
-
   "shipping": [
-    { "method": "POST", "path": "/shipping/create", "auth": "backoffice+ACL:CreateBrand", "in": "{name, description, cost, is_active}", "out": "{message}", "desc": "ایجاد روش ارسال (cost=0 یعنی رایگان)" },
-    { "method": "GET", "path": "/shipping/:id", "auth": "backoffice+ACL:ListBrands", "in": "-", "out": "{shipping}", "desc": "جزئیات روش ارسال" },
-    { "method": "GET", "path": "/shipping", "auth": "backoffice+ACL:ListBrands", "in": "?is_active&page_number&page_size", "out": "{shipping[], pagination}", "desc": "لیست روش‌های ارسال (ادمین)" },
-    { "method": "PATCH", "path": "/shipping/:id", "auth": "backoffice+ACL:UpdateBrand", "in": "{name?, description?, cost?, is_active?}", "out": "{message}", "desc": "ویرایش روش ارسال (بدون DELETE؛ غیرفعال با is_active=false)" },
-    { "method": "GET", "path": "/shipping/storefront", "auth": "public", "in": "-", "out": "{shipping[]}", "desc": "لیست روش‌های ارسال فعال فروشگاه" }
+    {
+      "method": "POST",
+      "path": "/shipping/create",
+      "auth": "backoffice+ACL:CreateBrand",
+      "in": "{name, description, cost, is_active}",
+      "out": "{message}",
+      "desc": "ایجاد روش ارسال (cost=0 یعنی رایگان)"
+    },
+    {
+      "method": "GET",
+      "path": "/shipping/:id",
+      "auth": "backoffice+ACL:ListBrands",
+      "in": "-",
+      "out": "{shipping}",
+      "desc": "جزئیات روش ارسال"
+    },
+    {
+      "method": "GET",
+      "path": "/shipping",
+      "auth": "backoffice+ACL:ListBrands",
+      "in": "?is_active&page_number&page_size",
+      "out": "{shipping[], pagination}",
+      "desc": "لیست روش‌های ارسال (ادمین)"
+    },
+    {
+      "method": "PATCH",
+      "path": "/shipping/:id",
+      "auth": "backoffice+ACL:UpdateBrand",
+      "in": "{name?, description?, cost?, is_active?}",
+      "out": "{message}",
+      "desc": "ویرایش روش ارسال (بدون DELETE؛ غیرفعال با is_active=false)"
+    },
+    {
+      "method": "GET",
+      "path": "/shipping/storefront",
+      "auth": "public",
+      "in": "-",
+      "out": "{shipping[]}",
+      "desc": "لیست روش‌های ارسال فعال فروشگاه"
+    }
   ],
-
   "banner": [
-    { "method": "POST", "path": "/banner/create", "auth": "backoffice+ACL:UpdateSettings", "in": "{media_id, link, position, ...}", "out": "{message}", "desc": "ایجاد بنر" },
-    { "method": "DELETE", "path": "/banner/:id", "auth": "backoffice+ACL:UpdateSettings", "in": "-", "out": "{message}", "desc": "حذف بنر" },
-    { "method": "GET", "path": "/banner", "auth": "backoffice+ACL:UpdateSettings", "in": "?page", "out": "{banners[]}", "desc": "لیست بنرها (ادمین)" },
-    { "method": "PATCH", "path": "/banner/:id", "auth": "backoffice+ACL:UpdateSettings", "in": "{link?, position?, is_active?}", "out": "{message}", "desc": "ویرایش بنر" },
-    { "method": "GET", "path": "/banner/storefront", "auth": "public", "in": "-", "out": "{banners[]}", "desc": "بنرهای فعال فروشگاه" }
+    {
+      "method": "POST",
+      "path": "/banner/create",
+      "auth": "backoffice+ACL:UpdateSettings",
+      "in": "{media_id, link, position, ...}",
+      "out": "{message}",
+      "desc": "ایجاد بنر"
+    },
+    {
+      "method": "DELETE",
+      "path": "/banner/:id",
+      "auth": "backoffice+ACL:UpdateSettings",
+      "in": "-",
+      "out": "{message}",
+      "desc": "حذف بنر"
+    },
+    {
+      "method": "GET",
+      "path": "/banner",
+      "auth": "backoffice+ACL:UpdateSettings",
+      "in": "?page",
+      "out": "{banners[]}",
+      "desc": "لیست بنرها (ادمین)"
+    },
+    {
+      "method": "PATCH",
+      "path": "/banner/:id",
+      "auth": "backoffice+ACL:UpdateSettings",
+      "in": "{link?, position?, is_active?}",
+      "out": "{message}",
+      "desc": "ویرایش بنر"
+    },
+    {
+      "method": "GET",
+      "path": "/banner/storefront",
+      "auth": "public",
+      "in": "-",
+      "out": "{banners[]}",
+      "desc": "بنرهای فعال فروشگاه"
+    }
   ],
-
   "article": [
-    { "method": "POST", "path": "/article/create", "auth": "backoffice+ACL:CreateArticle", "in": "{title, body, ...}", "out": "{message}", "desc": "ایجاد مقاله" },
-    { "method": "GET", "path": "/article/:id", "auth": "backoffice+ACL:ViewArticle", "in": "-", "out": "{article}", "desc": "جزئیات مقاله (ادمین)" },
-    { "method": "GET", "path": "/article", "auth": "backoffice+ACL:ListArticles", "in": "?page", "out": "{articles[], pagination}", "desc": "لیست مقالات (ادمین)" },
-    { "method": "PATCH", "path": "/article/:id", "auth": "backoffice+ACL:UpdateArticle", "in": "{title?, body?}", "out": "{message}", "desc": "ویرایش مقاله" },
-    { "method": "DELETE", "path": "/article/:id", "auth": "backoffice+ACL:DeleteArticle", "in": "-", "out": "{message}", "desc": "حذف مقاله" },
-    { "method": "GET", "path": "/article/storefront", "auth": "public", "in": "?page", "out": "{articles[], pagination}", "desc": "لیست مقالات فروشگاه" },
-    { "method": "GET", "path": "/article/storefront/get-by-slug/:slug", "auth": "public", "in": "-", "out": "{article}", "desc": "مقاله با slug" },
-    { "method": "GET", "path": "/article/storefront/:id", "auth": "public", "in": "-", "out": "{article}", "desc": "مقاله با id" }
+    {
+      "method": "POST",
+      "path": "/article/create",
+      "auth": "backoffice+ACL:CreateArticle",
+      "in": "{title, body, ...}",
+      "out": "{message}",
+      "desc": "ایجاد مقاله"
+    },
+    {
+      "method": "GET",
+      "path": "/article/:id",
+      "auth": "backoffice+ACL:ViewArticle",
+      "in": "-",
+      "out": "{article}",
+      "desc": "جزئیات مقاله (ادمین)"
+    },
+    {
+      "method": "GET",
+      "path": "/article",
+      "auth": "backoffice+ACL:ListArticles",
+      "in": "?page_number&page_size&title&sort|order=desc|asc (پیش‌فرض desc بر اساس created_at)",
+      "out": "{articles[], pagination}",
+      "desc": "لیست مقالات (ادمین)"
+    },
+    {
+      "method": "PATCH",
+      "path": "/article/:id",
+      "auth": "backoffice+ACL:UpdateArticle",
+      "in": "{title?, body?}",
+      "out": "{message}",
+      "desc": "ویرایش مقاله"
+    },
+    {
+      "method": "DELETE",
+      "path": "/article/:id",
+      "auth": "backoffice+ACL:DeleteArticle",
+      "in": "-",
+      "out": "{message}",
+      "desc": "حذف مقاله"
+    },
+    {
+      "method": "GET",
+      "path": "/article/storefront",
+      "auth": "public",
+      "in": "?page_number&page_size&title&sort|order=desc|asc (پیش‌فرض desc بر اساس created_at)",
+      "out": "{articles[], pagination}",
+      "desc": "لیست مقالات فروشگاه"
+    },
+    {
+      "method": "GET",
+      "path": "/article/storefront/get-by-slug/:slug",
+      "auth": "public",
+      "in": "-",
+      "out": "{article}",
+      "desc": "مقاله با slug"
+    },
+    {
+      "method": "GET",
+      "path": "/article/storefront/:id",
+      "auth": "public",
+      "in": "-",
+      "out": "{article}",
+      "desc": "مقاله با id"
+    }
   ],
-
   "comment": [
-    { "method": "POST", "path": "/comment/add", "auth": "user", "in": "{commentable_type, commentable_id, body}", "out": "{message}", "desc": "ثبت نظر توسط کاربر" },
-    { "method": "POST", "path": "/comment/backoffice/add", "auth": "backoffice", "in": "{commentable_type, commentable_id, body}", "out": "{message}", "desc": "ثبت نظر توسط ادمین" },
-    { "method": "POST", "path": "/comment/update/:id", "auth": "backoffice+ACL:UpdateComment", "in": "{status?, body?}", "out": "{message}", "desc": "ویرایش/تأیید نظر" },
-    { "method": "GET", "path": "/comment", "auth": "backoffice+ACL:ListComment", "in": "?page&filters", "out": "{comments[], pagination}", "desc": "لیست نظرات (ادمین)" },
-    { "method": "GET", "path": "/comment/storefront/:commentabletype/:commentableid", "auth": "public", "in": "?page", "out": "{comments[], pagination}", "desc": "نظرات یک موجودیت در فروشگاه" }
+    {
+      "method": "POST",
+      "path": "/comment/add",
+      "auth": "user",
+      "in": "{commentable_type, commentable_id, body}",
+      "out": "{message}",
+      "desc": "ثبت نظر توسط کاربر"
+    },
+    {
+      "method": "POST",
+      "path": "/comment/backoffice/add",
+      "auth": "backoffice",
+      "in": "{commentable_type, commentable_id, body}",
+      "out": "{message}",
+      "desc": "ثبت نظر توسط ادمین"
+    },
+    {
+      "method": "POST",
+      "path": "/comment/update/:id",
+      "auth": "backoffice+ACL:UpdateComment",
+      "in": "{status?, body?}",
+      "out": "{message}",
+      "desc": "ویرایش/تأیید نظر"
+    },
+    {
+      "method": "GET",
+      "path": "/comment",
+      "auth": "backoffice+ACL:ListComment",
+      "in": "?page&filters",
+      "out": "{comments[], pagination}",
+      "desc": "لیست نظرات (ادمین)"
+    },
+    {
+      "method": "GET",
+      "path": "/comment/storefront/:commentabletype/:commentableid",
+      "auth": "public",
+      "in": "?page",
+      "out": "{comments[], pagination}",
+      "desc": "نظرات یک موجودیت در فروشگاه"
+    }
   ],
-
   "rating": [
-    { "method": "POST", "path": "/rating/storefront/upsert", "auth": "user", "in": "{rateable_type, rateable_id, score}", "out": "{message}", "desc": "ثبت/به‌روزرسانی امتیاز" }
+    {
+      "method": "POST",
+      "path": "/rating/storefront/upsert",
+      "auth": "user",
+      "in": "{rateable_type, rateable_id, score}",
+      "out": "{message}",
+      "desc": "ثبت/به‌روزرسانی امتیاز"
+    }
   ],
-
   "sell": [
-    { "method": "POST", "path": "/sell/storefront/add", "auth": "user", "in": "{device, description, ...}", "out": "{message}", "desc": "ثبت درخواست فروش دستگاه" },
-    { "method": "GET", "path": "/sell/storefront/my-sell", "auth": "user", "in": "?page", "out": "{sells[], pagination}", "desc": "درخواست‌های فروش کاربر" },
-    { "method": "GET", "path": "/sell/storefront/user-sell/statics", "auth": "user", "in": "-", "out": "{counts by status}", "desc": "آمار درخواست‌های فروش کاربر" },
-    { "method": "GET", "path": "/sell/backoffice/:id", "auth": "backoffice+ACL:UpdateProduct", "in": "-", "out": "{sell}", "desc": "جزئیات درخواست فروش (ادمین)" },
-    { "method": "PATCH", "path": "/sell/backoffice/:id", "auth": "backoffice+ACL:UpdateProduct", "in": "{status?, price?, ...}", "out": "{message}", "desc": "ویرایش درخواست فروش" },
-    { "method": "GET", "path": "/sell/backoffice", "auth": "backoffice+ACL:ListProducts", "in": "?page&filters", "out": "{sells[], pagination}", "desc": "لیست درخواست‌های فروش (ادمین)" }
+    {
+      "method": "POST",
+      "path": "/sell/storefront/add",
+      "auth": "user",
+      "in": "{device, description, ...}",
+      "out": "{message}",
+      "desc": "ثبت درخواست فروش دستگاه"
+    },
+    {
+      "method": "GET",
+      "path": "/sell/storefront/my-sell",
+      "auth": "user",
+      "in": "?page",
+      "out": "{sells[], pagination}",
+      "desc": "درخواست‌های فروش کاربر"
+    },
+    {
+      "method": "GET",
+      "path": "/sell/storefront/user-sell/statics",
+      "auth": "user",
+      "in": "-",
+      "out": "{counts by status}",
+      "desc": "آمار درخواست‌های فروش کاربر"
+    },
+    {
+      "method": "GET",
+      "path": "/sell/backoffice/:id",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "-",
+      "out": "{sell}",
+      "desc": "جزئیات درخواست فروش (ادمین)"
+    },
+    {
+      "method": "PATCH",
+      "path": "/sell/backoffice/:id",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "{status?, price?, ...}",
+      "out": "{message}",
+      "desc": "ویرایش درخواست فروش"
+    },
+    {
+      "method": "GET",
+      "path": "/sell/backoffice",
+      "auth": "backoffice+ACL:ListProducts",
+      "in": "?page&filters",
+      "out": "{sells[], pagination}",
+      "desc": "لیست درخواست‌های فروش (ادمین)"
+    }
   ],
-
   "repair": [
-    { "method": "POST", "path": "/repair/storefront/add", "auth": "user", "in": "{device, problem, ...}", "out": "{message}", "desc": "ثبت درخواست تعمیر" },
-    { "method": "GET", "path": "/repair/storefront/my-repair", "auth": "user", "in": "?page", "out": "{repairs[], pagination}", "desc": "درخواست‌های تعمیر کاربر" },
-    { "method": "GET", "path": "/repair/storefront/user-repair/statics", "auth": "user", "in": "-", "out": "{counts by status}", "desc": "آمار درخواست‌های تعمیر کاربر" },
-    { "method": "GET", "path": "/repair/backoffice/:id", "auth": "backoffice+ACL:UpdateProduct", "in": "-", "out": "{repair}", "desc": "جزئیات درخواست تعمیر (ادمین)" },
-    { "method": "PATCH", "path": "/repair/backoffice/:id", "auth": "backoffice+ACL:UpdateProduct", "in": "{status?, price?, ...}", "out": "{message}", "desc": "ویرایش درخواست تعمیر" },
-    { "method": "GET", "path": "/repair/backoffice", "auth": "backoffice+ACL:ListProducts", "in": "?page&filters", "out": "{repairs[], pagination}", "desc": "لیست درخواست‌های تعمیر (ادمین)" }
+    {
+      "method": "POST",
+      "path": "/repair/storefront/add",
+      "auth": "user",
+      "in": "{device, problem, ...}",
+      "out": "{message}",
+      "desc": "ثبت درخواست تعمیر"
+    },
+    {
+      "method": "GET",
+      "path": "/repair/storefront/my-repair",
+      "auth": "user",
+      "in": "?page",
+      "out": "{repairs[], pagination}",
+      "desc": "درخواست‌های تعمیر کاربر"
+    },
+    {
+      "method": "GET",
+      "path": "/repair/storefront/user-repair/statics",
+      "auth": "user",
+      "in": "-",
+      "out": "{counts by status}",
+      "desc": "آمار درخواست‌های تعمیر کاربر"
+    },
+    {
+      "method": "GET",
+      "path": "/repair/backoffice/:id",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "-",
+      "out": "{repair}",
+      "desc": "جزئیات درخواست تعمیر (ادمین)"
+    },
+    {
+      "method": "PATCH",
+      "path": "/repair/backoffice/:id",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "{status?, price?, ...}",
+      "out": "{message}",
+      "desc": "ویرایش درخواست تعمیر"
+    },
+    {
+      "method": "GET",
+      "path": "/repair/backoffice",
+      "auth": "backoffice+ACL:ListProducts",
+      "in": "?page&filters",
+      "out": "{repairs[], pagination}",
+      "desc": "لیست درخواست‌های تعمیر (ادمین)"
+    }
   ],
-
   "contactus": [
-    { "method": "POST", "path": "/contact-us/storefront", "auth": "public", "in": "{name, phone, message}", "out": "{message}", "desc": "ثبت پیام تماس با ما" },
-    { "method": "GET", "path": "/contact-us/backoffice", "auth": "public", "in": "?page", "out": "{messages[], pagination}", "desc": "لیست پیام‌های تماس با ما" }
+    {
+      "method": "POST",
+      "path": "/contact-us/storefront",
+      "auth": "public",
+      "in": "{name, phone, message}",
+      "out": "{message}",
+      "desc": "ثبت پیام تماس با ما"
+    },
+    {
+      "method": "GET",
+      "path": "/contact-us/backoffice",
+      "auth": "public",
+      "in": "?page",
+      "out": "{messages[], pagination}",
+      "desc": "لیست پیام‌های تماس با ما"
+    }
   ],
-
   "media": [
-    { "method": "POST", "path": "/media/upload", "auth": "backoffice", "in": "multipart file", "out": "{media_id, url}", "desc": "آپلود فایل (ادمین)" },
-    { "method": "POST", "path": "/media/storefront/upload", "auth": "user", "in": "multipart file", "out": "{media_id, url}", "desc": "آپلود فایل (کاربر)" },
-    { "method": "GET", "path": "/media/get-url/:id", "auth": "public", "in": "-", "out": "{url}", "desc": "دریافت URL فایل با id" }
+    {
+      "method": "POST",
+      "path": "/media/upload",
+      "auth": "backoffice",
+      "in": "multipart file",
+      "out": "{media_id, url}",
+      "desc": "آپلود فایل (ادمین)"
+    },
+    {
+      "method": "POST",
+      "path": "/media/storefront/upload",
+      "auth": "user",
+      "in": "multipart file",
+      "out": "{media_id, url}",
+      "desc": "آپلود فایل (کاربر)"
+    },
+    {
+      "method": "GET",
+      "path": "/media/get-url/:id",
+      "auth": "public",
+      "in": "-",
+      "out": "{url}",
+      "desc": "دریافت URL فایل با id"
+    }
   ],
-
   "search": [
-    { "method": "GET", "path": "/search/storefront", "auth": "public", "in": "?q", "out": "{products[], articles[]}", "desc": "جستجوی محصولات و مقالات" }
+    {
+      "method": "GET",
+      "path": "/search/storefront",
+      "auth": "public",
+      "in": "?q",
+      "out": "{products[], articles[]}",
+      "desc": "جستجوی محصولات و مقالات"
+    }
   ],
-
   "referral": [
-    { "method": "GET", "path": "/referral/me/link", "auth": "user", "in": "-", "out": "{link, code}", "desc": "لینک دعوت کاربر جاری" },
-    { "method": "POST", "path": "/referral/invite", "auth": "user", "in": "{phone_number}", "out": "{message}", "desc": "دعوت با شماره تلفن" },
-    { "method": "GET", "path": "/referral/me/referrals", "auth": "user", "in": "?page", "out": "{referrals[], pagination}", "desc": "لیست دعوت‌شده‌های کاربر" },
-    { "method": "GET", "path": "/referral/me/rewards", "auth": "user", "in": "?page", "out": "{rewards[], pagination}", "desc": "پاداش‌های دعوت کاربر" },
-    { "method": "GET", "path": "/backoffice/referral/stats", "auth": "backoffice+ACL:ListReferrals", "in": "-", "out": "{stats}", "desc": "آمار کلی برنامه دعوت" },
-    { "method": "GET", "path": "/backoffice/referral/settings", "auth": "backoffice+ACL:ListReferrals", "in": "-", "out": "{settings}", "desc": "تنظیمات برنامه دعوت" },
-    { "method": "PUT", "path": "/backoffice/referral/settings", "auth": "backoffice+ACL:ManageReferral", "in": "{reward_every, reward_value, ...}", "out": "{message}", "desc": "ویرایش تنظیمات برنامه دعوت" },
-    { "method": "GET", "path": "/backoffice/referral", "auth": "backoffice+ACL:ListReferrals", "in": "?page&filters", "out": "{referrals[], pagination}", "desc": "لیست همه‌ی دعوت‌ها (ادمین)" },
-    { "method": "GET", "path": "/backoffice/referral/:userID", "auth": "backoffice+ACL:ViewReferral", "in": "-", "out": "{referral detail}", "desc": "جزئیات دعوت‌های یک کاربر" }
+    {
+      "method": "GET",
+      "path": "/referral/me/link",
+      "auth": "user",
+      "in": "-",
+      "out": "{link, code}",
+      "desc": "لینک دعوت کاربر جاری"
+    },
+    {
+      "method": "POST",
+      "path": "/referral/invite",
+      "auth": "user",
+      "in": "{phone_number}",
+      "out": "{message}",
+      "desc": "دعوت با شماره تلفن"
+    },
+    {
+      "method": "GET",
+      "path": "/referral/me/referrals",
+      "auth": "user",
+      "in": "?page",
+      "out": "{referrals[], pagination}",
+      "desc": "لیست دعوت‌شده‌های کاربر"
+    },
+    {
+      "method": "GET",
+      "path": "/referral/me/rewards",
+      "auth": "user",
+      "in": "?page",
+      "out": "{rewards[], pagination}",
+      "desc": "پاداش‌های دعوت کاربر"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/referral/stats",
+      "auth": "backoffice+ACL:ListReferrals",
+      "in": "-",
+      "out": "{stats}",
+      "desc": "آمار کلی برنامه دعوت"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/referral/settings",
+      "auth": "backoffice+ACL:ListReferrals",
+      "in": "-",
+      "out": "{settings}",
+      "desc": "تنظیمات برنامه دعوت"
+    },
+    {
+      "method": "PUT",
+      "path": "/backoffice/referral/settings",
+      "auth": "backoffice+ACL:ManageReferral",
+      "in": "{reward_every, reward_value, ...}",
+      "out": "{message}",
+      "desc": "ویرایش تنظیمات برنامه دعوت"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/referral",
+      "auth": "backoffice+ACL:ListReferrals",
+      "in": "?page&filters",
+      "out": "{referrals[], pagination}",
+      "desc": "لیست همه‌ی دعوت‌ها (ادمین)"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/referral/:userID",
+      "auth": "backoffice+ACL:ViewReferral",
+      "in": "-",
+      "out": "{referral detail}",
+      "desc": "جزئیات دعوت‌های یک کاربر"
+    }
   ],
-
   "partner": [
-    { "method": "POST", "path": "/partner/apply", "auth": "user", "in": "{shop_name, docs, ...}", "out": "{message}", "desc": "درخواست عضویت به‌عنوان همکار" },
-    { "method": "GET", "path": "/partner/me", "auth": "user", "in": "-", "out": "{partner status}", "desc": "وضعیت درخواست همکاری کاربر" },
-    { "method": "GET", "path": "/backoffice/partner-shop/me", "auth": "backoffice+ACL:PartnerShopAccess", "in": "-", "out": "{shop profile}", "desc": "پروفایل فروشگاه همکار" },
-    { "method": "GET", "path": "/backoffice/partner-shop/products", "auth": "backoffice+ACL:PartnerShopAccess", "in": "?page&filters", "out": "{products[], pagination}", "desc": "کاتالوگ محصولات با قیمت همکار" },
-    { "method": "GET", "path": "/backoffice/partner-shop/my-orders", "auth": "backoffice+ACL:PartnerShopAccess", "in": "?page", "out": "{orders[], pagination}", "desc": "سفارش‌های همکار" },
-    { "method": "GET", "path": "/backoffice/partner-shop/cart", "auth": "backoffice+ACL:PartnerShopAccess", "in": "-", "out": "{cart}", "desc": "سبد خرید همکار" },
-    { "method": "POST", "path": "/backoffice/partner-shop/cart/items", "auth": "backoffice+ACL:PartnerShopOrder", "in": "{variant_id, quantity}", "out": "{cart}", "desc": "افزودن به سبد همکار" },
-    { "method": "DELETE", "path": "/backoffice/partner-shop/cart/items", "auth": "backoffice+ACL:PartnerShopOrder", "in": "{variant_id}", "out": "{cart}", "desc": "حذف از سبد همکار" },
-    { "method": "POST", "path": "/backoffice/partner-shop/checkout", "auth": "backoffice+ACL:PartnerShopOrder", "in": "{payment_method, ...}", "out": "{order}", "desc": "ثبت سفارش همکار" },
-    { "method": "POST", "path": "/backoffice/partner-shop/payment/verify", "auth": "backoffice+ACL:PartnerShopOrder", "in": "{authority, status}", "out": "{result}", "desc": "تأیید پرداخت سفارش همکار" },
-    { "method": "GET", "path": "/backoffice/partner", "auth": "backoffice+ACL:ListPartners", "in": "?page&filters", "out": "{partners[], pagination}", "desc": "لیست همکاران (مدیریت)" },
-    { "method": "GET", "path": "/backoffice/partner/:id", "auth": "backoffice+ACL:ViewPartner", "in": "-", "out": "{partner}", "desc": "جزئیات همکار" },
-    { "method": "POST", "path": "/backoffice/partner/:id/approve", "auth": "backoffice+ACL:ApprovePartner", "in": "-", "out": "{message}", "desc": "تأیید همکار" },
-    { "method": "POST", "path": "/backoffice/partner/:id/reject", "auth": "backoffice+ACL:RejectPartner", "in": "{reason?}", "out": "{message}", "desc": "رد درخواست همکار" },
-    { "method": "POST", "path": "/backoffice/partner/:id/suspend", "auth": "backoffice+ACL:SuspendPartner", "in": "{reason?}", "out": "{message}", "desc": "تعلیق همکار" },
-    { "method": "POST", "path": "/backoffice/partner/:id/unsuspend", "auth": "backoffice+ACL:SuspendPartner", "in": "-", "out": "{message}", "desc": "رفع تعلیق همکار" },
-    { "method": "PATCH", "path": "/backoffice/partner/:id/pricing", "auth": "backoffice+ACL:UpdatePartnerPricing", "in": "{pricing rules}", "out": "{message}", "desc": "تنظیم قیمت‌گذاری همکار" },
-    { "method": "GET", "path": "/backoffice/partner-product", "auth": "backoffice+ACL:ListPartners", "in": "?page&filters", "out": "{products[], pagination}", "desc": "لیست پیکربندی محصولات همکار" },
-    { "method": "PATCH", "path": "/backoffice/partner-product/:id/config", "auth": "backoffice+ACL:UpdatePartnerPricing", "in": "{eligible?, margin?, ...}", "out": "{message}", "desc": "تنظیم پیکربندی یک محصول برای همکار" },
-    { "method": "POST", "path": "/backoffice/partner-product/bulk-eligible", "auth": "backoffice+ACL:UpdatePartnerPricing", "in": "{product_ids[], eligible}", "out": "{message}", "desc": "تعیین گروهی واجد شرایط بودن محصولات" },
-    { "method": "GET", "path": "/backoffice/partner-order", "auth": "backoffice+ACL:ListPartners", "in": "?page&filters", "out": "{orders[], pagination}", "desc": "لیست سفارش‌های همکاران" },
-    { "method": "POST", "path": "/backoffice/partner-order/:id/in-person-payment", "auth": "backoffice+ACL:RecordPartnerHandover", "in": "{amount, ...}", "out": "{message}", "desc": "ثبت پرداخت حضوری سفارش همکار" },
-    { "method": "POST", "path": "/backoffice/partner-order/:id/handover", "auth": "backoffice+ACL:RecordPartnerHandover", "in": "{notes?}", "out": "{message}", "desc": "ثبت تحویل سفارش به همکار" }
+    {
+      "method": "POST",
+      "path": "/partner/apply",
+      "auth": "user",
+      "in": "{shop_name, docs, ...}",
+      "out": "{message}",
+      "desc": "درخواست عضویت به‌عنوان همکار"
+    },
+    {
+      "method": "GET",
+      "path": "/partner/me",
+      "auth": "user",
+      "in": "-",
+      "out": "{partner status}",
+      "desc": "وضعیت درخواست همکاری کاربر"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/partner-shop/me",
+      "auth": "backoffice+ACL:PartnerShopAccess",
+      "in": "-",
+      "out": "{shop profile}",
+      "desc": "پروفایل فروشگاه همکار"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/partner-shop/products",
+      "auth": "backoffice+ACL:PartnerShopAccess",
+      "in": "?page&filters",
+      "out": "{products[], pagination}",
+      "desc": "کاتالوگ محصولات با قیمت همکار"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/partner-shop/my-orders",
+      "auth": "backoffice+ACL:PartnerShopAccess",
+      "in": "?page",
+      "out": "{orders[], pagination}",
+      "desc": "سفارش‌های همکار"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/partner-shop/cart",
+      "auth": "backoffice+ACL:PartnerShopAccess",
+      "in": "-",
+      "out": "{cart}",
+      "desc": "سبد خرید همکار"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/partner-shop/cart/items",
+      "auth": "backoffice+ACL:PartnerShopOrder",
+      "in": "{variant_id, quantity}",
+      "out": "{cart}",
+      "desc": "افزودن به سبد همکار"
+    },
+    {
+      "method": "DELETE",
+      "path": "/backoffice/partner-shop/cart/items",
+      "auth": "backoffice+ACL:PartnerShopOrder",
+      "in": "{variant_id}",
+      "out": "{cart}",
+      "desc": "حذف از سبد همکار"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/partner-shop/checkout",
+      "auth": "backoffice+ACL:PartnerShopOrder",
+      "in": "{payment_method, ...}",
+      "out": "{order}",
+      "desc": "ثبت سفارش همکار"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/partner-shop/payment/verify",
+      "auth": "backoffice+ACL:PartnerShopOrder",
+      "in": "{authority, status}",
+      "out": "{result}",
+      "desc": "تأیید پرداخت سفارش همکار"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/partner",
+      "auth": "backoffice+ACL:ListPartners",
+      "in": "?page&filters",
+      "out": "{partners[], pagination}",
+      "desc": "لیست همکاران (مدیریت)"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/partner/:id",
+      "auth": "backoffice+ACL:ViewPartner",
+      "in": "-",
+      "out": "{partner}",
+      "desc": "جزئیات همکار"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/partner/:id/approve",
+      "auth": "backoffice+ACL:ApprovePartner",
+      "in": "-",
+      "out": "{message}",
+      "desc": "تأیید همکار"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/partner/:id/reject",
+      "auth": "backoffice+ACL:RejectPartner",
+      "in": "{reason?}",
+      "out": "{message}",
+      "desc": "رد درخواست همکار"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/partner/:id/suspend",
+      "auth": "backoffice+ACL:SuspendPartner",
+      "in": "{reason?}",
+      "out": "{message}",
+      "desc": "تعلیق همکار"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/partner/:id/unsuspend",
+      "auth": "backoffice+ACL:SuspendPartner",
+      "in": "-",
+      "out": "{message}",
+      "desc": "رفع تعلیق همکار"
+    },
+    {
+      "method": "PATCH",
+      "path": "/backoffice/partner/:id/pricing",
+      "auth": "backoffice+ACL:UpdatePartnerPricing",
+      "in": "{pricing rules}",
+      "out": "{message}",
+      "desc": "تنظیم قیمت‌گذاری همکار"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/partner-product",
+      "auth": "backoffice+ACL:ListPartners",
+      "in": "?page&filters",
+      "out": "{products[], pagination}",
+      "desc": "لیست پیکربندی محصولات همکار"
+    },
+    {
+      "method": "PATCH",
+      "path": "/backoffice/partner-product/:id/config",
+      "auth": "backoffice+ACL:UpdatePartnerPricing",
+      "in": "{eligible?, margin?, ...}",
+      "out": "{message}",
+      "desc": "تنظیم پیکربندی یک محصول برای همکار"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/partner-product/bulk-eligible",
+      "auth": "backoffice+ACL:UpdatePartnerPricing",
+      "in": "{product_ids[], eligible}",
+      "out": "{message}",
+      "desc": "تعیین گروهی واجد شرایط بودن محصولات"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/partner-order",
+      "auth": "backoffice+ACL:ListPartners",
+      "in": "?page&filters",
+      "out": "{orders[], pagination}",
+      "desc": "لیست سفارش‌های همکاران"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/partner-order/:id/in-person-payment",
+      "auth": "backoffice+ACL:RecordPartnerHandover",
+      "in": "{amount, ...}",
+      "out": "{message}",
+      "desc": "ثبت پرداخت حضوری سفارش همکار"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/partner-order/:id/handover",
+      "auth": "backoffice+ACL:RecordPartnerHandover",
+      "in": "{notes?}",
+      "out": "{message}",
+      "desc": "ثبت تحویل سفارش به همکار"
+    }
+  ],
+  "supplier": [
+    {
+      "method": "GET",
+      "path": "/backoffice/supplier",
+      "auth": "backoffice+ACL:ListSuppliers",
+      "in": "?search&is_active&page_number&page_size",
+      "out": "{suppliers[], pagination}",
+      "desc": "لیست تأمین‌کنندگان (مغازه/شخصی که ازش جنس می‌خریم)"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/supplier/:id",
+      "auth": "backoffice+ACL:ViewSupplier",
+      "in": "-",
+      "out": "{supplier}",
+      "desc": "جزئیات یک تأمین‌کننده"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/supplier",
+      "auth": "backoffice+ACL:CreateSupplier",
+      "in": "{name, shop_name, phone_number, address, note}",
+      "out": "{supplier}",
+      "desc": "ثبت تأمین‌کننده جدید"
+    },
+    {
+      "method": "PATCH",
+      "path": "/backoffice/supplier/:id",
+      "auth": "backoffice+ACL:UpdateSupplier",
+      "in": "{name?, shop_name?, phone_number?, address?, note?, is_active?}",
+      "out": "{supplier}",
+      "desc": "ویرایش تأمین‌کننده"
+    },
+    {
+      "method": "DELETE",
+      "path": "/backoffice/supplier/:id",
+      "auth": "backoffice+ACL:DeleteSupplier",
+      "in": "-",
+      "out": "-",
+      "desc": "حذف نرم تأمین‌کننده (تاریخچه فاکتورها حفظ می‌شود)"
+    }
+  ],
+  "purchase": [
+    {
+      "method": "GET",
+      "path": "/backoffice/purchase",
+      "auth": "backoffice+ACL:ListPurchases",
+      "in": "?supplier_id&status&payment_state&order_id&from&to&page_number&page_size",
+      "out": "{purchases[], pagination}",
+      "desc": "لیست فاکتورهای خرید"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/purchase/:id",
+      "auth": "backoffice+ACL:ViewPurchase",
+      "in": "-",
+      "out": "{purchase}",
+      "desc": "جزئیات فاکتور خرید"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/purchase",
+      "auth": "backoffice+ACL:CreatePurchase",
+      "in": "{supplier_id, invoice_number?, items[{product_id, variant_id, quantity, unit_cost, add_to_stock?}], paid_amount?, note?, order_id?, purchased_at?, confirm?}",
+      "out": "{purchase}",
+      "desc": "ثبت فاکتور خرید؛ با confirm=true بلافاصله وارد انبار و دفتر حسابداری می‌شود"
+    },
+    {
+      "method": "PATCH",
+      "path": "/backoffice/purchase/:id",
+      "auth": "backoffice+ACL:UpdatePurchase",
+      "in": "{supplier_id?, invoice_number?, items?, paid_amount?, note?, purchased_at?}",
+      "out": "{purchase}",
+      "desc": "ویرایش فاکتور خرید — فقط در وضعیت draft"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/purchase/:id/confirm",
+      "auth": "backoffice+ACL:ConfirmPurchase",
+      "in": "-",
+      "out": "{purchase}",
+      "desc": "تأیید فاکتور: ورود کالا به انبار و به‌روزرسانی میانگین موزون قیمت خرید"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/purchase/:id/cancel",
+      "auth": "backoffice+ACL:CancelPurchase",
+      "in": "-",
+      "out": "{purchase}",
+      "desc": "لغو فاکتور؛ اگر تأیید شده بود اثر انباری‌اش برگشت می‌خورد"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/purchase/:id/payment",
+      "auth": "backoffice+ACL:UpdatePurchase",
+      "in": "{paid_amount, payment_method?(cash|card|gateway|transfer|credit|other)}",
+      "out": "{purchase}",
+      "desc": "ثبت مبلغ پرداخت‌شده به تأمین‌کننده (تجمعی)؛ فقط مابه‌التفاوت جدید در صندوق ثبت می‌شود"
+    }
+  ],
+  "inventory": [
+    {
+      "method": "GET",
+      "path": "/backoffice/inventory/movements",
+      "auth": "backoffice+ACL:ViewInventory",
+      "in": "?product_id&variant_id&supplier_id&type&ref_type&ref_id&from&to&page_number&page_size",
+      "out": "{movements[], pagination}",
+      "desc": "دفتر حرکت کالا (purchase_in, sale_out, return_in, adjustment, external_supply, service_sale)"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/inventory/stock",
+      "auth": "backoffice+ACL:ViewInventoryReport",
+      "in": "?low_stock=true&threshold&page_number&page_size&format=csv",
+      "out": "{rows[], total_stock_value, total_units, pagination}",
+      "desc": "موجودی فعلی انبار و ارزش ریالی آن به قیمت تمام‌شده"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/inventory/adjust",
+      "auth": "backoffice+ACL:AdjustInventory",
+      "in": "{product_id, variant_id, quantity(+/-), unit_cost?, note?}",
+      "out": "{movement}",
+      "desc": "اصلاح دستی موجودی (انبارگردانی)"
+    },
+    {
+      "method": "PATCH",
+      "path": "/backoffice/inventory/stock-config",
+      "auth": "backoffice+ACL:UpdateStockConfig",
+      "in": "{product_id, variant_id, stock_mode?, allow_backorder?, backorder_limit?, supplier_id?, supply_cost?, avg_cost?}",
+      "out": "-",
+      "desc": "تنظیم حالت موجودی واریانت: tracked / on_demand / none، تأمین‌کننده پیش‌فرض و قیمت خرید"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/report/profit",
+      "auth": "backoffice+ACL:ViewProfitReport",
+      "in": "?from&to&group_by=day|product|supplier&format=csv",
+      "out": "{summary, rows[]}",
+      "desc": "گزارش سود ناخالص فروش: فروش، قیمت تمام‌شده و سود؛ با format=csv خروجی اکسل می‌دهد"
+    }
+  ],
+  "expense": [
+    {
+      "method": "GET",
+      "path": "/backoffice/expense",
+      "auth": "backoffice+ACL:ListExpenses",
+      "in": "?category&supplier_id&is_paid&search&from&to&page_number&page_size&format=csv",
+      "out": "{expenses[], total_amount, pagination}",
+      "desc": "لیست هزینه‌های عملیاتی؛ total_amount جمع کل فیلتر است نه صفحه. format=csv خروجی اکسل"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/expense/:id",
+      "auth": "backoffice+ACL:ViewExpense",
+      "in": "-",
+      "out": "{expense}",
+      "desc": "جزئیات یک هزینه"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/expense",
+      "auth": "backoffice+ACL:CreateExpense",
+      "in": "{title, category(rent|salary|utilities|shipping|marketing|tax|fee|supplies|repair|other), amount, supplier_id?, payment_method?(cash|card|gateway|transfer|credit|other), is_paid?(default true), spent_at?, note?, attachment?}",
+      "out": "{expense}",
+      "desc": "ثبت هزینه؛ اگر is_paid باشد یک تراکنش خروج خودکار در صندوق ثبت می‌شود"
+    },
+    {
+      "method": "PATCH",
+      "path": "/backoffice/expense/:id",
+      "auth": "backoffice+ACL:UpdateExpense",
+      "in": "{title?, category?, amount?, supplier_id?, payment_method?, is_paid?, spent_at?, note?, attachment?}",
+      "out": "{expense}",
+      "desc": "ویرایش هزینه؛ فقط گذار پرداخت‌نشده→پرداخت‌شده تراکنش صندوق می‌سازد"
+    },
+    {
+      "method": "DELETE",
+      "path": "/backoffice/expense/:id",
+      "auth": "backoffice+ACL:DeleteExpense",
+      "in": "-",
+      "out": "-",
+      "desc": "حذف نرم هزینه"
+    }
+  ],
+  "cash": [
+    {
+      "method": "GET",
+      "path": "/backoffice/cash",
+      "auth": "backoffice+ACL:ViewCash",
+      "in": "?direction=in|out&method&ref_type=order|purchase|expense|sales_return|manual&ref_id&supplier_id&from&to&page_number&page_size&format=csv",
+      "out": "{transactions[], summary{total_in,total_out,balance}, pagination}",
+      "desc": "گردش صندوق (دخل و خرج)"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/cash",
+      "auth": "backoffice+ACL:CreateCash",
+      "in": "{direction(in|out), method?, amount, description?, supplier_id?, ref_type?, ref_id?, occurred_at?}",
+      "out": "{transaction}",
+      "desc": "ثبت دریافت/پرداخت دستی صندوق"
+    },
+    {
+      "method": "DELETE",
+      "path": "/backoffice/cash/:id",
+      "auth": "backoffice+ACL:DeleteCash",
+      "in": "-",
+      "out": "-",
+      "desc": "حذف تراکنش دستی؛ تراکنش خودکار (is_auto) قابل حذف نیست"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/report/cash",
+      "auth": "backoffice+ACL:ViewCashReport",
+      "in": "?direction&method&from&to&format=csv",
+      "out": "{summary, by_method[], by_day[]}",
+      "desc": "گزارش دخل و خرج به تفکیک روش پرداخت و روز"
+    }
+  ],
+  "sales_return": [
+    {
+      "method": "GET",
+      "path": "/backoffice/sales-return",
+      "auth": "backoffice+ACL:ListSalesReturns",
+      "in": "?order_id&user_id&from&to&page_number&page_size&format=csv",
+      "out": "{sales_returns[], summary{count,refund_amount,items_amount,returned_cost}, pagination}",
+      "desc": "لیست مرجوعی‌ها"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/sales-return/:id",
+      "auth": "backoffice+ACL:ViewSalesReturn",
+      "in": "-",
+      "out": "{sales_return}",
+      "desc": "جزئیات مرجوعی"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/sales-return",
+      "auth": "backoffice+ACL:CreateSalesReturn",
+      "in": "{order_id, items[{variant_id, quantity, restock?}], refund_amount?, refund_method?, is_refunded?(default true), reason?, note?, returned_at?}",
+      "out": "{sales_return}",
+      "desc": "ثبت برگشت از فروش: قیمت هر قلم از خود سفارش (پس از تخفیف) خوانده می‌شود، کالای قابل فروش به انبار برمی‌گردد و در صورت is_refunded مبلغ از صندوق خارج می‌شود"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/sales-return/:id/refund",
+      "auth": "backoffice+ACL:RefundSalesReturn",
+      "in": "{refund_method?}",
+      "out": "{sales_return}",
+      "desc": "ثبت استرداد وجه مرجوعی که قبلاً پرداخت نشده بود"
+    }
+  ],
+  "accounting_report": [
+    {
+      "method": "GET",
+      "path": "/backoffice/report/profit-loss",
+      "auth": "backoffice+ACL:ViewProfitLossReport",
+      "in": "?from&to&format=csv",
+      "out": "{revenue, returns, net_revenue, cogs, returned_cost, net_cogs, gross_profit, expenses, expense_breakdown[], net_profit, gross_margin_percent, net_margin_percent}",
+      "desc": "صورت سود و زیان کامل: فروش خالص − بهای تمام‌شده خالص = سود ناخالص؛ منهای هزینه‌های عملیاتی = سود خالص"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/report/supplier-ledger",
+      "auth": "backoffice+ACL:ViewSupplierLedger",
+      "in": "?supplier_id&only_debt=true&from&to&format=csv",
+      "out": "{rows[{supplier_id,supplier_name,invoice_count,total_purchased,total_paid,balance,last_purchase_at}], total_debt, total_purchased, total_paid}",
+      "desc": "دفتر حساب تأمین‌کنندگان بر اساس فاکتورهای خرید تأییدشده؛ balance = بدهی"
+    }
+  ],
+  "order_delivery": [
+    {
+      "method": "GET",
+      "path": "/backoffice/order/:id/delivery-qrcode",
+      "auth": "backoffice+ACL:ViewOrderDetails",
+      "in": "-",
+      "out": "{order_id, url, qr_code}",
+      "desc": "QR تحویل سفارش (qr_code = data URI تصویر PNG) برای چاپ روی بسته"
+    },
+    {
+      "method": "GET",
+      "path": "/order/delivery/:token",
+      "auth": "public",
+      "in": "-",
+      "out": "{order_id, status, status_label, masked_phone, can_confirm}",
+      "desc": "اطلاعات سفارش پس از اسکن QR"
+    },
+    {
+      "method": "POST",
+      "path": "/order/delivery/:token/send-otp",
+      "auth": "public",
+      "in": "{phone_number}",
+      "out": "{masked_phone}",
+      "desc": "ارسال OTP به شماره‌ی صاحب سفارش (شماره باید با سفارش یکی باشد)"
+    },
+    {
+      "method": "POST",
+      "path": "/order/delivery/:token/verify",
+      "auth": "public",
+      "in": "{phone_number, code}",
+      "out": "{order_id, status}",
+      "desc": "تأیید OTP و تغییر خودکار وضعیت سفارش به delivered"
+    }
   ]
 }

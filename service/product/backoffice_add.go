@@ -15,12 +15,14 @@ func (s BackofficeService) Create(ctx context.Context, req productparam.CreatePr
 	const op = "productservice.Create"
 
 	p := entity.Product{
-		Name:         req.Name,
-		ENTitle:      req.ENTitle,
-		BrandID:      req.BrandID,
-		CategoryID:   req.CategoryID,
-		IsSecondHand: *req.IsSecondHand,
-		Description:  req.Description,
+		Name:          req.Name,
+		ENTitle:       req.ENTitle,
+		BrandID:       req.BrandID,
+		CategoryID:    req.CategoryID,
+		IsSecondHand:  *req.IsSecondHand,
+		Description:   req.Description,
+		Kind:          req.Kind,
+		SalesChannels: req.SalesChannels,
 	}
 	slg := slug.GenerateSlug(p.ENTitle)
 	counter := 1
@@ -42,10 +44,18 @@ func (s BackofficeService) Create(ctx context.Context, req productparam.CreatePr
 		counter++
 	}
 	p.Slug = slg
+
+	// A service carries its fee on one implicit variant, attached before
+	// BeforeCreate so the row gets its ID in the same insert. The admin never
+	// sees or manages this variant.
+	if p.IsService() {
+		p.Variants = []entity.Variant{entity.NewServiceVariant(req.Price)}
+	}
+
 	p.BeforeCreate()
 
 	if err := s.repo.Create(ctx, p); err != nil {
 		return productparam.CreateProductResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	return productparam.CreateProductResponse{Product: p}, nil
+	return productparam.CreateProductResponse{Product: productparam.NewProductCreated(p)}, nil
 }

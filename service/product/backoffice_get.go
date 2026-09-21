@@ -74,6 +74,9 @@ func (s BackofficeService) GetProduct(ctx context.Context, req productparam.GetP
 		IsPublished:    p.IsPublished,
 		IsSecondHand:   p.IsSecondHand,
 		Description:    p.Description,
+		Kind:           p.GetKind(),
+		SalesChannels:  p.GetSalesChannels(),
+		Price:          p.ServicePrice(),
 		Variants:       p.Variants,
 		CreatedAt:      p.CreatedAt,
 		UpdatedAt:      p.UpdatedAt,
@@ -127,15 +130,18 @@ func (s BackofficeService) GetProductsByIDs(ctx context.Context, req productpara
 
 	for _, p := range products {
 		res[p.ID] = productparam.ProductList{
-			ID:           p.ID,
-			Name:         p.Name,
-			EnTitle:      p.ENTitle,
-			Brand:        p.BrandID,
-			Category:     p.CategoryID,
-			IsPublished:  p.IsPublished,
-			IsSecondHand: p.IsSecondHand,
-			Slug:         p.Slug,
-			ThumbnailURL: "",
+			ID:            p.ID,
+			Name:          p.Name,
+			EnTitle:       p.ENTitle,
+			Brand:         p.BrandID,
+			Category:      p.CategoryID,
+			IsPublished:   p.IsPublished,
+			IsSecondHand:  p.IsSecondHand,
+			Slug:          p.Slug,
+			ThumbnailURL:  "",
+			Kind:          p.GetKind(),
+			SalesChannels: p.GetSalesChannels(),
+			Price:         p.ServicePrice(),
 		}
 	}
 	return productparam.GetProductsByIDsResponse{Products: res}, nil
