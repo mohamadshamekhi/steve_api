@@ -27,11 +27,18 @@ type BackofficeOrderList struct {
 	SubtotalAmount  uint               `json:"subtotal_amount"`
 	ShippingAmount  uint               `json:"shipping_amount"`
 	FinalAmount     uint               `json:"final_amount"`
-	Shipping        entity.Shipping    `json:"shipping,omitempty"`
-	Payments        []entity.Payment   `json:"payments,omitempty"`
-	Status          entity.OrderStatus `json:"status"`
-	CreatedAt       time.Time          `json:"created_at"`
-	UpdatedAt       time.Time          `json:"updated_at"`
+	// AppliedDiscounts are the campaign/coupon discounts on the order.
+	AppliedDiscounts []entity.AppliedDiscount `json:"applied_discounts"`
+	// TotalDiscountAmount is everything taken off the invoice:
+	// subtotal + shipping - final (coupon, campaign and manual discounts).
+	TotalDiscountAmount uint `json:"total_discount_amount"`
+	// ManualDiscount is the whole-invoice discount given at the counter.
+	ManualDiscount uint               `json:"manual_discount"`
+	Shipping       entity.Shipping    `json:"shipping,omitempty"`
+	Payments       []entity.Payment   `json:"payments,omitempty"`
+	Status         entity.OrderStatus `json:"status"`
+	CreatedAt      time.Time          `json:"created_at"`
+	UpdatedAt      time.Time          `json:"updated_at"`
 }
 
 type GetAllOrderResponse struct {

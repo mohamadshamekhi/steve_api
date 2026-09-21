@@ -217,12 +217,20 @@ ok "docker compose up -d --force-recreate done"
 # 7. smoke test
 # ---------------------------------------------------------------------------
 step "Smoke test"
-sleep 3
-if $SSH "curl -fsS -o /dev/null -m 5 http://localhost:7777/ ; ec=\$?; [ \$ec -eq 0 -o \$ec -eq 22 ]"; then
+# Poll and fetch logs inside ONE ssh session: startup (Mongo/Redis connect,
+# index builds) can take longer than a few seconds, and opening a second
+# connection right after a failure has been rejected by the server's auth
+# throttling, which hid the logs we need.
+if $SSH "for i in \$(seq 1 30); do
+    curl -fsS -o /dev/null -m 5 http://localhost:7777/; ec=\$?
+    [ \$ec -eq 0 -o \$ec -eq 22 ] && exit 0
+    sleep 2
+  done
+  echo '  app did not answer on port 7777 within 60s - container state & recent logs:'
+  cd '${REMOTE_ROOT}' && docker compose ps app && docker compose logs --tail=150 app
+  exit 1"; then
   ok "app is answering on port 7777"
 else
-  echo "  app did not answer on port 7777 within 5s - recent logs:"
-  $SSH "cd '${REMOTE_ROOT}' && docker compose logs --tail=100 app" || true
   fail "smoke test failed"
 fi
 

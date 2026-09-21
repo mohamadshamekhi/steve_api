@@ -692,7 +692,7 @@
       "path": "/order/all",
       "auth": "backoffice",
       "in": "?page&filters",
-      "out": "{orders[], pagination}",
+      "out": "{orders[{..., applied_discounts[{discount_id, discount_code?, amount}], total_discount_amount, manual_discount}], pagination}",
       "desc": "لیست همه‌ی سفارش‌ها (ادمین)"
     },
     {

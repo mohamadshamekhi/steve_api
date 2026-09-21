@@ -171,20 +171,23 @@ func (s BackofficeService) GetAll(ctx context.Context, req orderparam.GetAllOrde
 			return orderparam.GetAllOrderResponse{}, richerror.New(op).WithWarpError(err)
 		}
 		list = append(list, orderparam.BackofficeOrderList{
-			ID:              order.ID,
-			UserPhoneNumber: u.PhoneNumber,
-			UserName:        u.Name,
-			UserID:          order.UserID,
-			Items:           order.Items,
-			ShippingAddress: order.ShippingAddress,
-			SubtotalAmount:  order.SubtotalAmount,
-			ShippingAmount:  order.ShippingAmount,
-			FinalAmount:     order.FinalAmount,
-			Payments:        payments.Payments,
-			Status:          order.Status,
-			CreatedAt:       order.CreatedAt,
-			UpdatedAt:       order.UpdatedAt,
-			Shipping:        order.Shipping,
+			ID:                  order.ID,
+			UserPhoneNumber:     u.PhoneNumber,
+			UserName:            u.Name,
+			UserID:              order.UserID,
+			Items:               order.Items,
+			ShippingAddress:     order.ShippingAddress,
+			SubtotalAmount:      order.SubtotalAmount,
+			ShippingAmount:      order.ShippingAmount,
+			FinalAmount:         order.FinalAmount,
+			AppliedDiscounts:    appliedDiscountsOrEmpty(order.AppliedDiscounts),
+			TotalDiscountAmount: totalDiscountAmount(order),
+			ManualDiscount:      order.ManualDiscountAmount,
+			Payments:            payments.Payments,
+			Status:              order.Status,
+			CreatedAt:           order.CreatedAt,
+			UpdatedAt:           order.UpdatedAt,
+			Shipping:            order.Shipping,
 		})
 	}
 
@@ -539,4 +542,23 @@ func applyManualDiscounts(summary *entity.CheckoutSummary, invoiceLevel uint) (u
 	summary.FinalPrice -= applied
 
 	return uint(applied), nil
+}
+
+// totalDiscountAmount is what the invoice lost to discounts of any kind.
+// FinalAmount already includes shipping, so it is added back before diffing.
+func totalDiscountAmount(o entity.Order) uint {
+	gross := o.SubtotalAmount + o.ShippingAmount
+	if o.FinalAmount >= gross {
+		return 0
+	}
+	return gross - o.FinalAmount
+}
+
+// appliedDiscountsOrEmpty keeps the field a JSON array for the frontend
+// instead of null on orders with no discount.
+func appliedDiscountsOrEmpty(d []entity.AppliedDiscount) []entity.AppliedDiscount {
+	if d == nil {
+		return []entity.AppliedDiscount{}
+	}
+	return d
 }
