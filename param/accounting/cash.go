@@ -30,6 +30,9 @@ type CashFilter struct {
 	SupplierID string
 	From       *time.Time
 	To         *time.Time
+	// Timezone (a Mongo offset such as "+03:30") sets which calendar day a
+	// transaction falls on in SummaryByDay; empty means UTC.
+	Timezone string
 }
 
 type ListCashTransactionsRequest struct {

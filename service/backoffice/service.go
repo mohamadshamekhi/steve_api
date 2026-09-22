@@ -26,22 +26,31 @@ type Repository interface {
 	AllBackoffice(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
 	AllSuperUserBackOffices(ctx context.Context) (ListResult, error)
 }
+// RolePermissionProvider resolves the current permission keys of the given
+// roles from the database, so the login token reflects the role's latest
+// permissions instead of only the user's directly-assigned ones.
+type RolePermissionProvider interface {
+	GetPermissionKeysOfRole(ctx context.Context, roleKeys []string) ([]string, error)
+}
+
 type Service struct {
 	config        Config
 	authSvc       authservice.Service
 	repo          Repository
 	cacheProvider CacheProvider
+	roleRepo      RolePermissionProvider
 }
 
 type CacheProvider interface {
 	AddToBlocklist(ctx context.Context, kind string, JWTID string, ExpireAt time.Time) error
 }
 
-func New(cfg Config, authSvc authservice.Service, repo Repository, cacheProvider CacheProvider) Service {
+func New(cfg Config, authSvc authservice.Service, repo Repository, cacheProvider CacheProvider, roleRepo RolePermissionProvider) Service {
 	return Service{
 		config:        cfg,
 		authSvc:       authSvc,
 		repo:          repo,
 		cacheProvider: cacheProvider,
+		roleRepo:      roleRepo,
 	}
 }

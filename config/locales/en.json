@@ -278,5 +278,17 @@
   {
     "id": "order.delivery_confirmed",
     "translation": "Order delivery confirmed successfully."
+  },
+  {
+    "id": "inventory.stocktake_duplicate_item",
+    "translation": "A product variant appears more than once in the stocktake list."
+  },
+  {
+    "id": "inventory.stocktake_too_many_items",
+    "translation": "A stocktake request can contain at most 2000 items."
+  },
+  {
+    "id": "dashboard.invalid_period",
+    "translation": "Invalid date range: from and to must be YYYY-MM-DD, from must not be after to, and the range must be at most 366 days."
   }
 ]

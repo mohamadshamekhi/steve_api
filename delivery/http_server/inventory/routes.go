@@ -13,6 +13,8 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.GET("/movements", h.ListMovements, ba(), backofficemiddleware.ACL(h.aclSvc, key.ViewInventory))
 	g.GET("/stock", h.InventoryValue, ba(), backofficemiddleware.ACL(h.aclSvc, key.ViewInventoryReport))
 	g.POST("/adjust", h.Adjust, ba(), backofficemiddleware.ACL(h.aclSvc, key.AdjustInventory))
+	g.POST("/stocktake", h.Stocktake, ba(), backofficemiddleware.ACL(h.aclSvc, key.AdjustInventory))
+	g.POST("/backfill-sales", h.BackfillSales, ba(), backofficemiddleware.ACL(h.aclSvc, key.AdjustInventory))
 	g.PATCH("/stock-config", h.SetStockConfig, ba(), backofficemiddleware.ACL(h.aclSvc, key.UpdateStockConfig))
 
 	r := e.Group("/backoffice/report")

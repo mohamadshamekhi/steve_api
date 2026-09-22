@@ -31,7 +31,13 @@ func (s Service) VerifyOTPCode(ctx context.Context, req backofficeauthparam.Veri
 		if iErr != nil {
 			return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(iErr)
 		}
-		token, gErr := s.authSvc.GenerateAccessToken(backoffice.ID, s.config.Prefix, backoffice.Roles, backoffice.Permissions)
+		rolePermissionKeys, rErr := s.roleRepo.GetPermissionKeysOfRole(ctx, backoffice.Roles)
+		if rErr != nil {
+			return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(rErr)
+		}
+		permissionKeys := mergePermissionKeys(backoffice.Permissions, rolePermissionKeys)
+
+		token, gErr := s.authSvc.GenerateAccessToken(backoffice.ID, s.config.Prefix, backoffice.Roles, permissionKeys)
 		if gErr != nil {
 			return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(gErr)
 		}
@@ -41,4 +47,22 @@ func (s Service) VerifyOTPCode(ctx context.Context, req backofficeauthparam.Veri
 	}
 	return backofficeauthparam.VerifyLoginCodeResponse{}, richerror.New(op).WithKind(richerror.KindUnauthorized).
 		WithMessageKey("validation.incorrect_opt_code")
+}
+
+// mergePermissionKeys returns the de-duplicated union of the user's direct
+// permissions and the permissions granted by their roles (same rule as
+// aclservice.CheckAccess).
+func mergePermissionKeys(direct []string, fromRoles []string) []string {
+	seen := make(map[string]struct{}, len(direct)+len(fromRoles))
+	merged := make([]string, 0, len(direct)+len(fromRoles))
+	for _, list := range [][]string{direct, fromRoles} {
+		for _, k := range list {
+			if _, ok := seen[k]; ok {
+				continue
+			}
+			seen[k] = struct{}{}
+			merged = append(merged, k)
+		}
+	}
+	return merged
 }

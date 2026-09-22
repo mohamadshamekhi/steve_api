@@ -17,7 +17,7 @@ func cashFilter(c echo.Context) accountingparam.CashFilter {
 		RefID:      c.QueryParam("ref_id"),
 		SupplierID: c.QueryParam("supplier_id"),
 		From:       parseDate(c.QueryParam("from")),
-		To:         parseDate(c.QueryParam("to")),
+		To:         parseDateEnd(c.QueryParam("to")),
 	}
 }
 

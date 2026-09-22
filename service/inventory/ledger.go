@@ -66,6 +66,9 @@ func (s BackofficeService) RecordOrderSale(ctx context.Context, order entity.Ord
 		}
 	}
 
+	if len(movements) == 0 {
+		return nil
+	}
 	if err := s.repo.CreateMany(ctx, movements); err != nil {
 		return richerror.New(op).WithWarpError(err)
 	}

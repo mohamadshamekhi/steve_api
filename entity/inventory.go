@@ -50,6 +50,9 @@ const (
 	StockRefOrder    = "order"
 	StockRefPurchase = "purchase"
 	StockRefManual   = "manual"
+	// StockRefStocktake groups every movement of one انبارگردانی under a
+	// shared RefID so the whole count can be listed/audited together.
+	StockRefStocktake = "stocktake"
 )
 
 // StockMovement is one append-only line of the inventory/accounting ledger.

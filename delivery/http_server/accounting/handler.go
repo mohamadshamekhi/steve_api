@@ -83,6 +83,16 @@ func parseDate(raw string) *time.Time {
 	return nil
 }
 
+// parseDateEnd is parseDate for the upper bound of a window: a plain
+// YYYY-MM-DD means "through the end of that day", not its first instant.
+func parseDateEnd(raw string) *time.Time {
+	if t, err := time.Parse("2006-01-02", raw); err == nil {
+		end := t.Add(24*time.Hour - time.Nanosecond)
+		return &end
+	}
+	return parseDate(raw)
+}
+
 // parseBool reads an optional tri-state filter (set / unset / absent).
 func parseBool(raw string) *bool {
 	switch raw {

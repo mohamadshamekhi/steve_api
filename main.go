@@ -28,6 +28,7 @@ import (
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
 	commenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/comment"
 	contactushandler "github.com/abolfazlnorzad/steve/delivery/http_server/contactus"
+	dashboardhandler "github.com/abolfazlnorzad/steve/delivery/http_server/dashboard"
 	discounthandler "github.com/abolfazlnorzad/steve/delivery/http_server/discount"
 	inventoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/inventory"
 	mediahandler "github.com/abolfazlnorzad/steve/delivery/http_server/media"
@@ -97,6 +98,7 @@ import (
 	categoryservice "github.com/abolfazlnorzad/steve/service/category"
 	commentservice "github.com/abolfazlnorzad/steve/service/comment"
 	contactusservice "github.com/abolfazlnorzad/steve/service/contactus"
+	dashboardservice "github.com/abolfazlnorzad/steve/service/dashboard"
 	discountservice "github.com/abolfazlnorzad/steve/service/discount"
 	fetcherservice "github.com/abolfazlnorzad/steve/service/fetcher"
 	inventoryservice "github.com/abolfazlnorzad/steve/service/inventory"
@@ -157,14 +159,16 @@ func main() {
 	authSvc := authservice.New(cfg.Auth, redisotp, mp)
 	mongoRepo := mongodb.NewMongoDB(cfg.Mongo)
 	backOfficeMongoRepo := mongodbbackoffice.New(mongoRepo)
-	backOfficeSvc := backofficeservice.New(cfg.BackOffice, authSvc, backOfficeMongoRepo, redisotp)
+	permissionRepo := mongodbpermission.New(mongoRepo)
+	roleRepo := mongodbrole.New(mongoRepo)
+	backOfficeSvc := backofficeservice.New(cfg.BackOffice, authSvc, backOfficeMongoRepo, redisotp, roleRepo)
 	backOfficeVld := backofficevalidatorauth.New(backOfficeMongoRepo)
 
 	translator, _ := i18n.New("config/locales", "fa")
 
-	permissionRepo := mongodbpermission.New(mongoRepo)
-	roleRepo := mongodbrole.New(mongoRepo)
-	seeder.Run(permissionRepo, roleRepo, backOfficeMongoRepo)
+	if err := seeder.Run(permissionRepo, roleRepo, backOfficeMongoRepo); err != nil {
+		logger.L().Error("seeder failed", "error", err)
+	}
 
 	brandRepo := mongodbbrand.New(mongoRepo)
 	mediaRepo := mongodbmedia.New(mongoRepo)
@@ -316,6 +320,7 @@ func main() {
 
 	supplierSvc := supplierservice.NewBackofficeService(supplierRepo)
 	inventorySvc := inventoryservice.NewBackofficeService(inventoryRepo, productRepo)
+	inventorySvc.SetOrderProvider(mongodborder.New(mongoRepo))
 	purchaseSvc := purchaseservice.NewBackofficeService(purchaseRepo, inventorySvc, productRepo, supplierRepo)
 
 	// The order services record every sale in the stock ledger. Wired after
@@ -341,6 +346,10 @@ func main() {
 	purchaseHandler := purchasehandler.New(purchaseSvc, translator, purchasevalidator.New(), authSvc, cfg.Auth, aclSvc)
 	inventoryHandler := inventoryhandler.New(inventorySvc, translator, inventoryvalidator.New(), authSvc, cfg.Auth, aclSvc)
 	accountingHandler := accountinghandler.New(accountingSvc, translator, accountingvalidator.New(), authSvc, cfg.Auth, aclSvc)
+
+	dashboardSvc := dashboardservice.New(accountingSvc, inventoryRepo, cashRepo, productRepo,
+		mongodborder.New(mongoRepo), userRepo, repairRepo, aclSvc)
+	dashboardHandler := dashboardhandler.New(dashboardSvc, translator, authSvc, cfg.Auth)
 	salesReturnHandler := salesreturnhandler.New(salesReturnSvc, translator, salesreturnvalidator.New(), authSvc, cfg.Auth, aclSvc)
 
 	orderDeliverySvc := orderdeliveryservice.New(cfg.OrderDelivery, orderRepo, userRepo, authSvc, redisotp)
@@ -349,7 +358,7 @@ func main() {
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
 		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler, paymentHandler, searchHandler, partnerHandler, referralHandler,
-		supplierHandler, purchaseHandler, inventoryHandler, accountingHandler, salesReturnHandler, orderDeliveryHandler)
+		supplierHandler, purchaseHandler, inventoryHandler, accountingHandler, salesReturnHandler, orderDeliveryHandler, dashboardHandler)
 
 	orderScheduler := orderscheduler.New(cfg.OrderScheduler, orderBackofficeSvc)
 	cartScheduler := cartscheduler.New(cfg.CartScheduler, cartBackofficeSvc)

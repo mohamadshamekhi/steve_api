@@ -34,6 +34,34 @@ func profitMatch(req inventoryparam.ProfitReportRequest) bson.M {
 	return match
 }
 
+// excludedOrderStatuses are orders whose ledger lines are not (yet, or any
+// more) a sale: a storefront order is written to the ledger at registration,
+// before payment, and an expired one is cancelled without reversing that
+// line. Refunds are not excluded here; they are subtracted as sales returns.
+var excludedOrderStatuses = bson.A{
+	entity.OrderStatusPendingPayment,
+	entity.OrderStatusCancelled,
+}
+
+// salesStages is the leading part of every revenue aggregation: sale
+// movements in the window whose order is actually a sale.
+func salesStages(req inventoryparam.ProfitReportRequest) []bson.M {
+	return []bson.M{
+		{"$match": profitMatch(req)},
+		{"$lookup": bson.M{
+			"from":         "orders",
+			"localField":   "ref_id",
+			"foreignField": "_id",
+			"as":           "_order",
+		}},
+		{"$match": bson.M{"$or": bson.A{
+			bson.M{"ref_type": bson.M{"$ne": entity.StockRefOrder}},
+			bson.M{"_order.status": bson.M{"$nin": excludedOrderStatuses}},
+		}}},
+		{"$project": bson.M{"_order": 0}},
+	}
+}
+
 // profitAccumulators are the summed fields every profit bucket needs.
 // Quantity is stored negative for sales, so units are negated back.
 var profitAccumulators = bson.M{
@@ -61,10 +89,7 @@ func (d DB) ProfitSummary(ctx context.Context, req inventoryparam.ProfitReportRe
 		group[k] = v
 	}
 
-	pipeline := []bson.M{
-		{"$match": profitMatch(req)},
-		{"$group": group},
-	}
+	pipeline := append(salesStages(req), bson.M{"$group": group})
 
 	cursor, err := d.collection.Aggregate(ctx, pipeline)
 	if err != nil {
@@ -111,12 +136,11 @@ func (d DB) ProfitBreakdown(ctx context.Context, req inventoryparam.ProfitReport
 		group[k] = v
 	}
 
-	pipeline := []bson.M{
-		{"$match": profitMatch(req)},
-		{"$group": group},
-		{"$sort": bson.M{"gross_profit": -1}},
-		{"$limit": 500},
-	}
+	pipeline := append(salesStages(req),
+		bson.M{"$group": group},
+		bson.M{"$sort": bson.M{"gross_profit": -1}},
+		bson.M{"$limit": 500},
+	)
 
 	cursor, err := d.collection.Aggregate(ctx, pipeline)
 	if err != nil {

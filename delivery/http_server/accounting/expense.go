@@ -16,7 +16,7 @@ func expenseFilter(c echo.Context) accountingparam.ExpenseFilter {
 		IsPaid:     parseBool(c.QueryParam("is_paid")),
 		Search:     c.QueryParam("search"),
 		From:       parseDate(c.QueryParam("from")),
-		To:         parseDate(c.QueryParam("to")),
+		To:         parseDateEnd(c.QueryParam("to")),
 	}
 }
 

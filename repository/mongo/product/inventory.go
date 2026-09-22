@@ -2,6 +2,8 @@ package mongodbproduct
 
 import (
 	"context"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
@@ -125,15 +127,48 @@ func (d DB) InventoryValue(ctx context.Context, req inventoryparam.InventoryValu
 		{"$match": bson.M{"variants.stock_mode": bson.M{"$ne": entity.StockModeOnDemand}}},
 	}
 
+	// Second-hand products are single-unit by nature, so a quantity of 1 or 0
+	// is their normal state, not a restock alert.
+	if (req.LowStockOnly || req.OutOfStockOnly) && !req.IncludeSecondHand {
+		pipeline = append(pipeline, bson.M{"$match": bson.M{"is_second_hand": bson.M{"$ne": true}}})
+	}
 	if req.LowStockOnly {
 		pipeline = append(pipeline, bson.M{
-			"$match": bson.M{"variants.quantity": bson.M{"$lte": req.LowStockThreshold}},
+			"$match": bson.M{"variants.quantity": bson.M{"$gt": 0, "$lte": req.LowStockThreshold}},
 		})
+	}
+	if req.OutOfStockOnly {
+		pipeline = append(pipeline, bson.M{"$match": bson.M{"variants.quantity": bson.M{"$lte": 0}}})
+	}
+
+	switch req.StockMode {
+	case "":
+	case entity.StockModeTracked:
+		// Absent/empty stock_mode is a pre-inventory document, read as tracked.
+		pipeline = append(pipeline, bson.M{"$match": bson.M{
+			"variants.stock_mode": bson.M{"$in": bson.A{entity.StockModeTracked, "", nil}},
+		}})
+	default:
+		pipeline = append(pipeline, bson.M{"$match": bson.M{"variants.stock_mode": req.StockMode}})
+	}
+
+	if q := strings.TrimSpace(req.Search); q != "" {
+		pipeline = append(pipeline, bson.M{"$match": bson.M{"$or": bson.A{
+			bson.M{"name": bson.M{"$regex": regexp.QuoteMeta(q), "$options": "i"}},
+			bson.M{"_id": q},
+			bson.M{"variants.id": q},
+		}}})
+	}
+
+	// A low-stock list is read top-down as "what runs out first".
+	sort := bson.D{{Key: "created_at", Value: -1}}
+	if req.LowStockOnly {
+		sort = bson.D{{Key: "variants.quantity", Value: 1}, {Key: "created_at", Value: -1}}
 	}
 
 	pipeline = append(pipeline, bson.M{"$facet": bson.M{
 		"rows": []bson.M{
-			{"$sort": bson.M{"created_at": -1}},
+			{"$sort": sort},
 			{"$skip": int64(req.Pagination.GetOffset())},
 			{"$limit": int64(req.Pagination.GetPageSize())},
 			{"$project": bson.M{

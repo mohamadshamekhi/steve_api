@@ -1525,9 +1525,9 @@
       "method": "GET",
       "path": "/backoffice/inventory/stock",
       "auth": "backoffice+ACL:ViewInventoryReport",
-      "in": "?low_stock=true&threshold&page_number&page_size&format=csv",
-      "out": "{rows[], total_stock_value, total_units, pagination}",
-      "desc": "موجودی فعلی انبار و ارزش ریالی آن به قیمت تمام‌شده"
+      "in": "?page_number&page_size&search&stock_mode=tracked|none&low_stock=true&threshold(default 3)&out_of_stock=true&include_second_hand=true&format=csv",
+      "out": "{rows[{product_id, product_name, variant_id, attributes[], stock_mode, quantity, avg_cost, price, stock_value, potential_profit}], total_stock_value, total_units, pagination}",
+      "desc": "موجودی فعلی انبار و ارزش ریالی آن به قیمت تمام‌شده — search روی نام محصول (یا شناسه‌ی دقیق محصول/واریانت)؛ stock_mode فیلتر حالت موجودی؛ low_stock=true یعنی 0 < موجودی ≤ threshold (مرتب از کم به زیاد)، out_of_stock=true یعنی موجودی ≤ 0؛ کالای دست‌دوم در این دو فیلتر نمی‌آید مگر include_second_hand=true"
     },
     {
       "method": "POST",
@@ -1536,6 +1536,22 @@
       "in": "{product_id, variant_id, quantity(+/-), unit_cost?, note?}",
       "out": "{movement}",
       "desc": "اصلاح دستی موجودی (انبارگردانی)"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/inventory/stocktake",
+      "auth": "backoffice+ACL:AdjustInventory",
+      "in": "{note?, items[{product_id, variant_id, counted_quantity}]}",
+      "out": "{stocktake_id, adjusted_count, unchanged_count, surplus_units, shortage_units, value_diff, movements[]}",
+      "desc": "انبارگردانی گروهی: سرور اختلاف شمارش با موجودی را حساب و همه را یکجا به‌صورت adjustment ثبت می‌کند (همه یا هیچ، حداکثر ۲۰۰۰ قلم)"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/inventory/backfill-sales",
+      "auth": "backoffice+ACL:AdjustInventory",
+      "in": "?from=YYYY-MM-DD&to=YYYY-MM-DD (هر دو اجباری)",
+      "out": "{scanned, recorded, skipped}",
+      "desc": "ثبت ردیف‌های فروشِ جاافتاده در دفتر حرکت کالا برای سفارش‌های بازه (به‌جز pending_payment و cancelled) تا در گزارش سود و داشبورد بیایند؛ سفارشی که قبلاً ثبت شده رد می‌شود، پس اجرای دوباره بی‌خطر است"
     },
     {
       "method": "PATCH",
@@ -1551,7 +1567,7 @@
       "auth": "backoffice+ACL:ViewProfitReport",
       "in": "?from&to&group_by=day|product|supplier&format=csv",
       "out": "{summary, rows[]}",
-      "desc": "گزارش سود ناخالص فروش: فروش، قیمت تمام‌شده و سود؛ با format=csv خروجی اکسل می‌دهد"
+      "desc": "گزارش سود ناخالص فروش از دفتر حرکت کالا (سفارش‌های pending_payment و cancelled حساب نمی‌شوند)؛ to به شکل YYYY-MM-DD کل آن روز را شامل می‌شود؛ با format=csv خروجی اکسل می‌دهد"
     }
   ],
   "expense": [
@@ -1714,6 +1730,16 @@
       "in": "{phone_number, code}",
       "out": "{order_id, status}",
       "desc": "تأیید OTP و تغییر خودکار وضعیت سفارش به delivered"
+    }
+  ],
+  "dashboard": [
+    {
+      "method": "GET",
+      "path": "/backoffice/dashboard/overview",
+      "auth": "backoffice (هر بخش با ACL جدا؛ بدون مجوز = null)",
+      "in": "?from=YYYY-MM-DD&to=YYYY-MM-DD (پیش‌فرض ۳۰ روز اخیر تا امروز، به وقت تهران، حداکثر ۳۶۶ روز)",
+      "out": "{period{from,to,prev_from,prev_to}, sales{net_revenue(_prev), net_profit(_prev), gross_profit, revenue, returns, net_cogs, expenses, gross_margin_percent, net_margin_percent, units_sold, order_count(_prev), avg_order_value}, trend[{day,revenue,gross_profit,order_count}], orders_by_status[{status,count}], top_products[{product_id,product_name,units_sold,revenue,gross_profit}], expense_breakdown[{category,amount,count}], cash{total_in,total_out,balance,by_day[{day,total_in,total_out}],by_method[{method,total_in}]}, inventory{total_stock_value,total_units,low_stock_count,out_of_stock_count,low_stock_threshold,low_stock[{product_id,variant_id,product_name,attributes[],quantity}]}, suppliers{total_debt,top_debtors[{supplier_id,supplier_name,balance}]}, recent_orders[{id,user_name,user_phone_number,final_amount,status,created_at}], customers{new_count,new_count_prev}, repairs{open_count}}",
+      "desc": "داشبورد تجمیعی صفحه‌ی اول بک‌آفیس. مجوزها: sales/trend/top_products/expense_breakdown ← report:profit_loss؛ cash ← report:cash؛ inventory ← inventory:view؛ suppliers ← report:supplier_ledger؛ orders_by_status/recent_orders ← order:list؛ customers ← user:list؛ repairs ← repair:list. *_prev = بازه‌ی هم‌طول قبل از from. trend و cash.by_day برای همه‌ی روزها ردیف دارند. لیست‌ها حداکثر ۵ ردیف؛ top_products به ترتیب سود ناخالص؛ recent_orders آخرین ۵ سفارش (مستقل از بازه). خطای بازه‌ی نامعتبر: 400 با کلید dashboard.invalid_period"
     }
   ]
 }

@@ -10,7 +10,7 @@ import (
 func (h Handler) ProfitLoss(c echo.Context) error {
 	req := accountingparam.ProfitLossRequest{
 		From: parseDate(c.QueryParam("from")),
-		To:   parseDate(c.QueryParam("to")),
+		To:   parseDateEnd(c.QueryParam("to")),
 	}
 
 	resp, err := h.backofficeSvc.ProfitLoss(c.Request().Context(), req)
@@ -48,7 +48,7 @@ func (h Handler) SupplierLedger(c echo.Context) error {
 		SupplierID: c.QueryParam("supplier_id"),
 		OnlyDebt:   c.QueryParam("only_debt") == "true",
 		From:       parseDate(c.QueryParam("from")),
-		To:         parseDate(c.QueryParam("to")),
+		To:         parseDateEnd(c.QueryParam("to")),
 		Pagination: pagination(c),
 	}
 

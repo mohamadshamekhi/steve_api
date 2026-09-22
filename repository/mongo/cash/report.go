@@ -90,7 +90,11 @@ func (d DB) SummaryByMethod(ctx context.Context, f accountingparam.CashFilter) (
 
 // SummaryByDay is the daily till report (گردش روزانه صندوق).
 func (d DB) SummaryByDay(ctx context.Context, f accountingparam.CashFilter) ([]accountingparam.CashDayRow, error) {
-	groupID := bson.M{"$dateToString": bson.M{"format": "%Y-%m-%d", "date": "$occurred_at"}}
+	dateToString := bson.M{"format": "%Y-%m-%d", "date": "$occurred_at"}
+	if f.Timezone != "" {
+		dateToString["timezone"] = f.Timezone
+	}
+	groupID := bson.M{"$dateToString": dateToString}
 
 	aggRows, err := d.aggregate(ctx, "mongodbcash.SummaryByDay", f, groupID)
 	if err != nil {

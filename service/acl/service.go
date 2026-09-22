@@ -22,27 +22,33 @@ func New(roleRepo RoleRepository, BackofficeRepo BackofficeRepository) Service {
 	return Service{RoleRepo: roleRepo, BackofficeRepo: BackofficeRepo}
 }
 
-func (s Service) CheckAccess(ctx context.Context, backofficeUserID string, requiredPermissions ...string) (bool, error) {
-	const op = "aclservice.CheckAccess"
+// PermissionSet returns every permission the backoffice user holds: the ones
+// granted directly plus the ones of each of their roles.
+func (s Service) PermissionSet(ctx context.Context, backofficeUserID string) (map[string]struct{}, error) {
+	const op = "aclservice.PermissionSet"
 	user, err := s.BackofficeRepo.GetBackOfficeUserByID(ctx, backofficeUserID)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	backofficeUserRoleKeys := user.Roles
-	backofficeUserPermissionKeys := user.Permissions
-	rolePermissionKeys, gErr := s.RoleRepo.GetPermissionKeysOfRole(ctx, backofficeUserRoleKeys)
+	rolePermissionKeys, gErr := s.RoleRepo.GetPermissionKeysOfRole(ctx, user.Roles)
 	if gErr != nil {
-		return false, richerror.New(op).WithWarpError(gErr)
+		return nil, richerror.New(op).WithWarpError(gErr)
 	}
 
-	userPermissionsSet := make(map[string]struct{})
-
-	for _, k := range backofficeUserPermissionKeys {
-		userPermissionsSet[k] = struct{}{}
+	set := make(map[string]struct{}, len(user.Permissions)+len(rolePermissionKeys))
+	for _, k := range user.Permissions {
+		set[k] = struct{}{}
 	}
+	for _, k := range rolePermissionKeys {
+		set[k] = struct{}{}
+	}
+	return set, nil
+}
 
-	for _, pkey := range rolePermissionKeys {
-		userPermissionsSet[pkey] = struct{}{}
+func (s Service) CheckAccess(ctx context.Context, backofficeUserID string, requiredPermissions ...string) (bool, error) {
+	userPermissionsSet, err := s.PermissionSet(ctx, backofficeUserID)
+	if err != nil {
+		return false, err
 	}
 
 	for _, requiredPerm := range requiredPermissions {

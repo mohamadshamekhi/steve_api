@@ -2,6 +2,7 @@ package inventoryservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
@@ -16,6 +17,13 @@ type Repository interface {
 	DeleteByRef(ctx context.Context, refType string, refID string) error
 	ProfitSummary(ctx context.Context, req inventoryparam.ProfitReportRequest) (inventoryparam.ProfitRow, error)
 	ProfitBreakdown(ctx context.Context, req inventoryparam.ProfitReportRequest) ([]inventoryparam.ProfitRow, error)
+	OrderIDsWithSales(ctx context.Context, orderIDs []string) (map[string]struct{}, error)
+}
+
+// SoldOrderProvider lists the orders that count as a sale, for backfilling
+// the ledger.
+type SoldOrderProvider interface {
+	SoldOrdersBetween(ctx context.Context, from, to time.Time) ([]entity.Order, error)
 }
 
 // ProductProvider is the slice of the product repo the inventory domain needs:
@@ -30,10 +38,16 @@ type ProductProvider interface {
 type BackofficeService struct {
 	repo            Repository
 	productProvider ProductProvider
+	orderProvider   SoldOrderProvider
 }
 
 func NewBackofficeService(repo Repository, productProvider ProductProvider) BackofficeService {
 	return BackofficeService{repo: repo, productProvider: productProvider}
+}
+
+// SetOrderProvider wires the order repo in for BackfillOrderSales.
+func (s *BackofficeService) SetOrderProvider(p SoldOrderProvider) {
+	s.orderProvider = p
 }
 
 // findVariant locates one variant inside a product, returning ok=false when

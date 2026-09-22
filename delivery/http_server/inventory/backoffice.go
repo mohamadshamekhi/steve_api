@@ -44,6 +44,16 @@ func parseDate(raw string) *time.Time {
 	return nil
 }
 
+// parseDateEnd is parseDate for the upper bound of a window: a plain
+// YYYY-MM-DD means "through the end of that day", not its first instant.
+func parseDateEnd(raw string) *time.Time {
+	if t, err := time.Parse("2006-01-02", raw); err == nil {
+		end := t.Add(24*time.Hour - time.Nanosecond)
+		return &end
+	}
+	return parseDate(raw)
+}
+
 func (h Handler) ListMovements(c echo.Context) error {
 	req := inventoryparam.ListMovementsRequest{
 		Filter: inventoryparam.MovementFilter{
@@ -54,7 +64,7 @@ func (h Handler) ListMovements(c echo.Context) error {
 			RefType:    c.QueryParam("ref_type"),
 			RefID:      c.QueryParam("ref_id"),
 			From:       parseDate(c.QueryParam("from")),
-			To:         parseDate(c.QueryParam("to")),
+			To:         parseDateEnd(c.QueryParam("to")),
 		},
 		Pagination: pagination(c),
 	}
@@ -71,8 +81,20 @@ func (h Handler) ListMovements(c echo.Context) error {
 const exportPageSize = 200
 
 func (h Handler) InventoryValue(c echo.Context) error {
-	req := inventoryparam.InventoryValueRequest{Pagination: pagination(c)}
+	req := inventoryparam.InventoryValueRequest{
+		Pagination: pagination(c),
+		Search:     c.QueryParam("search"),
+		StockMode:  entity.StockMode(c.QueryParam("stock_mode")),
+	}
+	if req.StockMode != "" && (!req.StockMode.IsValid() || req.StockMode == entity.StockModeOnDemand) {
+		return richerror.New("inventoryhandler.InventoryValue").
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("inventory.invalid_stock_mode").
+			WithMeta(map[string]any{"allowed": []entity.StockMode{entity.StockModeTracked, entity.StockModeNone}})
+	}
 
+	req.OutOfStockOnly = c.QueryParam("out_of_stock") == "true"
+	req.IncludeSecondHand = c.QueryParam("include_second_hand") == "true"
 	if c.QueryParam("low_stock") == "true" {
 		req.LowStockOnly = true
 		req.LowStockThreshold = defaultLowStockThreshold
@@ -129,6 +151,26 @@ func (h Handler) Adjust(c echo.Context) error {
 	return h.success(c, resp)
 }
 
+func (h Handler) Stocktake(c echo.Context) error {
+	const op = "inventoryhandler.Stocktake"
+
+	var req inventoryparam.StocktakeRequest
+	if err := c.Bind(&req); err != nil {
+		return richerror.New(op).WithKind(richerror.KindInvalid).
+			WithMessageKey("validation.invalid_input").WithWarpError(err)
+	}
+	if err := h.validator.ValidateStocktakeRequest(req); err != nil {
+		return err
+	}
+
+	cl := claim.GetClaimsFromEchoContext(c)
+	resp, err := h.backofficeSvc.Stocktake(c.Request().Context(), req, cl.EntityID)
+	if err != nil {
+		return err
+	}
+	return h.success(c, resp)
+}
+
 func (h Handler) SetStockConfig(c echo.Context) error {
 	const op = "inventoryhandler.SetStockConfig"
 
@@ -151,7 +193,7 @@ func (h Handler) SetStockConfig(c echo.Context) error {
 func (h Handler) ProfitReport(c echo.Context) error {
 	req := inventoryparam.ProfitReportRequest{
 		From:    parseDate(c.QueryParam("from")),
-		To:      parseDate(c.QueryParam("to")),
+		To:      parseDateEnd(c.QueryParam("to")),
 		GroupBy: c.QueryParam("group_by"),
 	}
 
@@ -174,6 +216,24 @@ func (h Handler) ProfitReport(c echo.Context) error {
 			export.Uint(resp.Summary.Revenue), export.Uint(resp.Summary.Cost), export.Int(resp.Summary.GrossProfit)})
 		return export.CSV(c, "profit-report",
 			[]string{"عنوان", "تعداد فروش", "فروش", "بهای تمام‌شده", "سود ناخالص"}, rows)
+	}
+	return h.success(c, resp)
+}
+
+// BackfillSales books the missing sale-ledger lines for the orders of a
+// window: POST /backoffice/inventory/backfill-sales?from=YYYY-MM-DD&to=YYYY-MM-DD
+func (h Handler) BackfillSales(c echo.Context) error {
+	const op = "inventoryhandler.BackfillSales"
+
+	from := parseDate(c.QueryParam("from"))
+	to := parseDateEnd(c.QueryParam("to"))
+	if from == nil || to == nil || from.After(*to) {
+		return richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("dashboard.invalid_period")
+	}
+
+	resp, err := h.backofficeSvc.BackfillOrderSales(c.Request().Context(), *from, *to)
+	if err != nil {
+		return err
 	}
 	return h.success(c, resp)
 }

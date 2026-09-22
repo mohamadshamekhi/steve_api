@@ -585,5 +585,17 @@
   {
     "id": "order.delivery_confirmed",
     "translation": "تحویل سفارش با موفقیت تأیید شد."
+  },
+  {
+    "id": "inventory.stocktake_duplicate_item",
+    "translation": "یک کالا/واریانت بیش از یک بار در لیست انبارگردانی آمده است."
+  },
+  {
+    "id": "inventory.stocktake_too_many_items",
+    "translation": "تعداد اقلام انبارگردانی در هر درخواست حداکثر ۲۰۰۰ قلم است."
+  },
+  {
+    "id": "dashboard.invalid_period",
+    "translation": "بازه‌ی تاریخ نامعتبر است؛ from و to باید به شکل YYYY-MM-DD باشند، from بعد از to نباشد و بازه حداکثر ۳۶۶ روز باشد."
   }
 ]

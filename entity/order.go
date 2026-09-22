@@ -72,10 +72,10 @@ type Order struct {
 	DeliveryConfirmedBy string     `bson:"delivery_confirmed_by,omitempty"`
 	// ThankYouClaimed guards the one-time post-purchase thank-you coupon so a
 	// replayed status change never mints a second one.
-	ThankYouClaimed    bool   `bson:"thank_you_claimed,omitempty"`
-	ThankYouDiscountID string `bson:"thank_you_discount_id,omitempty"`
-	CreatedAt      time.Time  `bson:"created_at"`
-	UpdatedAt      time.Time  `bson:"updated_at"`
+	ThankYouClaimed    bool      `bson:"thank_you_claimed,omitempty"`
+	ThankYouDiscountID string    `bson:"thank_you_discount_id,omitempty"`
+	CreatedAt          time.Time `bson:"created_at"`
+	UpdatedAt          time.Time `bson:"updated_at"`
 }
 
 func (o *Order) BeforeCreate() {

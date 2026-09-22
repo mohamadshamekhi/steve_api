@@ -36,6 +36,51 @@ func (v Validator) ValidateAdjustRequest(req inventoryparam.AdjustStockRequest) 
 	return nil
 }
 
+// maxStocktakeItems bounds one request; a bigger warehouse is counted in
+// several submissions (each one is still all-or-nothing).
+const maxStocktakeItems = 2000
+
+func (v Validator) ValidateStocktakeRequest(req inventoryparam.StocktakeRequest) error {
+	const op = "inventoryvalidator.ValidateStocktakeRequest"
+
+	if err := validation.ValidateStruct(&req,
+		validation.Field(&req.Note, validation.Length(0, 500).Error("validation.invalid_format")),
+		validation.Field(&req.Items,
+			validation.Required.Error("validation.required"),
+			validation.Length(1, maxStocktakeItems).Error("inventory.stocktake_too_many_items")),
+	); err != nil {
+		return wrap(op, err)
+	}
+
+	seen := make(map[string]int, len(req.Items))
+	for i, item := range req.Items {
+		if err := validation.ValidateStruct(&item,
+			validation.Field(&item.ProductID, validation.Required.Error("validation.required")),
+			validation.Field(&item.VariantID, validation.Required.Error("validation.required")),
+			validation.Field(&item.CountedQuantity, validation.NotNil.Error("validation.required")),
+		); err != nil {
+			var vErrs validation.Errors
+			if errors.As(err, &vErrs) {
+				return richerror.New(op).
+					WithKind(richerror.KindInvalid).
+					WithMessageKey("global.validation_failed").
+					WithMeta(map[string]any{"fields": vErrs, "index": i})
+			}
+			return wrap(op, err)
+		}
+
+		key := item.ProductID + "/" + item.VariantID
+		if first, dup := seen[key]; dup {
+			return richerror.New(op).
+				WithKind(richerror.KindInvalid).
+				WithMessageKey("inventory.stocktake_duplicate_item").
+				WithMeta(map[string]any{"index": i, "first_index": first, "variant_id": item.VariantID})
+		}
+		seen[key] = i
+	}
+	return nil
+}
+
 func (v Validator) ValidateSetStockConfigRequest(req inventoryparam.SetStockConfigRequest) error {
 	const op = "inventoryvalidator.ValidateSetStockConfigRequest"
 
