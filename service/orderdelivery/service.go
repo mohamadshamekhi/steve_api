@@ -285,13 +285,11 @@ func (s Service) confirmableOrder(ctx context.Context, token, rawPhone string) (
 	return order, phone, nil
 }
 
+// link puts the token in the path (<base>/<token>); the storefront page is
+// /order/delivery/:token. Old labels printed as ?token= are redirected by
+// the storefront.
 func (s Service) link(token string) string {
-	base := s.cfg.BaseURL
-	sep := "?"
-	if strings.Contains(base, "?") {
-		sep = "&"
-	}
-	return base + sep + "token=" + url.QueryEscape(token)
+	return strings.TrimRight(s.cfg.BaseURL, "/") + "/" + url.PathEscape(token)
 }
 
 func (s Service) otpPrefix(orderID string) string {

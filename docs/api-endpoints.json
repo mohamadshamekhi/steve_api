@@ -1721,7 +1721,7 @@
       "auth": "backoffice+ACL:ViewOrderDetails",
       "in": "-",
       "out": "{order_id, url, qr_code}",
-      "desc": "QR تحویل سفارش (qr_code = data URI تصویر PNG) برای چاپ روی بسته"
+      "desc": "QR تحویل سفارش (qr_code = data URI تصویر PNG) برای چاپ روی بسته؛ url = <base_url>/<token> مثل https://stevemobile.com/order/delivery/<token>"
     },
     {
       "method": "GET",
