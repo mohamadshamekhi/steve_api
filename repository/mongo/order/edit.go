@@ -36,7 +36,7 @@ func (d DB) ApplyEdit(ctx context.Context, order entity.Order, prevUpdatedAt tim
 			WithMessageKey("global.something_wrong")
 	}
 	if result.MatchedCount == 0 {
-		return richerror.New(op).WithKind(richerror.KindBadRequest).
+		return richerror.New(op).WithKind(richerror.KindConflict).
 			WithMessageKey("order.edit_conflict").
 			WithMeta(map[string]any{"order_id": order.ID})
 	}

@@ -14,6 +14,9 @@ const (
 	KindUnexpected
 	KindBadRequest
 	KindUnauthorized
+	// KindConflict: the resource changed under the caller (409); retry after
+	// reloading.
+	KindConflict
 )
 
 type RichError struct {

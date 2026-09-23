@@ -89,7 +89,7 @@
       "method": "GET",
       "path": "/user",
       "auth": "backoffice+ACL:ListUsers",
-      "in": "?page_number&page_size&filter",
+      "in": "?page_number&page_size&name&phone_number (هر دو جستجوی بخشی و بدون حساسیت به حروف)",
       "out": "{users[], pagination}",
       "desc": "لیست کاربران (ادمین)"
     },
@@ -699,7 +699,7 @@
       "method": "GET",
       "path": "/order/all",
       "auth": "backoffice+ACL:ListOrders",
-      "in": "?page_number&page_size&status(یک مقدار یا چندتا با کاما: processing,shipped)&order_id&user_id&phone(بخشی از شماره هم کافی است)&purchase_type(online|in_person)&is_partner_order(true|false)&from&to(YYYY-MM-DD به وقت تهران، هر دو شامل)&min_amount&max_amount(روی final_amount، تومان)؛ تاریخ نامعتبر → 422 validation.invalid_input",
+      "in": "?page_number&page_size&status(یک مقدار یا چندتا با کاما: processing,shipped)&order_id&user_id&phone(بخشی از شماره هم کافی است)&purchase_type(online|in_person)&is_partner_order(true|false)&from&to(YYYY-MM-DD به وقت تهران، هر دو شامل)&min_amount&max_amount(روی final_amount، تومان)؛ تاریخ نامعتبر → 400 validation.invalid_input",
       "out": "{orders[{..., applied_discounts[{discount_id, discount_code?, amount}], total_discount_amount, manual_discount, is_edited, edits[]?}], pagination}",
       "desc": "لیست همه‌ی سفارش‌ها (ادمین)"
     },
@@ -757,7 +757,7 @@
       "auth": "backoffice+ACL:EditOrder (فقط ادمین اصلی)",
       "in": "{reason (الزامی), user_id?, shipping_address?{title,province,city,street,postcode}, shipping_amount?, manual_discount_amount?, items?[{variant_id, product_id? (برای سطر جدید کاتالوگ), quantity, unit_price?, discount_amount?, is_custom?, product_name?, kind?, unit_cost?}], record_cash_difference?, payment_method?}",
       "out": "{order, edit{id, edited_by, edited_at, reason, changes[], before, after, cash_difference}}",
-      "desc": "ویرایش سفارش اشتباه. items اگر ارسال شود لیست کامل جدید است (سطر حذف‌شده = حذف). اختلاف تعداد به‌صورت دلتا روی موجودی و دفتر کالا اعمال می‌شود؛ اختلاف مبلغ نهایی برای فروش حضوری تحویل‌شده به‌طور پیش‌فرض در صندوق ثبت می‌شود (record_cash_difference برای override). سفارش لغو/مرجوع‌شده یا دارای مرجوعی: فقط اطلاعات غیرکالایی. خطاها: order.edit_conflict, order.edit_no_changes, order.edit_items_not_allowed, order.edit_has_returns, order.edit_negative_total, order.edit_discount_exceeds_line, order.edit_duplicate_line"
+      "desc": "ویرایش سفارش اشتباه. items اگر ارسال شود لیست کامل جدید است (سطر حذف‌شده = حذف). اختلاف تعداد به‌صورت دلتا روی موجودی و دفتر کالا اعمال می‌شود؛ اختلاف مبلغ نهایی برای فروش حضوری تحویل‌شده به‌طور پیش‌فرض در صندوق ثبت می‌شود (record_cash_difference برای override). سفارش لغو/مرجوع‌شده یا دارای مرجوعی: فقط اطلاعات غیرکالایی. خطاها: order.edit_conflict (409 — سفارش همزمان تغییر کرده؛ دوباره بارگذاری کنید), order.edit_no_changes, order.edit_items_not_allowed, order.edit_has_returns, order.edit_negative_total, order.edit_discount_exceeds_line, order.edit_duplicate_line"
     }
   ],
   "payment": [
