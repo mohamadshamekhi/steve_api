@@ -35,4 +35,7 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.GET("/storefront/get-products-with-special-discount", h.GetProductsWithSpecialDiscount)
 	g.GET("/storefront/:id", h.StorefrontGetProduct)
 	g.GET("/storefront/get-by-slug/:slug", h.StorefrontGetProductBySlug)
+	// Public: target of the printed variant QR label; the variant ID is the
+	// stable code (survives renames and slug changes).
+	g.GET("/variant/:variant_id/resolve", h.ResolveVariant)
 }

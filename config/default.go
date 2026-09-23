@@ -45,11 +45,12 @@ func Default() Config {
 			SMSTimeout:              30 * time.Second,
 		},
 		OrderDelivery: orderdeliveryservice.Config{
-			BaseURL:        "https://stevemobile.com/order/delivery",
-			OTPPrefix:      "order_delivery",
-			MaxOTPAttempts: 5,
-			AttemptWindow:  15 * time.Minute,
-			QRSize:         512,
+			BaseURL:         "https://stevemobile.com/order/delivery",
+			OTPPrefix:       "order_delivery",
+			MaxOTPAttempts:  5,
+			AttemptWindow:   15 * time.Minute,
+			QRSize:          512,
+			InvoiceTokenTTL: 30 * time.Minute,
 		},
 	}
 }

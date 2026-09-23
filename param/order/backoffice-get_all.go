@@ -14,7 +14,23 @@ type GetAllOrderRequest struct {
 
 type BackofficeFilterOrder struct {
 	UserID *string `json:"user_id" query:"user_id"`
+	// Status is one status or a comma-separated list (processing,shipped).
 	Status *string `json:"status" query:"status"`
+	// OrderID matches an exact order ID.
+	OrderID *string `json:"order_id" query:"order_id"`
+	// Phone matches any part of the customer's phone number.
+	Phone          *string `json:"phone" query:"phone"`
+	PurchaseType   *string `json:"purchase_type" query:"purchase_type"`
+	IsPartnerOrder *bool   `json:"is_partner_order" query:"is_partner_order"`
+	// From / To are YYYY-MM-DD in Tehran time, both inclusive, on created_at.
+	From      *string `json:"from" query:"from"`
+	To        *string `json:"to" query:"to"`
+	MinAmount *uint   `json:"min_amount" query:"min_amount"`
+	MaxAmount *uint   `json:"max_amount" query:"max_amount"`
+
+	// Resolved by the handler from From / To.
+	FromTime *time.Time `json:"-" query:"-"`
+	ToTime   *time.Time `json:"-" query:"-"`
 }
 
 type BackofficeOrderList struct {
@@ -39,6 +55,9 @@ type BackofficeOrderList struct {
 	Status         entity.OrderStatus `json:"status"`
 	CreatedAt      time.Time          `json:"created_at"`
 	UpdatedAt      time.Time          `json:"updated_at"`
+	// IsEdited / Edits: super-admin corrections of this order, oldest first.
+	IsEdited bool               `json:"is_edited"`
+	Edits    []entity.OrderEdit `json:"edits,omitempty"`
 }
 
 type GetAllOrderResponse struct {

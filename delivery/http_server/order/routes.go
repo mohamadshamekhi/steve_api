@@ -10,7 +10,7 @@ import (
 func (h Handler) SetRoutes(e *echo.Echo) {
 	g := e.Group("/order")
 	g.POST("/register", h.Register, middleware.Auth(h.authSvc, h.authCfg))
-	g.GET("/all", h.GetAll, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg))
+	g.GET("/all", h.GetAll, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ListOrders))
 	g.GET("/storefront/all", h.GetUserOrder, middleware.Auth(h.authSvc, h.authCfg))
 	g.GET("/storefront/user-order/statics", h.GetUserOrderStatics, middleware.Auth(h.authSvc, h.authCfg))
 	g.PATCH("/update-status/:id", h.UpdateStatus, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateOrderStatus))
@@ -18,5 +18,6 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	backofficePanel := e.Group("/backoffice/order")
 	backofficePanel.POST("/register", h.RegisterBackoffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.CreateOrder))
 	backofficePanel.POST("/complete-order", h.CompleteOrderBackoffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.CreateOrder))
+	backofficePanel.PATCH("/:id", h.EditOrder, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.EditOrder))
 	backofficePanel.GET("/check-pending-exist/:id", h.CheckPendingExist, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ViewOrderDetails))
 }

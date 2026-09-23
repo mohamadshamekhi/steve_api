@@ -575,6 +575,10 @@
     "translation": "شماره موبایل وارد شده با شماره ثبت‌کننده‌ی سفارش یکسان نیست."
   },
   {
+    "id": "order.delivery_invoice_unauthorized",
+    "translation": "دسترسی به فاکتور منقضی یا نامعتبر است. لطفاً دوباره با کد پیامکی تأیید کنید."
+  },
+  {
     "id": "order.delivery_too_many_attempts",
     "translation": "تعداد تلاش‌ها بیش از حد مجاز است. لطفاً چند دقیقه‌ی دیگر دوباره تلاش کنید."
   },
@@ -597,5 +601,49 @@
   {
     "id": "dashboard.invalid_period",
     "translation": "بازه‌ی تاریخ نامعتبر است؛ from و to باید به شکل YYYY-MM-DD باشند، from بعد از to نباشد و بازه حداکثر ۳۶۶ روز باشد."
+  },
+  {
+    "id": "order.edited",
+    "translation": "سفارش با موفقیت ویرایش شد."
+  },
+  {
+    "id": "order.edit_conflict",
+    "translation": "این سفارش همزمان توسط شخص دیگری تغییر کرده است. صفحه را تازه کنید و دوباره تلاش کنید."
+  },
+  {
+    "id": "order.edit_no_changes",
+    "translation": "هیچ تغییری برای ثبت وجود ندارد."
+  },
+  {
+    "id": "order.edit_items_not_allowed",
+    "translation": "اقلام سفارش لغوشده یا مرجوع‌شده قابل ویرایش نیست."
+  },
+  {
+    "id": "order.edit_has_returns",
+    "translation": "برای این سفارش مرجوعی ثبت شده و اقلام آن قابل ویرایش نیست."
+  },
+  {
+    "id": "order.edit_empty_items",
+    "translation": "سفارش باید حداقل یک قلم داشته باشد."
+  },
+  {
+    "id": "order.edit_duplicate_line",
+    "translation": "یک واریانت نمی‌تواند دو بار در سفارش بیاید."
+  },
+  {
+    "id": "order.edit_line_kind_mismatch",
+    "translation": "سطر دستی را نمی‌توان به کالای کاتالوگ تبدیل کرد (و برعکس)."
+  },
+  {
+    "id": "order.edit_discount_exceeds_line",
+    "translation": "تخفیف سطر از مبلغ همان سطر بیشتر است."
+  },
+  {
+    "id": "order.edit_negative_total",
+    "translation": "با این تغییرات مبلغ نهایی سفارش منفی می‌شود."
+  },
+  {
+    "id": "user.not_found",
+    "translation": "کاربر پیدا نشد."
   }
 ]

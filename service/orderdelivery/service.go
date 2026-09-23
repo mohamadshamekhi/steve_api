@@ -40,6 +40,8 @@ type OTPService interface {
 type OTPStore interface {
 	IncrAttempts(ctx context.Context, key string, ttl time.Duration) (int64, error)
 	DeleteUserActiveCode(ctx context.Context, key string) error
+	StoreNewActiveCodeForUser(ctx context.Context, key string, code string, expireTime time.Duration) error
+	GetUserActiveCode(ctx context.Context, key string) (string, error)
 }
 
 type Service struct {
@@ -160,8 +162,97 @@ func (s Service) Verify(ctx context.Context, req orderdeliveryparam.VerifyReques
 		return orderdeliveryparam.VerifyResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	_ = s.orders.SetDeliveryConfirmedBy(ctx, order.ID, confirmedByCustomerQR)
+	order.Status = entity.OrderStatusDelivered
 
-	return orderdeliveryparam.VerifyResponse{OrderID: order.ID, Status: string(entity.OrderStatusDelivered)}, nil
+	invoiceToken, gErr := newToken()
+	if gErr != nil {
+		return orderdeliveryparam.VerifyResponse{}, richerror.New(op).WithWarpError(gErr).
+			WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
+	}
+	ttl := s.invoiceTokenTTL()
+	if err := s.otpStore.StoreNewActiveCodeForUser(ctx, s.invoiceKey(invoiceToken), order.ID, ttl); err != nil {
+		return orderdeliveryparam.VerifyResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	return orderdeliveryparam.VerifyResponse{
+		OrderID:               order.ID,
+		Status:                string(entity.OrderStatusDelivered),
+		Invoice:               buildInvoice(order),
+		InvoiceToken:          invoiceToken,
+		InvoiceTokenExpiresIn: int64(ttl.Seconds()),
+	}, nil
+}
+
+// GetInvoice returns the invoice to a customer who proved ownership with an
+// OTP; the invoice token issued by Verify is bound to the QR's order.
+func (s Service) GetInvoice(ctx context.Context, req orderdeliveryparam.GetInvoiceRequest) (orderdeliveryparam.GetInvoiceResponse, error) {
+	const op = "orderdeliveryservice.GetInvoice"
+
+	unauthorized := richerror.New(op).WithKind(richerror.KindUnauthorized).WithMessageKey("order.delivery_invoice_unauthorized")
+	if req.InvoiceToken == "" {
+		return orderdeliveryparam.GetInvoiceResponse{}, unauthorized
+	}
+	order, err := s.orders.GetOrderByDeliveryToken(ctx, req.Token)
+	if err != nil {
+		return orderdeliveryparam.GetInvoiceResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	orderID, err := s.otpStore.GetUserActiveCode(ctx, s.invoiceKey(req.InvoiceToken))
+	if err != nil || orderID != order.ID {
+		return orderdeliveryparam.GetInvoiceResponse{}, unauthorized
+	}
+	return orderdeliveryparam.GetInvoiceResponse{Invoice: buildInvoice(order)}, nil
+}
+
+func buildInvoice(order entity.Order) orderdeliveryparam.Invoice {
+	items := make([]orderdeliveryparam.InvoiceItem, 0, len(order.Items))
+	for _, it := range order.Items {
+		gross := it.PriceAtTime * it.Quantity
+		total := uint(0)
+		if gross > it.DiscountAmount {
+			total = gross - it.DiscountAmount
+		}
+		items = append(items, orderdeliveryparam.InvoiceItem{
+			ProductName:  it.ProductName,
+			VariantLabel: variantLabel(it.VariantAttributes),
+			Quantity:     it.Quantity,
+			UnitPrice:    it.PriceAtTime,
+			Discount:     it.DiscountAmount,
+			Total:        total,
+		})
+	}
+	// Derived rather than summed so subtotal + shipping - discount always
+	// equals final_amount, whatever mix of line/coupon/counter discounts applied.
+	discount := uint(0)
+	if gross := order.SubtotalAmount + order.ShippingAmount; gross > order.FinalAmount {
+		discount = gross - order.FinalAmount
+	}
+	a := order.ShippingAddress
+	return orderdeliveryparam.Invoice{
+		OrderID:      order.ID,
+		Status:       string(order.Status),
+		StatusLabel:  ordernotifyservice.StatusLabelFa(order.Status),
+		Items:        items,
+		Subtotal:     order.SubtotalAmount,
+		ShippingCost: order.ShippingAmount,
+		Discount:     discount,
+		FinalAmount:  order.FinalAmount,
+		ShippingAddress: orderdeliveryparam.InvoiceAddress{
+			Title: a.Title, Province: a.Province, City: a.City, Street: a.Street, Postcode: a.Postcode,
+		},
+		CreatedAt: order.CreatedAt,
+	}
+}
+
+func variantLabel(attrs []entity.VariantAttribute) string {
+	parts := make([]string, 0, len(attrs))
+	for _, a := range attrs {
+		if a.Label != "" {
+			parts = append(parts, a.Label)
+		} else if a.Value != "" {
+			parts = append(parts, a.Value)
+		}
+	}
+	return strings.Join(parts, " / ")
 }
 
 // confirmableOrder resolves the token, checks the order can still move to
@@ -209,6 +300,21 @@ func (s Service) otpPrefix(orderID string) string {
 		p = "order_delivery"
 	}
 	return p + ":" + orderID
+}
+
+func (s Service) invoiceKey(invoiceToken string) string {
+	p := s.cfg.OTPPrefix
+	if p == "" {
+		p = "order_delivery"
+	}
+	return p + ":invoice:" + invoiceToken
+}
+
+func (s Service) invoiceTokenTTL() time.Duration {
+	if s.cfg.InvoiceTokenTTL <= 0 {
+		return 30 * time.Minute
+	}
+	return s.cfg.InvoiceTokenTTL
 }
 
 func (s Service) maxAttempts() int64 {

@@ -1,5 +1,7 @@
 package orderdeliveryparam
 
+import "time"
+
 type GetQRCodeRequest struct {
 	OrderID string `param:"id"`
 }
@@ -39,6 +41,51 @@ type VerifyRequest struct {
 }
 
 type VerifyResponse struct {
-	OrderID string `json:"order_id"`
-	Status  string `json:"status"`
+	OrderID string  `json:"order_id"`
+	Status  string  `json:"status"`
+	Invoice Invoice `json:"invoice"`
+	// InvoiceToken unlocks GET /order/delivery/:token/invoice (header
+	// X-Invoice-Token) for InvoiceTokenExpiresIn seconds, so a page refresh
+	// doesn't need a new OTP.
+	InvoiceToken          string `json:"invoice_token"`
+	InvoiceTokenExpiresIn int64  `json:"invoice_token_expires_in"`
+}
+
+type GetInvoiceRequest struct {
+	Token        string
+	InvoiceToken string
+}
+
+type GetInvoiceResponse struct {
+	Invoice Invoice `json:"invoice"`
+}
+
+type Invoice struct {
+	OrderID         string         `json:"order_id"`
+	Status          string         `json:"status"`
+	StatusLabel     string         `json:"status_label"`
+	Items           []InvoiceItem  `json:"items"`
+	Subtotal        uint           `json:"subtotal"`
+	ShippingCost    uint           `json:"shipping_cost"`
+	Discount        uint           `json:"discount"`
+	FinalAmount     uint           `json:"final_amount"`
+	ShippingAddress InvoiceAddress `json:"shipping_address"`
+	CreatedAt       time.Time      `json:"created_at"`
+}
+
+type InvoiceItem struct {
+	ProductName  string `json:"product_name"`
+	VariantLabel string `json:"variant_label"`
+	Quantity     uint   `json:"quantity"`
+	UnitPrice    uint   `json:"unit_price"`
+	Discount     uint   `json:"discount"`
+	Total        uint   `json:"total"`
+}
+
+type InvoiceAddress struct {
+	Title    string `json:"title"`
+	Province string `json:"province"`
+	City     string `json:"city"`
+	Street   string `json:"street"`
+	Postcode string `json:"postcode"`
 }

@@ -10,4 +10,6 @@ type Config struct {
 	MaxOTPAttempts int64         `koanf:"max_otp_attempts"`
 	AttemptWindow  time.Duration `koanf:"attempt_window"`
 	QRSize         int           `koanf:"qr_size"`
+	// InvoiceTokenTTL is how long the post-OTP invoice token stays valid.
+	InvoiceTokenTTL time.Duration `koanf:"invoice_token_ttl"`
 }

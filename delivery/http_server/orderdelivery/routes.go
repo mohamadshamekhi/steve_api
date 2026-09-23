@@ -16,4 +16,5 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.GET("/:token", h.GetInfo)
 	g.POST("/:token/send-otp", h.SendOTP)
 	g.POST("/:token/verify", h.Verify)
+	g.GET("/:token/invoice", h.GetInvoice)
 }

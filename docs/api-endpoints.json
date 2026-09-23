@@ -362,6 +362,14 @@
       "in": "-",
       "out": "{product}",
       "desc": "جزئیات محصول فروشگاه با slug"
+    },
+    {
+      "method": "GET",
+      "path": "/product/variant/:variant_id/resolve",
+      "auth": "public",
+      "in": "-",
+      "out": "{product_id, variant_id, slug, product_name, variant_label, kind, on_website}",
+      "desc": "مقصد QR لیبل واریانت (شامل واریانت تنهای خدمات). کد QR همان variant_id است که با تغییر نام/slug عوض نمی‌شود. محصول منتشرنشده یا فقط‌حضوری هم resolve می‌شود؛ on_website=false یعنی صفحه‌ی فروشگاهی ندارد. محصول/واریانت حذف‌شده → 404"
     }
   ],
   "category": [
@@ -690,9 +698,9 @@
     {
       "method": "GET",
       "path": "/order/all",
-      "auth": "backoffice",
-      "in": "?page&filters",
-      "out": "{orders[{..., applied_discounts[{discount_id, discount_code?, amount}], total_discount_amount, manual_discount}], pagination}",
+      "auth": "backoffice+ACL:ListOrders",
+      "in": "?page_number&page_size&status(یک مقدار یا چندتا با کاما: processing,shipped)&order_id&user_id&phone(بخشی از شماره هم کافی است)&purchase_type(online|in_person)&is_partner_order(true|false)&from&to(YYYY-MM-DD به وقت تهران، هر دو شامل)&min_amount&max_amount(روی final_amount، تومان)؛ تاریخ نامعتبر → 422 validation.invalid_input",
+      "out": "{orders[{..., applied_discounts[{discount_id, discount_code?, amount}], total_discount_amount, manual_discount, is_edited, edits[]?}], pagination}",
       "desc": "لیست همه‌ی سفارش‌ها (ادمین)"
     },
     {
@@ -742,6 +750,14 @@
       "in": "-",
       "out": "{exists}",
       "desc": "بررسی وجود سفارش در انتظار برای کاربر"
+    },
+    {
+      "method": "PATCH",
+      "path": "/backoffice/order/:id",
+      "auth": "backoffice+ACL:EditOrder (فقط ادمین اصلی)",
+      "in": "{reason (الزامی), user_id?, shipping_address?{title,province,city,street,postcode}, shipping_amount?, manual_discount_amount?, items?[{variant_id, product_id? (برای سطر جدید کاتالوگ), quantity, unit_price?, discount_amount?, is_custom?, product_name?, kind?, unit_cost?}], record_cash_difference?, payment_method?}",
+      "out": "{order, edit{id, edited_by, edited_at, reason, changes[], before, after, cash_difference}}",
+      "desc": "ویرایش سفارش اشتباه. items اگر ارسال شود لیست کامل جدید است (سطر حذف‌شده = حذف). اختلاف تعداد به‌صورت دلتا روی موجودی و دفتر کالا اعمال می‌شود؛ اختلاف مبلغ نهایی برای فروش حضوری تحویل‌شده به‌طور پیش‌فرض در صندوق ثبت می‌شود (record_cash_difference برای override). سفارش لغو/مرجوع‌شده یا دارای مرجوعی: فقط اطلاعات غیرکالایی. خطاها: order.edit_conflict, order.edit_no_changes, order.edit_items_not_allowed, order.edit_has_returns, order.edit_negative_total, order.edit_discount_exceeds_line, order.edit_duplicate_line"
     }
   ],
   "payment": [
@@ -1713,7 +1729,7 @@
       "auth": "public",
       "in": "-",
       "out": "{order_id, status, status_label, masked_phone, can_confirm}",
-      "desc": "اطلاعات سفارش پس از اسکن QR"
+      "desc": "اطلاعات عمومی سفارش پس از اسکن QR (بدون اطلاعات شخصی؛ فاکتور فقط بعد از OTP)"
     },
     {
       "method": "POST",
@@ -1728,8 +1744,16 @@
       "path": "/order/delivery/:token/verify",
       "auth": "public",
       "in": "{phone_number, code}",
-      "out": "{order_id, status}",
-      "desc": "تأیید OTP و تغییر خودکار وضعیت سفارش به delivered"
+      "out": "{order_id, status, invoice, invoice_token, invoice_token_expires_in}",
+      "desc": "تأیید OTP، تغییر خودکار وضعیت به delivered و برگرداندن فاکتور. invoice = {order_id, status, status_label, items[{product_name, variant_label, quantity, unit_price, discount, total}], subtotal, shipping_cost, discount, final_amount, shipping_address{title, province, city, street, postcode}, created_at}؛ invoice_token_expires_in به ثانیه (پیش‌فرض ۱۸۰۰)"
+    },
+    {
+      "method": "GET",
+      "path": "/order/delivery/:token/invoice",
+      "auth": "public + header X-Invoice-Token (از پاسخ verify)",
+      "in": "-",
+      "out": "{invoice}",
+      "desc": "فاکتور سفارش با توکن کوتاه‌مدت بعد از verify (برای رفرش صفحه). توکن نامعتبر/منقضی → 401 order.delivery_invoice_unauthorized"
     }
   ],
   "dashboard": [

@@ -341,6 +341,12 @@ func main() {
 	salesReturnSvc.SetCashRecorder(accountingSvc)
 	purchaseSvc.SetCashRecorder(accountingSvc)
 	orderBackofficeSvc.SetCashRecorder(accountingSvc)
+	orderBackofficeSvc.SetOrderEditDeps(orderservice.OrderEditDeps{
+		Orders:  orderRepo,
+		Catalog: productRepo,
+		Returns: salesReturnRepo,
+		Ledger:  inventorySvc,
+	})
 
 	supplierHandler := supplierhandler.New(supplierSvc, translator, suppliervalidator.New(), authSvc, cfg.Auth, aclSvc)
 	purchaseHandler := purchasehandler.New(purchaseSvc, translator, purchasevalidator.New(), authSvc, cfg.Auth, aclSvc)

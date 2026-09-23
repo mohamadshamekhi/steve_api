@@ -74,7 +74,9 @@ type Order struct {
 	// replayed status change never mints a second one.
 	ThankYouClaimed    bool      `bson:"thank_you_claimed,omitempty"`
 	ThankYouDiscountID string    `bson:"thank_you_discount_id,omitempty"`
-	CreatedAt          time.Time `bson:"created_at"`
+	// Edits is the audit trail of super-admin corrections, oldest first.
+	Edits     []OrderEdit `bson:"edits,omitempty"`
+	CreatedAt time.Time   `bson:"created_at"`
 	UpdatedAt          time.Time `bson:"updated_at"`
 }
 
@@ -189,4 +191,61 @@ func CanTransitionOrderStatus(from, to OrderStatus) bool {
 	}
 
 	return false
+}
+
+// OrderEdit records one super-admin correction of a mistakenly registered
+// order, with the order as it was before and after, so a correction is never
+// silent.
+type OrderEdit struct {
+	ID       string    `bson:"id" json:"id"`
+	EditedBy string    `bson:"edited_by" json:"edited_by"`
+	EditedAt time.Time `bson:"edited_at" json:"edited_at"`
+	Reason   string    `bson:"reason" json:"reason"`
+	// Changes names the parts that changed: items, user_id, shipping_address,
+	// shipping_amount, manual_discount_amount.
+	Changes []string      `bson:"changes" json:"changes"`
+	Before  OrderSnapshot `bson:"before" json:"before"`
+	After   OrderSnapshot `bson:"after" json:"after"`
+	// CashDifference is what was booked in the cashbox for this edit:
+	// positive = received from the customer, negative = paid back, 0 = none.
+	CashDifference int64 `bson:"cash_difference,omitempty" json:"cash_difference,omitempty"`
+}
+
+type OrderSnapshot struct {
+	UserID               string      `bson:"user_id" json:"user_id"`
+	Items                []OrderItem `bson:"items" json:"items"`
+	ShippingAddress      Address     `bson:"shipping_address" json:"shipping_address"`
+	SubtotalAmount       uint        `bson:"subtotal_amount" json:"subtotal_amount"`
+	ShippingAmount       uint        `bson:"shipping_amount" json:"shipping_amount"`
+	ManualDiscountAmount uint        `bson:"manual_discount_amount" json:"manual_discount_amount"`
+	FinalAmount          uint        `bson:"final_amount" json:"final_amount"`
+}
+
+func (o Order) Snapshot() OrderSnapshot {
+	items := make([]OrderItem, len(o.Items))
+	copy(items, o.Items)
+	return OrderSnapshot{
+		UserID:               o.UserID,
+		Items:                items,
+		ShippingAddress:      o.ShippingAddress,
+		SubtotalAmount:       o.SubtotalAmount,
+		ShippingAmount:       o.ShippingAmount,
+		ManualDiscountAmount: o.ManualDiscountAmount,
+		FinalAmount:          o.FinalAmount,
+	}
+}
+
+// StockApplied reports whether this order has already taken its units out of
+// stock and written its sale lines to the ledger. A storefront or partner
+// order does so at registration; a counter sale only when it is completed. A
+// cancelled order has had its stock put back.
+func (o Order) StockApplied() bool {
+	switch o.Status {
+	case OrderStatusCancelled, OrderStatusRefunded:
+		return false
+	case OrderStatusPendingPayment:
+		return o.PurchaseType != PurchaseTypeInPerson || o.IsPartnerOrder
+	default:
+		return true
+	}
 }

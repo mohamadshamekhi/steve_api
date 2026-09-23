@@ -268,6 +268,10 @@
     "translation": "The phone number does not match the order owner's number."
   },
   {
+    "id": "order.delivery_invoice_unauthorized",
+    "translation": "Invoice access has expired or is invalid. Please verify with the SMS code again."
+  },
+  {
     "id": "order.delivery_too_many_attempts",
     "translation": "Too many attempts. Please try again in a few minutes."
   },
@@ -290,5 +294,49 @@
   {
     "id": "dashboard.invalid_period",
     "translation": "Invalid date range: from and to must be YYYY-MM-DD, from must not be after to, and the range must be at most 366 days."
+  },
+  {
+    "id": "order.edited",
+    "translation": "The order was updated successfully."
+  },
+  {
+    "id": "order.edit_conflict",
+    "translation": "This order was changed by someone else meanwhile. Refresh and try again."
+  },
+  {
+    "id": "order.edit_no_changes",
+    "translation": "There are no changes to save."
+  },
+  {
+    "id": "order.edit_items_not_allowed",
+    "translation": "Items of a cancelled or refunded order cannot be edited."
+  },
+  {
+    "id": "order.edit_has_returns",
+    "translation": "This order has sales returns, so its items cannot be edited."
+  },
+  {
+    "id": "order.edit_empty_items",
+    "translation": "An order must have at least one item."
+  },
+  {
+    "id": "order.edit_duplicate_line",
+    "translation": "The same variant cannot appear twice in an order."
+  },
+  {
+    "id": "order.edit_line_kind_mismatch",
+    "translation": "A custom line cannot be turned into a catalog line (or vice versa)."
+  },
+  {
+    "id": "order.edit_discount_exceeds_line",
+    "translation": "The line discount exceeds the line amount."
+  },
+  {
+    "id": "order.edit_negative_total",
+    "translation": "These changes would make the order total negative."
+  },
+  {
+    "id": "user.not_found",
+    "translation": "User not found."
   }
 ]

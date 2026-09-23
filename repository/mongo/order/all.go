@@ -15,12 +15,12 @@ import (
 
 func (d DB) GetAll(ctx context.Context, f orderparam.BackofficeFilterOrder, p commonparam.PaginationRequest) (orderservice.ListResult, error) {
 	const op = "mongodborder.GetAll"
-	filter := bson.M{}
-	if f.UserID != nil {
-		filter["user_id"] = *f.UserID
+	filter, empty, err := d.backofficeOrderFilter(ctx, f)
+	if err != nil {
+		return orderservice.ListResult{}, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
 	}
-	if f.Status != nil {
-		filter["status"] = *f.Status
+	if empty {
+		return orderservice.ListResult{Orders: []entity.Order{}}, nil
 	}
 
 	totalCount, err := d.collection.CountDocuments(ctx, filter)

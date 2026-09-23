@@ -27,6 +27,7 @@ type BackofficeService struct {
 	cartProvider     CartProvider
 	inventory        InventoryRecorder
 	cash             CashRecorder
+	edit             OrderEditDeps
 }
 
 func NewBackofficeService(repo OrderReadWriter, userProvider UserProvider, productProvider ProductProvider, discountProvider DiscountProvider, cartProvider CartProvider) BackofficeService {
@@ -188,6 +189,8 @@ func (s BackofficeService) GetAll(ctx context.Context, req orderparam.GetAllOrde
 			CreatedAt:           order.CreatedAt,
 			UpdatedAt:           order.UpdatedAt,
 			Shipping:            order.Shipping,
+			IsEdited:            len(order.Edits) > 0,
+			Edits:               order.Edits,
 		})
 	}
 

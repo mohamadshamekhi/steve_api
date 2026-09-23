@@ -52,6 +52,7 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.DeleteReview, Description: "حذف نظر"},
 	{Name: key.ListOrders, Description: "مشاهده لیست سفارشات"},
 	{Name: key.ViewOrderDetails, Description: "مشاهده جزئیات سفارش"},
+	{Name: key.EditOrder, Description: "ویرایش سفارش ثبت‌شده (اقلام، مبالغ، مشتری) — فقط ادمین اصلی"},
 	{Name: key.UpdateOrderStatus, Description: "تغییر وضعیت سفارش"},
 	{Name: key.CreateOrder, Description: "ایجاد سفارش جدید"},
 	{Name: key.ListCarts, Description: "مشاهده لیست سبدهای خرید"},

@@ -81,6 +81,9 @@ const (
 	ViewOrderDetails  = "order:view_details"
 	UpdateOrderStatus = "order:update_status"
 	CreateOrder       = "order:create"
+	// EditOrder corrects a registered order (items, prices, customer, ...)
+	// with stock/ledger/cash reconciliation. Seeded for SuperAdmin only.
+	EditOrder = "order:edit"
 
 	ListCarts       = "cart:list"
 	ViewCartDetails = "cart:view_details"
