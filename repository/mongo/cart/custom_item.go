@@ -79,7 +79,7 @@ func (d DB) UpsertCustomItem(ctx context.Context, userID string, item entity.Car
 
 // SetItemManualDiscount stores the counter discount given on one line of the
 // user's active cart, in Toman for the whole line.
-func (d DB) SetItemManualDiscount(ctx context.Context, userID string, variantID string, amount uint) error {
+func (d DB) SetItemManualDiscount(ctx context.Context, userID string, variantID string, amount int64) error {
 	const op = "mongodbcart.SetItemManualDiscount"
 
 	filter := bson.M{

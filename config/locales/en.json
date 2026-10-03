@@ -200,6 +200,10 @@
     "translation": "Item not found in the cart."
   },
   {
+    "id": "cart.unit_price_invalid",
+    "translation": "Unit price cannot be negative."
+  },
+  {
     "id": "cart.not_found",
     "translation": "No active cart found."
   },

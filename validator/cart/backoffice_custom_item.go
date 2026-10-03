@@ -9,6 +9,22 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
+func (v Validator) ValidateSetItemUnitPriceBackofficeRequest(req cartparam.SetItemUnitPriceBackofficeRequest) error {
+	const op = "cartvalidator.ValidateSetItemUnitPriceBackofficeRequest"
+	if req.UnitPrice < 0 {
+		return richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("cart.unit_price_invalid")
+	}
+	if err := validation.ValidateStruct(&req,
+		validation.Field(&req.UserID, validation.Required.Error("validation.required"), validation.By(v.userIsExistByID)),
+		validation.Field(&req.VariantID, validation.Required.Error("validation.required")),
+	); err != nil {
+		return wrapValidationError(op, err)
+	}
+	return nil
+}
+
 // ValidateUpsertCustomItemBackofficeRequest checks a hand-typed invoice line.
 // There is no catalog entry to fall back on, so the title and the price the
 // salesperson typed are all the invoice will ever have.

@@ -40,5 +40,5 @@ type CartItemDetail struct {
 	Url               string                    `json:"url"`
 	IsCustom          bool                      `json:"is_custom,omitempty"`
 	Kind              entity.ProductKind        `json:"kind,omitempty"`
-	ManualDiscount    uint                      `json:"manual_discount,omitempty"`
+	ManualDiscount    int64                     `json:"manual_discount,omitempty"`
 }

@@ -35,7 +35,7 @@ type CartBackofficeWrite interface {
 	// UpsertCustomItem adds or rewrites a hand-typed in-person invoice line
 	// and returns the id that identifies it inside the cart.
 	UpsertCustomItem(ctx context.Context, userID string, item entity.CartItem) (string, error)
-	SetItemManualDiscount(ctx context.Context, userID string, variantID string, amount uint) error
+	SetItemManualDiscount(ctx context.Context, userID string, variantID string, amount int64) error
 	SetCartManualDiscount(ctx context.Context, userID string, amount uint) error
 	GetAll(ctx context.Context, filter cartparam.BackofficeFilterCart, pagination commonparam.PaginationRequest) (ListResult, error)
 }

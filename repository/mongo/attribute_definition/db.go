@@ -140,9 +140,20 @@ func (d DB) FindByIDs(ctx context.Context, ids []string) ([]entity.AttributeDefi
 	}
 	defer cursor.Close(ctx)
 
-	var attrs []entity.AttributeDefinition
-	if err := cursor.All(ctx, &attrs); err != nil {
+	var fetched []entity.AttributeDefinition
+	if err := cursor.All(ctx, &fetched); err != nil {
 		return nil, richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+
+	byID := make(map[string]entity.AttributeDefinition, len(fetched))
+	for _, a := range fetched {
+		byID[a.ID] = a
+	}
+	attrs := make([]entity.AttributeDefinition, 0, len(ids))
+	for _, id := range ids {
+		if a, ok := byID[id]; ok {
+			attrs = append(attrs, a)
+		}
 	}
 
 	return attrs, nil

@@ -65,10 +65,11 @@ type CartItem struct {
 	// profit report stays honest for goods that never entered the warehouse.
 	UnitCost uint `bson:"unit_cost,omitempty"`
 
-	// ManualDiscount is the discount the salesperson granted on this line at
-	// the counter, in Toman, for the whole line (not per unit). It is applied
-	// on top of any campaign discount the line already earned.
-	ManualDiscount uint `bson:"manual_discount,omitempty"`
+	// ManualDiscount is the price adjustment the salesperson applied on this
+	// line, in Toman for the whole line. Positive = discount (price reduced),
+	// negative = markup (price raised above catalog). Applied on top of any
+	// campaign discount the line already earned.
+	ManualDiscount int64 `bson:"manual_discount,omitempty"`
 }
 
 // GetKind normalises a cart line whose kind was never set.

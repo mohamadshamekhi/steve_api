@@ -258,7 +258,7 @@ func buildOrderItems(checkoutItems []entity.CheckoutItemResult) []entity.OrderIt
 			VariantAttributes: item.VariantAttributes,
 			PriceAtTime:       uint(item.PriceAtTime),
 			DiscountAmount:    item.DiscountAmount,
-			ManualDiscount:    item.ManualDiscount,
+			ManualDiscount:    uint(max(int64(0), item.ManualDiscount)),
 			IsCustom:          item.IsCustom,
 			Kind:              item.Kind,
 			CostAtTime:        item.CostAtTime,
@@ -333,6 +333,9 @@ func (s StoreFrontService) FinalizeCartForCheckout(ctx context.Context, cart ent
 func (s StoreFrontService) validateCartItems(ctx context.Context, cart entity.Cart, summary *entity.CheckoutSummary) error {
 	variantIDs := make([]string, 0, len(cart.Items))
 	for _, item := range cart.Items {
+		if item.IsCustom {
+			continue
+		}
 		variantIDs = append(variantIDs, item.VariantID)
 	}
 
@@ -344,6 +347,10 @@ func (s StoreFrontService) validateCartItems(ctx context.Context, cart entity.Ca
 
 	for _, item := range cart.Items {
 		itemResult := entity.CheckoutItemResult{CartItem: item}
+		if item.IsCustom {
+			summary.Items = append(summary.Items, itemResult)
+			continue
+		}
 		currentVariant, ok := currentVariants[item.VariantID]
 		if !ok {
 			return fmt.Errorf("could not find variant %s for product %s", item.VariantID, item.ProductID)

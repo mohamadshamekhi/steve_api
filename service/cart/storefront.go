@@ -80,23 +80,30 @@ func (s *StoreFrontService) GetMyActiveCart(ctx context.Context, req cartparam.M
 	if err != nil {
 		return cartparam.MyActiveCartResponse{}, richerror.New(op).WithWarpError(err)
 	}
+	summary, err := s.orderProvider.FinalizeCartForCheckout(ctx, *cart, "")
+	if err != nil {
+		return cartparam.MyActiveCartResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
 	var cartItems []cartparam.StoreFrontCartItemDetail
 	for _, item := range cart.Items {
-		p, err := s.pRepo.FindByID(ctx, item.ProductID)
-		summary, err := s.orderProvider.FinalizeCartForCheckout(ctx, *cart, "")
-		if err != nil {
-			return cartparam.MyActiveCartResponse{}, richerror.New(op).WithWarpError(err)
-		}
-		cartItems = append(cartItems, cartparam.StoreFrontCartItemDetail{
-			ProductID:         p.ID,
+		detail := cartparam.StoreFrontCartItemDetail{
+			ProductID:         item.ProductID,
 			VariantID:         item.VariantID,
 			Quantity:          item.Quantity,
 			ProductName:       item.ProductName,
 			VariantAttributes: item.VariantAttributes,
 			PriceAtTime:       item.PriceAtTime,
-			Url:               p.GetMainGallery().URL,
 			Summary:           summary,
-		})
+		}
+		if !item.IsCustom {
+			p, pErr := s.pRepo.FindByID(ctx, item.ProductID)
+			if pErr == nil {
+				detail.ProductID = p.ID
+				detail.Url = p.GetMainGallery().URL
+			}
+		}
+		cartItems = append(cartItems, detail)
 	}
 
 	c := cartparam.StoreFrontCartDetail{

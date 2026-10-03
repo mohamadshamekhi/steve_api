@@ -66,6 +66,7 @@ func (s StorefrontService) GetAllCategories(ctx context.Context, req categorypar
 			Level:       c.Level,
 			Ancestors:   c.Ancestors,
 			Slug:        c.Slug,
+			ParentID:    strPtrOrNil(c.ParentID),
 		})
 	}
 

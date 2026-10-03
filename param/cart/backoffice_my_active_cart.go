@@ -24,11 +24,12 @@ type BackofficeCartDetail struct {
 	Subtotal  uint                       `json:"subtotal"`
 	// ManualDiscount is the counter discount on the invoice as a whole.
 	ManualDiscount uint `json:"manual_discount"`
-	// ItemsManualDiscount is the sum of the per-line counter discounts.
-	ItemsManualDiscount uint `json:"items_manual_discount"`
-	// PayableAmount is Subtotal minus both, i.e. what the invoice shows
-	// before any campaign discount is calculated at registration time.
-	PayableAmount uint `json:"payable_amount"`
+	// ItemsManualDiscount is the net sum of per-line adjustments (positive =
+	// discount, negative = markup).
+	ItemsManualDiscount int64 `json:"items_manual_discount"`
+	// PayableAmount is Subtotal minus line adjustments and invoice discount,
+	// i.e. what the invoice shows before campaign discounts at registration.
+	PayableAmount int64 `json:"payable_amount"`
 }
 type BackofficeCartItemDetail struct {
 	ProductID         string                    `json:"product_id"`
@@ -41,5 +42,5 @@ type BackofficeCartItemDetail struct {
 	IsCustom          bool                      `json:"is_custom,omitempty"`
 	Kind              entity.ProductKind        `json:"kind,omitempty"`
 	UnitCost          uint                      `json:"unit_cost,omitempty"`
-	ManualDiscount    uint                      `json:"manual_discount,omitempty"`
+	ManualDiscount    int64                     `json:"manual_discount,omitempty"`
 }

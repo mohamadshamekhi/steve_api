@@ -507,6 +507,10 @@
     "translation": "این آیتم در سبد خرید پیدا نشد."
   },
   {
+    "id": "cart.unit_price_invalid",
+    "translation": "قیمت واحد نمی‌تواند منفی باشد."
+  },
+  {
     "id": "cart.not_found",
     "translation": "سبد خرید فعالی پیدا نشد."
   },

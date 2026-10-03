@@ -368,9 +368,13 @@ func (s BackofficeService) RegisterOrderBackoffice(ctx context.Context, req orde
 	}
 
 	var orderItemInfo []orderparam.OrderItemInfo
-	var itemsManualDiscount uint
+	var itemsManualDiscount int64
 	for _, item := range summary.Items {
 		itemsManualDiscount += item.ManualDiscount
+		lineManualDiscount := item.ManualDiscount
+		if lineManualDiscount < 0 {
+			lineManualDiscount = 0
+		}
 		orderItemInfo = append(orderItemInfo, orderparam.OrderItemInfo{
 			ProductID:         item.ProductID,
 			VariantID:         item.VariantID,
@@ -379,7 +383,7 @@ func (s BackofficeService) RegisterOrderBackoffice(ctx context.Context, req orde
 			VariantAttributes: item.VariantAttributes,
 			TotalPriceAtTime:  uint(item.PriceAtTime),
 			DiscountAmount:    item.DiscountAmount,
-			ManualDiscount:    item.ManualDiscount,
+			ManualDiscount:    uint(lineManualDiscount),
 			IsCustom:          item.IsCustom,
 			Kind:              item.Kind,
 		})
@@ -510,26 +514,28 @@ func applyManualDiscounts(summary *entity.CheckoutSummary, invoiceLevel uint) (u
 	for i := range summary.Items {
 		item := &summary.Items[i]
 
-		manual := int64(item.ManualDiscount)
-		if manual <= 0 {
-			item.ManualDiscount = 0
+		manual := item.ManualDiscount
+		if manual == 0 {
 			continue
 		}
 
-		remaining := item.LineTotal() - int64(item.DiscountAmount)
-		if manual > remaining {
-			return 0, richerror.New(op).
-				WithKind(richerror.KindInvalid).
-				WithMessageKey("order.manual_discount_exceeds_total").
-				WithMeta(map[string]any{
-					"variant_id": item.VariantID,
-					"line_total": item.LineTotal(),
-					"payable":    remaining,
-					"requested":  manual,
-				})
+		if manual > 0 {
+			// Discount: cannot exceed what's left to pay on the line.
+			remaining := item.LineTotal() - int64(item.DiscountAmount)
+			if manual > remaining {
+				return 0, richerror.New(op).
+					WithKind(richerror.KindInvalid).
+					WithMessageKey("order.manual_discount_exceeds_total").
+					WithMeta(map[string]any{
+						"variant_id": item.VariantID,
+						"line_total": item.LineTotal(),
+						"payable":    remaining,
+						"requested":  manual,
+					})
+			}
+			item.DiscountAmount += uint(manual)
 		}
-
-		item.DiscountAmount += uint(manual)
+		// Markup (manual < 0) raises FinalPrice; DiscountAmount is unchanged.
 		totalLineDiscount += manual
 	}
 

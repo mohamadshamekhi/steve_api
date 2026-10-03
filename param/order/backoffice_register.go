@@ -23,9 +23,9 @@ type BackofficeOrderInfo struct {
 	AppliedDiscounts    []entity.AppliedDiscount `json:"applied_discounts,omitempty"`
 	SubtotalAmount      uint                     `json:"subtotal_amount"`
 	TotalDiscountAmount uint                     `json:"total_discount_amount,omitempty"`
-	// ItemsManualDiscount is the part of TotalDiscountAmount given by hand on
-	// individual lines; ManualDiscount is the part given on the whole invoice.
-	ItemsManualDiscount uint               `json:"items_manual_discount,omitempty"`
+	// ItemsManualDiscount is the net per-line adjustment (positive = discount,
+	// negative = markup); ManualDiscount is the whole-invoice discount.
+	ItemsManualDiscount int64              `json:"items_manual_discount,omitempty"`
 	ManualDiscount      uint               `json:"manual_discount,omitempty"`
 	FinalAmount         uint               `json:"final_amount"`
 	Status              entity.OrderStatus `json:"status"`

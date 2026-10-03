@@ -300,7 +300,6 @@ func main() {
 	paymentHandler := paymenthandler.New(paymentSvc, translator, authSvc, cfg.Auth, aclSvc)
 	orderSvc.SetPaymentProvider(paymentSvc)
 	orderBackofficeSvc.SetPaymentProvider(paymentSvc)
-	orderHandler := orderhandler.New(orderSvc, orderBackofficeSvc, orderVld, translator, authSvc, cfg.Auth, aclSvc)
 
 	searchSvc := searchservice.NewStorefrontService(productStorefrontSvc, storefrontSvc)
 	searchHandler := searchhandler.New(translator, searchSvc)
@@ -349,6 +348,7 @@ func main() {
 		Returns: salesReturnRepo,
 		Ledger:  inventorySvc,
 	})
+	orderHandler := orderhandler.New(orderSvc, orderBackofficeSvc, orderVld, translator, authSvc, cfg.Auth, aclSvc)
 
 	supplierHandler := supplierhandler.New(supplierSvc, translator, suppliervalidator.New(), authSvc, cfg.Auth, aclSvc)
 	purchaseHandler := purchasehandler.New(purchaseSvc, translator, purchasevalidator.New(), authSvc, cfg.Auth, aclSvc)
