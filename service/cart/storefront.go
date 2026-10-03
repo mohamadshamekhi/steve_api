@@ -133,6 +133,11 @@ func (s *StoreFrontService) GetEnrichedCart(
 	categoryIDSet := make(map[string]struct{})
 
 	for _, item := range cart.Items {
+		// Custom (hand-typed) lines have no catalog product behind them.
+		if item.IsCustom {
+			continue
+		}
+
 		// جمع کردن ورینت‌های هر محصول در map
 		if item.ProductID != "" {
 			variants := productIDVariantIDs[item.ProductID]
