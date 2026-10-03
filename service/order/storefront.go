@@ -27,6 +27,7 @@ type StoreFrontService struct {
 	shippingProvider ShippingProvider
 	paymentProvider  StorefrontPaymentProvider
 	inventory        InventoryRecorder
+	images           ProductImageReader
 }
 
 type ShippingProvider interface {
@@ -599,6 +600,8 @@ func (s StoreFrontService) GetUserOrders(ctx context.Context, req orderparam.Get
 
 		resp.Orders[i].Payments = payments.Payments
 	}
+
+	s.attachThumbnailsStorefront(ctx, resp.Orders)
 
 	return orderparam.GetUserOrderResponse{
 		Pagination: commonparam.PaginationResponse{

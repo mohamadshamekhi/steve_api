@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/abolfazlnorzad/steve/entity"
+	orderparam "github.com/abolfazlnorzad/steve/param/order"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 )
 
@@ -15,6 +16,50 @@ type ProductImageReader interface {
 
 func (s *BackofficeService) SetProductImageReader(r ProductImageReader) {
 	s.images = r
+}
+
+func (s *StoreFrontService) SetProductImageReader(r ProductImageReader) {
+	s.images = r
+}
+
+// attachThumbnailsStorefront fills ProductThumbnailURL on storefront order lines.
+func (s StoreFrontService) attachThumbnailsStorefront(ctx context.Context, orders []orderparam.StoreFrontOrderInfo) {
+	if s.images == nil {
+		return
+	}
+
+	seen := map[string]struct{}{}
+	var ids []string
+	for _, o := range orders {
+		for _, it := range o.Items {
+			if it.ProductID == "" {
+				continue
+			}
+			if _, ok := seen[it.ProductID]; !ok {
+				seen[it.ProductID] = struct{}{}
+				ids = append(ids, it.ProductID)
+			}
+		}
+	}
+	if len(ids) == 0 {
+		return
+	}
+
+	products, err := s.images.GetProductsByIDs(ctx, ids)
+	if err != nil {
+		logger.L().Error("failed to load product images for storefront orders", "err", err)
+		return
+	}
+	thumbs := make(map[string]string, len(products))
+	for _, p := range products {
+		thumbs[p.ID] = thumbnailOf(p)
+	}
+
+	for i := range orders {
+		for j := range orders[i].Items {
+			orders[i].Items[j].ProductThumbnailURL = thumbs[orders[i].Items[j].ProductID]
+		}
+	}
 }
 
 // attachThumbnails fills ProductThumbnailURL on every catalog line with one

@@ -342,6 +342,7 @@ func main() {
 	purchaseSvc.SetCashRecorder(accountingSvc)
 	orderBackofficeSvc.SetCashRecorder(accountingSvc)
 	orderBackofficeSvc.SetProductImageReader(productRepo)
+	orderSvc.SetProductImageReader(productRepo)
 	orderBackofficeSvc.SetOrderEditDeps(orderservice.OrderEditDeps{
 		Orders:  orderRepo,
 		Catalog: productRepo,
