@@ -28,6 +28,7 @@ type BackofficeService struct {
 	inventory        InventoryRecorder
 	cash             CashRecorder
 	edit             OrderEditDeps
+	images           ProductImageReader
 }
 
 func NewBackofficeService(repo OrderReadWriter, userProvider UserProvider, productProvider ProductProvider, discountProvider DiscountProvider, cartProvider CartProvider) BackofficeService {
@@ -148,6 +149,8 @@ func (s BackofficeService) GetAll(ctx context.Context, req orderparam.GetAllOrde
 	if err != nil {
 		logger.L().Error("cann't get users , users ids: %v - and errors : %v", userIDs, err)
 	}
+
+	s.attachThumbnails(ctx, resp.Orders)
 
 	var list []orderparam.BackofficeOrderList
 

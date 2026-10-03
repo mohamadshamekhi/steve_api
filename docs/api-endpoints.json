@@ -700,7 +700,7 @@
       "path": "/order/all",
       "auth": "backoffice+ACL:ListOrders",
       "in": "?page_number&page_size&status(یک مقدار یا چندتا با کاما: processing,shipped)&order_id&user_id&phone(بخشی از شماره هم کافی است)&purchase_type(online|in_person)&is_partner_order(true|false)&from&to(YYYY-MM-DD به وقت تهران، هر دو شامل)&min_amount&max_amount(روی final_amount، تومان)؛ تاریخ نامعتبر → 400 validation.invalid_input",
-      "out": "{orders[{..., applied_discounts[{discount_id, discount_code?, amount}], total_discount_amount, manual_discount, is_edited, edits[]?}], pagination}",
+      "out": "{orders[{..., items[{ProductID, VariantID, ProductName, Quantity, PriceAtTime, ..., ProductThumbnailURL}], applied_discounts[{discount_id, discount_code?, amount}], total_discount_amount, manual_discount, is_edited, edits[]?}], pagination} — ProductThumbnailURL = تصویر اصلی فعلی محصول (سطر دستی: خالی)",
       "desc": "لیست همه‌ی سفارش‌ها (ادمین)"
     },
     {

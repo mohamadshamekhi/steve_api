@@ -72,12 +72,12 @@ type Order struct {
 	DeliveryConfirmedBy string     `bson:"delivery_confirmed_by,omitempty"`
 	// ThankYouClaimed guards the one-time post-purchase thank-you coupon so a
 	// replayed status change never mints a second one.
-	ThankYouClaimed    bool      `bson:"thank_you_claimed,omitempty"`
-	ThankYouDiscountID string    `bson:"thank_you_discount_id,omitempty"`
+	ThankYouClaimed    bool   `bson:"thank_you_claimed,omitempty"`
+	ThankYouDiscountID string `bson:"thank_you_discount_id,omitempty"`
 	// Edits is the audit trail of super-admin corrections, oldest first.
 	Edits     []OrderEdit `bson:"edits,omitempty"`
 	CreatedAt time.Time   `bson:"created_at"`
-	UpdatedAt          time.Time `bson:"updated_at"`
+	UpdatedAt time.Time   `bson:"updated_at"`
 }
 
 func (o *Order) BeforeCreate() {
@@ -141,6 +141,10 @@ type OrderItem struct {
 	ExternalQuantity uint `bson:"external_quantity,omitempty"`
 	// SupplierID is the supplier the external part was sourced from.
 	SupplierID string `bson:"supplier_id,omitempty"`
+
+	// ProductThumbnailURL is the product's current primary image, filled at
+	// read time for listings; never stored, so a later image change shows.
+	ProductThumbnailURL string `bson:"-"`
 }
 
 // GetKind normalises pre-inventory order lines.
