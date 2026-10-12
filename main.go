@@ -23,6 +23,7 @@ import (
 	backofficehandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
 	bannerhandler "github.com/abolfazlnorzad/steve/delivery/http_server/banner"
+	pricereviewhandler "github.com/abolfazlnorzad/steve/delivery/http_server/pricereview"
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
 	carthandler "github.com/abolfazlnorzad/steve/delivery/http_server/cart"
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
@@ -58,6 +59,7 @@ import (
 	mongodbattributedefinition "github.com/abolfazlnorzad/steve/repository/mongo/attribute_definition"
 	mongodbbackoffice "github.com/abolfazlnorzad/steve/repository/mongo/backoffice"
 	mongodbbanner "github.com/abolfazlnorzad/steve/repository/mongo/banner"
+	mongodbpricereviewsetting "github.com/abolfazlnorzad/steve/repository/mongo/pricereviewsetting"
 	mongodbbrand "github.com/abolfazlnorzad/steve/repository/mongo/brand"
 	mongodbcart "github.com/abolfazlnorzad/steve/repository/mongo/cart"
 	mongodbcash "github.com/abolfazlnorzad/steve/repository/mongo/cash"
@@ -116,6 +118,7 @@ import (
 	salesreturnservice "github.com/abolfazlnorzad/steve/service/salesreturn"
 	searchservice "github.com/abolfazlnorzad/steve/service/search"
 	sellservice "github.com/abolfazlnorzad/steve/service/sell"
+	pricereviewservice "github.com/abolfazlnorzad/steve/service/pricereview"
 	settingservice "github.com/abolfazlnorzad/steve/service/setting"
 	supplierservice "github.com/abolfazlnorzad/steve/service/supplier"
 	userservice "github.com/abolfazlnorzad/steve/service/user"
@@ -253,6 +256,9 @@ func main() {
 	orderRepo.SetNotifier(ordernotifyservice.New(cfg.OrderNotify, orderRepo, discountRepo, userRepo, mp))
 	orderVld := ordervalidator.New(discountbackofficeSvc, cartRepo)
 	shippingRepo := mongodbshipping.New(mongoRepo)
+	if err := seeder.SeedShipping(shippingRepo); err != nil {
+		logger.L().Error("seeder failed", "error", err)
+	}
 	shippingVld := settingvalidator.NewShippingValidator(shippingRepo)
 	shippingBakcofficeSvc := settingservice.NewBackofficeShippingService(shippingRepo)
 	shippingStorefrontSvc := settingservice.NewStorefrontShippingService(shippingRepo)
@@ -294,6 +300,10 @@ func main() {
 	bannerBackofficeSvc := settingservice.NewBannerBackofficeService(bannerRepo, mediaSvc)
 	bannerVld := settingvalidator.NewBannerValidator()
 	bannerHandler := bannerhandler.New(bannerBackofficeSvc, bannerVld, translator, authSvc, cfg.Auth, aclSvc)
+
+	priceReviewSettingRepo := mongodbpricereviewsetting.New(mongoRepo)
+	priceReviewBackofficeSvc := pricereviewservice.NewBackofficeService(priceReviewSettingRepo, productRepo)
+	priceReviewHandler := pricereviewhandler.New(priceReviewBackofficeSvc, translator, authSvc, cfg.Auth, aclSvc)
 	paymentRepo := mongodbpayment.New(mongoRepo)
 	zarinpal := gateway.NewZarinpalAdapter(cfg.Zarinpal)
 	paymentSvc := paymentservice.NewService(cfg.Payment, paymentRepo, orderSvc, zarinpal, discountbackofficeSvc, productStorefrontSvc, mp, userSvc, adminTelegramBot, developerTelegramBot, backOfficeSvc)
@@ -366,7 +376,7 @@ func main() {
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
 		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler, paymentHandler, searchHandler, partnerHandler, referralHandler,
-		supplierHandler, purchaseHandler, inventoryHandler, accountingHandler, salesReturnHandler, orderDeliveryHandler, dashboardHandler)
+		supplierHandler, purchaseHandler, inventoryHandler, accountingHandler, salesReturnHandler, orderDeliveryHandler, dashboardHandler, priceReviewHandler)
 
 	orderScheduler := orderscheduler.New(cfg.OrderScheduler, orderBackofficeSvc)
 	cartScheduler := cartscheduler.New(cfg.CartScheduler, cartBackofficeSvc)

@@ -34,20 +34,23 @@ func (c SalesChannel) IsValid() bool {
 }
 
 type Product struct {
-	ID             string           `bson:"_id"`
-	Name           string           `bson:"name"`
-	ENTitle        string           `bson:"en_title"`
-	Slug           string           `bson:"slug"`
-	BrandID        string           `bson:"brand_id"`
-	CategoryID     string           `bson:"category_id"`
-	Gallery        []ProductGallery `bson:"gallery"`
-	IsPublished    bool             `bson:"is_published"`
-	IsSecondHand   bool             `bson:"is_second_hand"`
-	Description    string           `bson:"description"`
-	Rating         float64          `bson:"rating"`
-	Variants       []Variant        `bson:"variants"`
-	Specifications []Specification  `bson:"specifications,omitempty"`
-	SalesCount     uint             `bson:"sales_count"`
+	ID           string           `bson:"_id"`
+	Name         string           `bson:"name"`
+	ENTitle      string           `bson:"en_title"`
+	Slug         string           `bson:"slug"`
+	BrandID      string           `bson:"brand_id"`
+	CategoryID   string           `bson:"category_id"`
+	Gallery      []ProductGallery `bson:"gallery"`
+	IsPublished  bool             `bson:"is_published"`
+	IsSecondHand bool             `bson:"is_second_hand"`
+	// RequiresFreightShipping marks an oversized product that can only be
+	// delivered via freight (باربری), not regular courier.
+	RequiresFreightShipping bool            `bson:"requires_freight_shipping,omitempty"`
+	Description             string          `bson:"description"`
+	Rating                  float64         `bson:"rating"`
+	Variants                []Variant       `bson:"variants"`
+	Specifications          []Specification `bson:"specifications,omitempty"`
+	SalesCount              uint            `bson:"sales_count"`
 	// Kind distinguishes a stockable good from a service. Empty value is read
 	// as ProductKindPhysical so pre-existing documents keep working.
 	Kind ProductKind `bson:"kind,omitempty"`
@@ -66,6 +69,10 @@ type Product struct {
 	CreatedAt              time.Time `bson:"created_at"`
 	UpdatedAt              time.Time `bson:"updated_at"`
 	DeletedAt              time.Time `bson:"deleted_at,omitempty"`
+	// PriceReviewedAt is the last time an admin confirmed or changed this
+	// product's price. Used by the periodic price-review feature to flag
+	// products whose price hasn't been checked in a configured interval.
+	PriceReviewedAt time.Time `bson:"price_reviewed_at,omitempty"`
 }
 type ProductGallery struct {
 	MediaID   string `bson:"media_id" json:"media_id"`
@@ -89,6 +96,7 @@ func (p *Product) BeforeCreate() {
 	}
 	p.CreatedAt = now
 	p.UpdatedAt = now
+	p.PriceReviewedAt = now
 
 	for i := range p.Variants {
 		p.Variants[i].ID = ulid.Make().String()
@@ -181,6 +189,22 @@ func (p Product) ServicePrice() uint64 {
 		return 0
 	}
 	return v.Price
+}
+
+// DisplayPrice is the single price shown for a product in admin lists: the
+// service fee for a service, or the lowest variant price for a good (0 when
+// it has none yet).
+func (p Product) DisplayPrice() uint64 {
+	if p.IsService() {
+		return p.ServicePrice()
+	}
+	var min uint64
+	for i, v := range p.Variants {
+		if i == 0 || v.Price < min {
+			min = v.Price
+		}
+	}
+	return min
 }
 
 // NewServiceVariant builds the implicit pricing row for a service.

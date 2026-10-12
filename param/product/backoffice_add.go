@@ -8,7 +8,10 @@ type CreateProductRequest struct {
 	BrandID      string `json:"brand_id"`
 	CategoryID   string `json:"category_id"`
 	IsSecondHand *bool  `json:"is_second_hand"`
-	Description  string `json:"description"`
+	// RequiresFreightShipping marks an oversized product deliverable only by
+	// freight (باربری). Optional, defaults to false.
+	RequiresFreightShipping *bool  `json:"requires_freight_shipping"`
+	Description             string `json:"description"`
 	// Kind marks the item as a stockable good or a service the shop performs
 	// (repair, Apple-ID, ...). Defaults to physical.
 	Kind entity.ProductKind `json:"kind"`
@@ -31,17 +34,18 @@ type CreateProductResponse struct {
 // every other product response — the entity carries only bson tags, which
 // would serialise as PascalCase and break the caller's expectations.
 type ProductCreated struct {
-	ID            string                `json:"id"`
-	Name          string                `json:"name"`
-	ENTitle       string                `json:"en_title"`
-	Slug          string                `json:"slug"`
-	BrandID       string                `json:"brand_id,omitempty"`
-	CategoryID    string                `json:"category_id,omitempty"`
-	Kind          entity.ProductKind    `json:"kind"`
-	SalesChannels []entity.SalesChannel `json:"sales_channels"`
-	IsPublished   bool                  `json:"is_published"`
-	IsSecondHand  bool                  `json:"is_second_hand"`
-	Description   string                `json:"description"`
+	ID                      string                `json:"id"`
+	Name                    string                `json:"name"`
+	ENTitle                 string                `json:"en_title"`
+	Slug                    string                `json:"slug"`
+	BrandID                 string                `json:"brand_id,omitempty"`
+	CategoryID              string                `json:"category_id,omitempty"`
+	Kind                    entity.ProductKind    `json:"kind"`
+	SalesChannels           []entity.SalesChannel `json:"sales_channels"`
+	IsPublished             bool                  `json:"is_published"`
+	IsSecondHand            bool                  `json:"is_second_hand"`
+	RequiresFreightShipping bool                  `json:"requires_freight_shipping"`
+	Description             string                `json:"description"`
 	// Price is echoed back for a service. Omitted for goods, which price per
 	// variant instead.
 	Price uint64 `json:"price,omitempty"`
@@ -55,17 +59,18 @@ type ProductCreated struct {
 // channels) so the caller never has to re-derive them.
 func NewProductCreated(p entity.Product) ProductCreated {
 	created := ProductCreated{
-		ID:            p.ID,
-		Name:          p.Name,
-		ENTitle:       p.ENTitle,
-		Slug:          p.Slug,
-		BrandID:       p.BrandID,
-		CategoryID:    p.CategoryID,
-		Kind:          p.GetKind(),
-		SalesChannels: p.GetSalesChannels(),
-		IsPublished:   p.IsPublished,
-		IsSecondHand:  p.IsSecondHand,
-		Description:   p.Description,
+		ID:                      p.ID,
+		Name:                    p.Name,
+		ENTitle:                 p.ENTitle,
+		Slug:                    p.Slug,
+		BrandID:                 p.BrandID,
+		CategoryID:              p.CategoryID,
+		Kind:                    p.GetKind(),
+		SalesChannels:           p.GetSalesChannels(),
+		IsPublished:             p.IsPublished,
+		IsSecondHand:            p.IsSecondHand,
+		RequiresFreightShipping: p.RequiresFreightShipping,
+		Description:             p.Description,
 	}
 	if v, ok := p.ServiceVariant(); ok {
 		created.Price = v.Price

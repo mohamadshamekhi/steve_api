@@ -28,6 +28,7 @@ import (
 	orderdeliveryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/orderdelivery"
 	partnerhandler "github.com/abolfazlnorzad/steve/delivery/http_server/partner"
 	paymenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/payment"
+	pricereviewhandler "github.com/abolfazlnorzad/steve/delivery/http_server/pricereview"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
 	purchasehandler "github.com/abolfazlnorzad/steve/delivery/http_server/purchase"
 	ratinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/rating"
@@ -80,6 +81,7 @@ type Server struct {
 	salesReturnHandler    salesreturnhandler.Handler
 	orderDeliveryHandler  orderdeliveryhandler.Handler
 	dashboardHandler      dashboardhandler.Handler
+	priceReviewHandler    pricereviewhandler.Handler
 }
 
 func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler, brandHandler brandhandler.Handler, mediaHandler mediahandler.Handler, categoryHandler categoryhandler.Handler,
@@ -96,6 +98,7 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 	salesReturnHandler salesreturnhandler.Handler,
 	orderDeliveryHandler orderdeliveryhandler.Handler,
 	dashboardHandler dashboardhandler.Handler,
+	priceReviewHandler pricereviewhandler.Handler,
 ) Server {
 	return Server{
 		config:                cfg,
@@ -132,6 +135,7 @@ func New(cfg config.Config, backofficeAuthHandler backofficeauthhandler.Handler,
 		salesReturnHandler:    salesReturnHandler,
 		orderDeliveryHandler:  orderDeliveryHandler,
 		dashboardHandler:      dashboardHandler,
+		priceReviewHandler:    priceReviewHandler,
 	}
 }
 
@@ -222,6 +226,7 @@ func (s Server) Serve() {
 	s.dashboardHandler.SetRoutes(s.Router)
 	s.salesReturnHandler.SetRoutes(s.Router)
 	s.orderDeliveryHandler.SetRoutes(s.Router)
+	s.priceReviewHandler.SetRoutes(s.Router)
 	// Start server
 	address := fmt.Sprintf(":%d", s.config.HTTPServer.Port)
 	fmt.Printf("start echo server on %s\n", address)

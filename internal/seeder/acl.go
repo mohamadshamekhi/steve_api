@@ -132,6 +132,9 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.ListReferrals, Description: "مشاهده لیست و آمار برنامه دعوت از دوستان"},
 	{Name: key.ViewReferral, Description: "مشاهده جزئیات دعوت‌های یک کاربر و کدهای تخفیف کسب‌شده"},
 	{Name: key.ManageReferral, Description: "ویرایش تنظیمات برنامه دعوت (نوع و مقدار تخفیف، آستانه پاداش)"},
+
+	{Name: key.ViewPriceReview, Description: "مشاهده لیست محصولات نیازمند بازبینی قیمت"},
+	{Name: key.ManagePriceReview, Description: "تنظیم بازه بازبینی قیمت و تایید/ریست تایمر قیمت محصول"},
 }
 
 func Run(permissionRepo *mongodbpermission.DB, roleRepo *mongodbrole.DB, backooficeRepo *mongodbbackoffice.DB) error {
@@ -207,6 +210,7 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 			key.ListSuppliers, key.ViewSupplier,
 			key.ListBrands, key.CreateBrand, key.UpdateBrand, key.DeleteBrand,
 			key.ListCategories, key.CreateCategory, key.UpdateCategory, key.DeleteCategory,
+			key.ViewPriceReview, key.ManagePriceReview,
 		},
 
 		key.MarketingManager: {

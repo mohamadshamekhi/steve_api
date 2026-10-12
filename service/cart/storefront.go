@@ -101,6 +101,7 @@ func (s *StoreFrontService) GetMyActiveCart(ctx context.Context, req cartparam.M
 			if pErr == nil {
 				detail.ProductID = p.ID
 				detail.Url = p.GetMainGallery().URL
+				detail.RequiresFreightShipping = p.RequiresFreightShipping
 			}
 		}
 		cartItems = append(cartItems, detail)

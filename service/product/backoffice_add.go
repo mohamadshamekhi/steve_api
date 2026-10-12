@@ -15,14 +15,15 @@ func (s BackofficeService) Create(ctx context.Context, req productparam.CreatePr
 	const op = "productservice.Create"
 
 	p := entity.Product{
-		Name:          req.Name,
-		ENTitle:       req.ENTitle,
-		BrandID:       req.BrandID,
-		CategoryID:    req.CategoryID,
-		IsSecondHand:  *req.IsSecondHand,
-		Description:   req.Description,
-		Kind:          req.Kind,
-		SalesChannels: req.SalesChannels,
+		Name:                    req.Name,
+		ENTitle:                 req.ENTitle,
+		BrandID:                 req.BrandID,
+		CategoryID:              req.CategoryID,
+		IsSecondHand:            *req.IsSecondHand,
+		RequiresFreightShipping: req.RequiresFreightShipping != nil && *req.RequiresFreightShipping,
+		Description:             req.Description,
+		Kind:                    req.Kind,
+		SalesChannels:           req.SalesChannels,
 	}
 	slg := slug.GenerateSlug(p.ENTitle)
 	counter := 1

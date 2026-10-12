@@ -49,12 +49,15 @@ type BackofficeOrderList struct {
 	// subtotal + shipping - final (coupon, campaign and manual discounts).
 	TotalDiscountAmount uint `json:"total_discount_amount"`
 	// ManualDiscount is the whole-invoice discount given at the counter.
-	ManualDiscount uint               `json:"manual_discount"`
-	Shipping       entity.Shipping    `json:"shipping,omitempty"`
-	Payments       []entity.Payment   `json:"payments,omitempty"`
-	Status         entity.OrderStatus `json:"status"`
-	CreatedAt      time.Time          `json:"created_at"`
-	UpdatedAt      time.Time          `json:"updated_at"`
+	ManualDiscount uint            `json:"manual_discount"`
+	Shipping       entity.Shipping `json:"shipping,omitempty"`
+	// IsPostPayShipping: cart had a freight-only (باربری) item, so shipping
+	// fee is collected on delivery and ShippingAmount above is 0.
+	IsPostPayShipping bool               `json:"is_post_pay_shipping,omitempty"`
+	Payments          []entity.Payment   `json:"payments,omitempty"`
+	Status            entity.OrderStatus `json:"status"`
+	CreatedAt         time.Time          `json:"created_at"`
+	UpdatedAt         time.Time          `json:"updated_at"`
 	// IsEdited / Edits: super-admin corrections of this order, oldest first.
 	IsEdited bool               `json:"is_edited"`
 	Edits    []entity.OrderEdit `json:"edits,omitempty"`

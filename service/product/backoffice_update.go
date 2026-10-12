@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	categoryparam "github.com/abolfazlnorzad/steve/param/category"
@@ -61,6 +62,9 @@ func (s BackofficeService) UpdateProduct(ctx context.Context, req productparam.U
 	if req.IsSecondHand != nil {
 		p.IsSecondHand = *req.IsSecondHand
 	}
+	if req.RequiresFreightShipping != nil {
+		p.RequiresFreightShipping = *req.RequiresFreightShipping
+	}
 	if req.Kind != nil {
 		p.Kind = *req.Kind
 	}
@@ -80,6 +84,10 @@ func (s BackofficeService) UpdateProduct(ctx context.Context, req productparam.U
 		} else {
 			p.Variants[0].Price = *req.Price
 		}
+		// A price change counts as the admin having just reviewed it, so the
+		// price-review timer resets instead of flagging this product again
+		// right away.
+		p.PriceReviewedAt = time.Now()
 	}
 
 	if err := s.repo.Update(ctx, p); err != nil {

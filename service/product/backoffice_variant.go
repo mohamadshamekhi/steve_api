@@ -2,6 +2,7 @@ package productservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
@@ -109,6 +110,7 @@ func (s BackofficeService) UpdateVariant(ctx context.Context, req productparam.U
 	if req.Label != nil {
 		variant.VariantAttribute[0].Label = *req.Label
 	}
+	priceChanged := req.Price != nil && *req.Price != variant.Price
 	if req.Price != nil {
 		variant.Price = *req.Price
 	}
@@ -137,6 +139,16 @@ func (s BackofficeService) UpdateVariant(ctx context.Context, req productparam.U
 	if err := s.repo.UpdateVariant(ctx, req.ProductID, variant); err != nil {
 		return productparam.UpdateVariantResponse{}, richerror.New(op).WithWarpError(err)
 	}
+
+	// A price change counts as the admin having just reviewed it, so the
+	// price-review timer resets instead of flagging this product again
+	// right away.
+	if priceChanged {
+		if err := s.repo.MarkPriceReviewed(ctx, req.ProductID, time.Now()); err != nil {
+			return productparam.UpdateVariantResponse{}, richerror.New(op).WithWarpError(err)
+		}
+	}
+
 	return productparam.UpdateVariantResponse{}, nil
 }
 

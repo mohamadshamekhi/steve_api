@@ -114,7 +114,11 @@ func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.Reg
 		}
 	}
 	var cartItem []entity.CartItem
+	var isPostPayShipping bool
 	for _, item := range activeCartResp.Cart.Items {
+		if item.RequiresFreightShipping {
+			isPostPayShipping = true
+		}
 		cartItem = append(cartItem, entity.CartItem{
 			ProductID:         item.ProductID,
 			VariantID:         item.VariantID,
@@ -161,19 +165,23 @@ func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.Reg
 		address = add.Address
 		shipment = shipping.Shipping
 		shipCost = uint(shipping.Shipping.Cost)
+		if isPostPayShipping {
+			shipCost = 0
+		}
 	}
 
 	newOrder := entity.Order{
-		UserID:           userID,
-		CartID:           cart.ID,
-		Items:            buildOrderItems(summary.Items),
-		ShippingAddress:  address,
-		SubtotalAmount:   uint(summary.Subtotal),
-		ShippingAmount:   shipCost,
-		AppliedDiscounts: summary.AppliedDiscounts,
-		FinalAmount:      uint(summary.FinalPrice) + shipCost,
-		Shipping:         shipment,
-		Status:           entity.OrderStatusPendingPayment,
+		UserID:            userID,
+		CartID:            cart.ID,
+		Items:             buildOrderItems(summary.Items),
+		ShippingAddress:   address,
+		SubtotalAmount:    uint(summary.Subtotal),
+		ShippingAmount:    shipCost,
+		AppliedDiscounts:  summary.AppliedDiscounts,
+		FinalAmount:       uint(summary.FinalPrice) + shipCost,
+		Shipping:          shipment,
+		IsPostPayShipping: isPostPayShipping,
+		Status:            entity.OrderStatusPendingPayment,
 	}
 	newOrder.BeforeCreate()
 	if err := s.repo.Create(ctx, newOrder); err != nil {

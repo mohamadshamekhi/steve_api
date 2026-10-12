@@ -2,6 +2,7 @@ package productservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
@@ -52,6 +53,7 @@ type ProductWriter interface {
 	UpdateQuantity(ctx context.Context, ProductID string, variant entity.Variant, finalQuantity uint) error
 	UpdateProductSalesCount(ctx context.Context, ProductID string, quantity uint) error
 	UpdateVariantQuantity(ctx context.Context, productID string, variantID string, quantity uint) error
+	MarkPriceReviewed(ctx context.Context, productID string, at time.Time) error
 }
 
 type ProductReadWriter interface {

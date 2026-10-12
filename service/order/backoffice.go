@@ -192,6 +192,7 @@ func (s BackofficeService) GetAll(ctx context.Context, req orderparam.GetAllOrde
 			CreatedAt:           order.CreatedAt,
 			UpdatedAt:           order.UpdatedAt,
 			Shipping:            order.Shipping,
+			IsPostPayShipping:   order.IsPostPayShipping,
 			IsEdited:            len(order.Edits) > 0,
 			Edits:               order.Edits,
 		})

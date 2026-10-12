@@ -114,6 +114,10 @@ const (
 	// --- مدیریت تنظیمات ---
 	UpdateSettings = "settings:update"
 
+	// --- بازبینی دوره‌ای قیمت محصولات ---
+	ViewPriceReview   = "price_review:view"
+	ManagePriceReview = "price_review:manage"
+
 	// --- مدیریت همکاران (سمت کارمند) ---
 	ListPartners          = "partner:list"
 	ViewPartner           = "partner:view"

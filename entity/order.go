@@ -52,11 +52,15 @@ type Order struct {
 	AppliedDiscounts []AppliedDiscount `bson:"applied_discounts,omitempty"`
 	// ManualDiscountAmount is the discount applied to the invoice as a whole
 	// at the counter, on top of the per-line discounts, in Toman.
-	ManualDiscountAmount uint         `bson:"manual_discount_amount,omitempty"`
-	FinalAmount          uint         `bson:"final_amount"`
-	Shipping             Shipping     `bson:"shipping,omitempty"`
-	Status               OrderStatus  `bson:"status"`
-	PurchaseType         PurchaseType `bson:"purchase_type"`
+	ManualDiscountAmount uint     `bson:"manual_discount_amount,omitempty"`
+	FinalAmount          uint     `bson:"final_amount"`
+	Shipping             Shipping `bson:"shipping,omitempty"`
+	// IsPostPayShipping marks an order whose cart contains at least one
+	// freight-only (باربری) item, so the shipping fee is collected on
+	// delivery instead of at checkout; ShippingAmount is forced to 0.
+	IsPostPayShipping bool         `bson:"is_post_pay_shipping,omitempty"`
+	Status            OrderStatus  `bson:"status"`
+	PurchaseType      PurchaseType `bson:"purchase_type"`
 	// Partner (colleague-sales) order metadata. Set when the order is placed
 	// from the partner panel; used for financial reporting and the in-person
 	// handover flow.
