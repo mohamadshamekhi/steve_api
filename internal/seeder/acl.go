@@ -32,6 +32,7 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.CreateProduct, Description: "ایجاد محصول جدید"},
 	{Name: key.UpdateProduct, Description: "ویرایش محصول"},
 	{Name: key.DeleteProduct, Description: "حذف محصول"},
+	{Name: key.ExportProducts, Description: "خروجی اکسل از لیست محصولات"},
 	{Name: key.ListBrands, Description: "مشاهده لیست برندها"},
 	{Name: key.CreateBrand, Description: "ایجاد برند جدید"},
 	{Name: key.UpdateBrand, Description: "ویرایش برند"},
@@ -51,6 +52,7 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.DeleteReview, Description: "حذف نظر"},
 	{Name: key.ListOrders, Description: "مشاهده لیست سفارشات"},
 	{Name: key.ViewOrderDetails, Description: "مشاهده جزئیات سفارش"},
+	{Name: key.EditOrder, Description: "ویرایش سفارش ثبت‌شده (اقلام، مبالغ، مشتری) — فقط ادمین اصلی"},
 	{Name: key.UpdateOrderStatus, Description: "تغییر وضعیت سفارش"},
 	{Name: key.CreateOrder, Description: "ایجاد سفارش جدید"},
 	{Name: key.ListCarts, Description: "مشاهده لیست سبدهای خرید"},
@@ -79,6 +81,60 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.ListRole, Description: "لیست نقش های کاربری"},
 	{Name: key.CreateRole, Description: "ایجاد نقش کاربری"},
 	{Name: key.UpdateRole, Description: "ویرایش نقش کاربری"},
+	{Name: key.ListPartners, Description: "مشاهده لیست همکاران و درخواست‌های همکاری"},
+	{Name: key.ViewPartner, Description: "مشاهده جزئیات یک همکار"},
+	{Name: key.ApprovePartner, Description: "تایید درخواست همکاری و تعیین درصد تخفیف"},
+	{Name: key.RejectPartner, Description: "رد کردن درخواست همکاری"},
+	{Name: key.SuspendPartner, Description: "تعلیق یا رفع تعلیق یک همکار"},
+	{Name: key.UpdatePartnerPricing, Description: "ویرایش درصد تخفیف همکار و تنظیمات قیمت همکار روی محصولات"},
+	{Name: key.RecordPartnerHandover, Description: "ثبت تحویل حضوری کالای سفارش همکار"},
+	{Name: key.PartnerShopAccess, Description: "دسترسی همکار به پنل خرید همکاری (کاتالوگ و گزارش خرید)"},
+	{Name: key.PartnerShopOrder, Description: "ثبت سفارش توسط همکار در پنل خرید همکاری"},
+
+	{Name: key.ListSuppliers, Description: "مشاهده لیست تأمین‌کنندگان"},
+	{Name: key.ViewSupplier, Description: "مشاهده جزئیات یک تأمین‌کننده"},
+	{Name: key.CreateSupplier, Description: "ثبت تأمین‌کننده جدید"},
+	{Name: key.UpdateSupplier, Description: "ویرایش اطلاعات تأمین‌کننده"},
+	{Name: key.DeleteSupplier, Description: "حذف تأمین‌کننده"},
+
+	{Name: key.ListPurchases, Description: "مشاهده لیست فاکتورهای خرید"},
+	{Name: key.ViewPurchase, Description: "مشاهده جزئیات فاکتور خرید"},
+	{Name: key.CreatePurchase, Description: "ثبت فاکتور خرید جدید"},
+	{Name: key.UpdatePurchase, Description: "ویرایش فاکتور خرید پیش‌نویس"},
+	{Name: key.ConfirmPurchase, Description: "تأیید فاکتور خرید و ورود کالا به انبار"},
+	{Name: key.CancelPurchase, Description: "لغو فاکتور خرید و برگشت اثر آن از انبار"},
+
+	{Name: key.ViewInventory, Description: "مشاهده موجودی و دفتر حرکت کالا"},
+	{Name: key.AdjustInventory, Description: "اصلاح دستی موجودی انبار (انبارگردانی)"},
+	{Name: key.UpdateStockConfig, Description: "تنظیم حالت موجودی، تأمین بیرونی و قیمت خرید محصول"},
+
+	{Name: key.ListExpenses, Description: "مشاهده لیست هزینه‌های عملیاتی"},
+	{Name: key.ViewExpense, Description: "مشاهده جزئیات یک هزینه"},
+	{Name: key.CreateExpense, Description: "ثبت هزینه جدید"},
+	{Name: key.UpdateExpense, Description: "ویرایش هزینه ثبت‌شده"},
+	{Name: key.DeleteExpense, Description: "حذف هزینه"},
+
+	{Name: key.ViewCash, Description: "مشاهده گردش صندوق و نقدینگی"},
+	{Name: key.CreateCash, Description: "ثبت دریافت/پرداخت دستی در صندوق"},
+	{Name: key.DeleteCash, Description: "حذف تراکنش دستی صندوق"},
+
+	{Name: key.ListSalesReturns, Description: "مشاهده لیست مرجوعی‌ها"},
+	{Name: key.ViewSalesReturn, Description: "مشاهده جزئیات یک مرجوعی"},
+	{Name: key.CreateSalesReturn, Description: "ثبت برگشت از فروش و برگشت کالا به انبار"},
+	{Name: key.RefundSalesReturn, Description: "ثبت استرداد وجه مرجوعی در صندوق"},
+
+	{Name: key.ViewProfitReport, Description: "مشاهده گزارش سود ناخالص فروش"},
+	{Name: key.ViewInventoryReport, Description: "مشاهده گزارش ارزش موجودی انبار"},
+	{Name: key.ViewProfitLossReport, Description: "مشاهده صورت سود و زیان (فروش، بهای تمام‌شده، هزینه، سود خالص)"},
+	{Name: key.ViewSupplierLedger, Description: "مشاهده دفتر حساب و بدهی تأمین‌کنندگان"},
+	{Name: key.ViewCashReport, Description: "مشاهده گزارش دخل و خرج صندوق"},
+	{Name: key.ExportFinancialReports, Description: "دریافت خروجی اکسل/CSV گزارش‌های مالی"},
+	{Name: key.ListReferrals, Description: "مشاهده لیست و آمار برنامه دعوت از دوستان"},
+	{Name: key.ViewReferral, Description: "مشاهده جزئیات دعوت‌های یک کاربر و کدهای تخفیف کسب‌شده"},
+	{Name: key.ManageReferral, Description: "ویرایش تنظیمات برنامه دعوت (نوع و مقدار تخفیف، آستانه پاداش)"},
+
+	{Name: key.ViewPriceReview, Description: "مشاهده لیست محصولات نیازمند بازبینی قیمت"},
+	{Name: key.ManagePriceReview, Description: "تنظیم بازه بازبینی قیمت و تایید/ریست تایمر قیمت محصول"},
 }
 
 func Run(permissionRepo *mongodbpermission.DB, roleRepo *mongodbrole.DB, backooficeRepo *mongodbbackoffice.DB) error {
@@ -133,24 +189,35 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 		key.StoreManager: {
 			key.AccessAdminPanel, key.ViewDashboardAnalytics,
 			key.ListUsers, key.ViewUserDetails,
-			key.ListProducts, key.ViewProduct,
+			key.ListProducts, key.ViewProduct, key.ExportProducts,
 			key.ListOrders, key.ViewOrderDetails, key.UpdateOrderStatus, key.CreateOrder,
 			key.ListCarts, key.ViewCartDetails, key.UpdateCarts, key.CreateCarts,
 			key.ListPayments, key.ViewPaymentDetails,
 			key.ListDiscounts,
+			key.ListSuppliers, key.ViewSupplier,
+			key.ListPurchases, key.ViewPurchase, key.CreatePurchase, key.ConfirmPurchase,
+			key.ViewInventory, key.AdjustInventory, key.UpdateStockConfig,
+			key.ViewProfitReport, key.ViewInventoryReport, key.ViewProfitLossReport,
+			key.ViewCash, key.ViewCashReport, key.CreateCash,
+			key.ListExpenses, key.ViewExpense, key.CreateExpense,
+			key.ListSalesReturns, key.ViewSalesReturn, key.CreateSalesReturn, key.RefundSalesReturn,
 		},
 
 		key.ProductManager: {
 			key.AccessAdminPanel,
-			key.ListProducts, key.ViewProduct, key.CreateProduct, key.UpdateProduct, key.DeleteProduct,
+			key.ListProducts, key.ViewProduct, key.CreateProduct, key.UpdateProduct, key.DeleteProduct, key.ExportProducts,
+			key.ViewInventory, key.AdjustInventory, key.UpdateStockConfig,
+			key.ListSuppliers, key.ViewSupplier,
 			key.ListBrands, key.CreateBrand, key.UpdateBrand, key.DeleteBrand,
 			key.ListCategories, key.CreateCategory, key.UpdateCategory, key.DeleteCategory,
+			key.ViewPriceReview, key.ManagePriceReview,
 		},
 
 		key.MarketingManager: {
 			key.AccessAdminPanel,
 			key.ListDiscounts, key.CreateDiscount, key.UpdateDiscount, key.DeleteDiscount,
 			key.ListUsers, key.ViewUserDetails,
+			key.ListReferrals, key.ViewReferral, key.ManageReferral,
 		},
 
 		key.CustomerSupportLead: {
@@ -170,6 +237,14 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 			key.AccessAdminPanel,
 			key.ListPayments, key.ViewPaymentDetails, key.RefundPayment,
 			key.ExportReports,
+			key.ListSuppliers, key.ViewSupplier, key.CreateSupplier, key.UpdateSupplier,
+			key.ListPurchases, key.ViewPurchase, key.CreatePurchase, key.UpdatePurchase,
+			key.ConfirmPurchase, key.CancelPurchase,
+			key.ViewInventory, key.ViewProfitReport, key.ViewInventoryReport,
+			key.ListExpenses, key.ViewExpense, key.CreateExpense, key.UpdateExpense, key.DeleteExpense,
+			key.ViewCash, key.CreateCash, key.DeleteCash, key.ViewCashReport,
+			key.ListSalesReturns, key.ViewSalesReturn, key.CreateSalesReturn, key.RefundSalesReturn,
+			key.ViewProfitLossReport, key.ViewSupplierLedger, key.ExportFinancialReports,
 		},
 
 		key.RepairTechnician: {
@@ -181,10 +256,24 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 			key.AccessAdminPanel,
 			key.ListUsedPhoneRequests, key.ViewUsedPhoneRequest, key.ApproveUsedPhone, key.RejectUsedPhone,
 		},
+
+		key.PartnerManager: {
+			key.AccessAdminPanel,
+			key.ListPartners, key.ViewPartner, key.ApprovePartner, key.RejectPartner,
+			key.SuspendPartner, key.UpdatePartnerPricing, key.RecordPartnerHandover,
+			key.ListProducts, key.ViewProduct,
+			key.ListOrders, key.ViewOrderDetails,
+		},
+
+		// The partner themselves: admin-panel login, but ONLY the partner shop.
+		key.Partner: {
+			key.AccessAdminPanel,
+			key.PartnerShopAccess, key.PartnerShopOrder,
+		},
 	}
 
 	for roleName, permissionKeys := range rolesToSeed {
-		_, err := repo.FindByName(ctx, roleName)
+		existingRole, err := repo.FindByName(ctx, roleName)
 		if err != nil && !errors.Is(err, mongo.ErrNoDocuments) {
 			return err
 		}
@@ -201,7 +290,36 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 				return err
 			}
 			fmt.Printf("Role '%s' created with %d permissions.\n", newRole.Name, len(permissionKeys))
+			continue
 		}
+
+		// Role already exists: FindByName above only creates roles that are
+		// missing entirely, so a permission added to rolesToSeed after the
+		// role's first seeding would otherwise never reach the stored
+		// document. Sync in any predefined permission keys the role doesn't
+		// have yet, without touching permissions an admin may have added
+		// manually via the role-management endpoints.
+		existingSet := make(map[string]struct{}, len(existingRole.PermissionKeys))
+		for _, k := range existingRole.PermissionKeys {
+			existingSet[k] = struct{}{}
+		}
+
+		missing := make([]string, 0)
+		for _, k := range permissionKeys {
+			if _, ok := existingSet[k]; !ok {
+				missing = append(missing, k)
+			}
+		}
+
+		if len(missing) == 0 {
+			continue
+		}
+
+		merged := append(existingRole.PermissionKeys, missing...)
+		if err := repo.UpdatePermissionKeys(ctx, roleName, merged); err != nil {
+			return err
+		}
+		fmt.Printf("Role '%s' synced with %d new permission(s): %v\n", roleName, len(missing), missing)
 	}
 	return nil
 }

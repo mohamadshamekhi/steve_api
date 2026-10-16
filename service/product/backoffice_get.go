@@ -66,18 +66,22 @@ func (s BackofficeService) GetProduct(ctx context.Context, req productparam.GetP
 	}
 
 	productInfo := productparam.ProductInfo{
-		ID:             p.ID,
-		Name:           p.Name,
-		ENTitle:        p.ENTitle,
-		Slug:           p.Slug,
-		Gallery:        p.Gallery,
-		IsPublished:    p.IsPublished,
-		IsSecondHand:   p.IsSecondHand,
-		Description:    p.Description,
-		Variants:       p.Variants,
-		CreatedAt:      p.CreatedAt,
-		UpdatedAt:      p.UpdatedAt,
-		Specifications: specs,
+		ID:                      p.ID,
+		Name:                    p.Name,
+		ENTitle:                 p.ENTitle,
+		Slug:                    p.Slug,
+		Gallery:                 p.Gallery,
+		IsPublished:             p.IsPublished,
+		IsSecondHand:            p.IsSecondHand,
+		RequiresFreightShipping: p.RequiresFreightShipping,
+		Description:             p.Description,
+		Kind:                    p.GetKind(),
+		SalesChannels:           p.GetSalesChannels(),
+		Price:                   p.ServicePrice(),
+		Variants:                p.Variants,
+		CreatedAt:               p.CreatedAt,
+		UpdatedAt:               p.UpdatedAt,
+		Specifications:          specs,
 	}
 
 	if catRes.Category.ID != "" {
@@ -97,6 +101,7 @@ func (s BackofficeService) GetProduct(ctx context.Context, req productparam.GetP
 		productInfo.Brand = brandparam.BrandInfo{
 			ID:          brandRes.ID,
 			Name:        brandRes.Name,
+			Slug:        brandRes.Slug,
 			Description: brandRes.Description,
 			URL:         brandRes.Url,
 		}
@@ -126,15 +131,19 @@ func (s BackofficeService) GetProductsByIDs(ctx context.Context, req productpara
 
 	for _, p := range products {
 		res[p.ID] = productparam.ProductList{
-			ID:           p.ID,
-			Name:         p.Name,
-			EnTitle:      p.ENTitle,
-			Brand:        p.BrandID,
-			Category:     p.CategoryID,
-			IsPublished:  p.IsPublished,
-			IsSecondHand: p.IsSecondHand,
-			Slug:         p.Slug,
-			ThumbnailURL: "",
+			ID:                      p.ID,
+			Name:                    p.Name,
+			EnTitle:                 p.ENTitle,
+			Brand:                   p.BrandID,
+			Category:                p.CategoryID,
+			IsPublished:             p.IsPublished,
+			IsSecondHand:            p.IsSecondHand,
+			RequiresFreightShipping: p.RequiresFreightShipping,
+			Slug:                    p.Slug,
+			ThumbnailURL:            "",
+			Kind:                    p.GetKind(),
+			SalesChannels:           p.GetSalesChannels(),
+			Price:                   p.ServicePrice(),
 		}
 	}
 	return productparam.GetProductsByIDsResponse{Products: res}, nil

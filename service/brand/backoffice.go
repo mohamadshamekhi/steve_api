@@ -3,12 +3,14 @@ package brandservice
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	"github.com/abolfazlnorzad/steve/pkg/slug"
 )
 
 type BackofficeService struct {
@@ -23,8 +25,14 @@ func NewBackofficeService(repo BrandReadWriter, mediaSvc MediaService) Backoffic
 func (s BackofficeService) Create(ctx context.Context, req brandparam.CreateBrandRequest) (brandparam.CreateBrandResponse, error) {
 	const op = "brandservice.Create"
 
+	brandSlug, sErr := s.uniqueSlug(ctx, req.Slug, req.Name, "")
+	if sErr != nil {
+		return brandparam.CreateBrandResponse{}, richerror.New(op).WithWarpError(sErr)
+	}
+
 	brand := entity.Brand{
 		Name:        req.Name,
+		Slug:        brandSlug,
 		Description: req.Description,
 		MediaID:     req.MediaID,
 		IsFavorite:  req.IsFavorite,
@@ -36,6 +44,37 @@ func (s BackofficeService) Create(ctx context.Context, req brandparam.CreateBran
 	}
 
 	return brandparam.CreateBrandResponse{}, nil
+}
+
+// uniqueSlug builds a unique slug for a brand. If explicit is non-empty it is
+// normalized and used as the base (letting an admin pin an English slug like
+// "samsung" for a Persian brand name); otherwise the base is derived from
+// name, mirroring category's auto-slug behavior. A numeric suffix is
+// appended until the slug doesn't collide with another brand; excludeID lets
+// an update keep its own current slug instead of "colliding with itself".
+func (s BackofficeService) uniqueSlug(ctx context.Context, explicit, name, excludeID string) (string, error) {
+	base := slug.GenerateSlug(explicit)
+	if base == "" {
+		base = slug.GenerateSlug(name)
+	}
+
+	candidate := base
+	counter := 1
+	for {
+		existing, err := s.repo.FindBySlug(ctx, candidate)
+		if err != nil {
+			var rErr *richerror.RichError
+			if errors.As(err, &rErr) && rErr.Kind() == richerror.KindNotFound {
+				return candidate, nil
+			}
+			return "", err
+		}
+		if existing.ID == "" || existing.ID == excludeID {
+			return candidate, nil
+		}
+		candidate = fmt.Sprintf("%s-%d", base, counter)
+		counter++
+	}
 }
 
 func (s BackofficeService) GetBrand(ctx context.Context, req brandparam.GetBrandRequest) (brandparam.GetBrandResponse, error) {
@@ -58,6 +97,7 @@ func (s BackofficeService) GetBrand(ctx context.Context, req brandparam.GetBrand
 	return brandparam.GetBrandResponse{
 		ID:          brand.ID,
 		Name:        brand.Name,
+		Slug:        brand.Slug,
 		Description: brand.Description,
 		Url:         resp.URL,
 		IsFavorite:  brand.IsFavorite,
@@ -79,8 +119,23 @@ func (s BackofficeService) Update(ctx context.Context, req brandparam.UpdateBran
 
 	var oldMediaIDToDelete string
 
+	nameChanged := req.Name != nil && *req.Name != brand.Name
+	slugRequested := req.Slug != nil && *req.Slug != ""
+
 	if req.Name != nil {
 		brand.Name = *req.Name
+	}
+
+	if slugRequested || nameChanged {
+		var explicit string
+		if slugRequested {
+			explicit = *req.Slug
+		}
+		newSlug, sErr := s.uniqueSlug(ctx, explicit, brand.Name, brand.ID)
+		if sErr != nil {
+			return brandparam.UpdateBrandResponse{}, richerror.New(op).WithWarpError(sErr)
+		}
+		brand.Slug = newSlug
 	}
 
 	if req.Description != nil {
@@ -170,6 +225,7 @@ func (s BackofficeService) All(ctx context.Context, req brandparam.GetAllBrandsP
 		brands = append(brands, brandparam.BrandInfo{
 			ID:          b.ID,
 			Name:        b.Name,
+			Slug:        b.Slug,
 			Description: b.Description,
 			URL:         r.URL,
 			IsFavorite:  b.IsFavorite,

@@ -14,7 +14,7 @@ func (v Validator) ValidateAddItemToCartBackOfficeRequest(req cartparam.AddItemT
 	if err := validation.ValidateStruct(&req,
 		validation.Field(&req.UserID, validation.Required.Error("validation.required"), validation.By(v.userIsExistByID)),
 		validation.Field(&req.ProductID, validation.Required.Error("validation.required"),
-			validation.By(v.checkProductIsValid)),
+			validation.By(v.checkProductIsSellableInPerson)),
 		validation.Field(&req.VariantID, validation.Required.Error("validation.required"), validation.By(v.checkVariantIsValid(req.ProductID))),
 	); err != nil {
 

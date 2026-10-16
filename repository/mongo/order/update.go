@@ -13,12 +13,15 @@ func (d DB) UpdateOrderStatus(ctx context.Context, orderID string, status entity
 	const op = "mongodborder.UpdateOrderStatus"
 	filter := bson.M{"_id": orderID}
 
-	update := bson.M{
-		"$set": bson.M{
-			"status":     status,
-			"updated_at": time.Now(),
-		},
+	now := time.Now()
+	set := bson.M{
+		"status":     status,
+		"updated_at": now,
 	}
+	if status == entity.OrderStatusDelivered {
+		set["delivered_at"] = now
+	}
+	update := bson.M{"$set": set}
 
 	result, err := d.collection.UpdateOne(ctx, filter, update)
 	if err != nil {

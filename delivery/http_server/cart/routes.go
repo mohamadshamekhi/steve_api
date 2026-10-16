@@ -25,5 +25,9 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	backofficePanel.POST("/add-item", h.AddItemToCartBachOffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateCarts))
 	backofficePanel.POST("/remove-item", h.RemoveItemBackoffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateCarts))
 	backofficePanel.POST("/delete-item", h.DeleteItemBackoffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateCarts))
+	backofficePanel.POST("/custom-item", h.UpsertCustomItemBackoffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateCarts))
+	backofficePanel.POST("/item-discount", h.SetItemManualDiscountBackoffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateCarts))
+	backofficePanel.POST("/item-new-price", h.SetItemUnitPriceBackoffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateCarts))
+	backofficePanel.POST("/discount", h.SetCartManualDiscountBackoffice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateCarts))
 	backofficePanel.PATCH("/update-status/:id", h.UpdateStatus, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateCarts))
 }

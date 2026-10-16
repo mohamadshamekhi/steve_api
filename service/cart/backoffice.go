@@ -101,19 +101,27 @@ func (s *BackofficeService) GetSingle(ctx context.Context, req cartparam.GetCart
 	}
 	var cartItems []cartparam.CartItemDetail
 	for _, item := range cart.Items {
-		p, err := s.pRepo.FindByID(ctx, item.ProductID)
-		if err != nil {
-			return cartparam.GetCartResponse{}, richerror.New(op).WithWarpError(err)
-		}
-		cartItems = append(cartItems, cartparam.CartItemDetail{
-			ProductID:         p.ID,
+		detail := cartparam.CartItemDetail{
 			VariantID:         item.VariantID,
 			Quantity:          item.Quantity,
 			ProductName:       item.ProductName,
 			VariantAttributes: item.VariantAttributes,
 			PriceAtTime:       item.PriceAtTime,
-			Url:               p.GetMainGallery().URL,
-		})
+			IsCustom:          item.IsCustom,
+			Kind:              item.GetKind(),
+			ManualDiscount:    item.ManualDiscount,
+		}
+		// A hand-typed line has no catalog product to look up, and asking for
+		// one would fail the whole cart.
+		if !item.IsCustom {
+			p, err := s.pRepo.FindByID(ctx, item.ProductID)
+			if err != nil {
+				return cartparam.GetCartResponse{}, richerror.New(op).WithWarpError(err)
+			}
+			detail.ProductID = p.ID
+			detail.Url = p.GetMainGallery().URL
+		}
+		cartItems = append(cartItems, detail)
 	}
 
 	c := cartparam.CartDetail{
@@ -185,30 +193,57 @@ func (s *BackofficeService) GetMyActiveCartBackoffice(ctx context.Context, req c
 	}
 
 	var cartItems []cartparam.BackofficeCartItemDetail
+	var itemsManualDiscount int64
 	for _, item := range cart.Items {
-		p, pErr := s.pRepo.FindByID(ctx, item.ProductID)
-		if pErr != nil {
-			return cartparam.MyActiveCartBackofficeResponse{}, richerror.New(op).WithWarpError(pErr)
+		adj := item.ManualDiscount
+		// A pure discount cannot exceed the line total; cap it.
+		if adj > item.LineTotal() {
+			adj = item.LineTotal()
 		}
-		cartItems = append(cartItems, cartparam.BackofficeCartItemDetail{
-			ProductID:         p.ID,
+		detail := cartparam.BackofficeCartItemDetail{
 			VariantID:         item.VariantID,
 			Quantity:          item.Quantity,
 			ProductName:       item.ProductName,
 			VariantAttributes: item.VariantAttributes,
 			PriceAtTime:       item.PriceAtTime,
-			Url:               p.GetMainGallery().URL,
-		})
+			IsCustom:          item.IsCustom,
+			Kind:              item.GetKind(),
+			UnitCost:          item.UnitCost,
+			ManualDiscount:    adj,
+		}
+		// A hand-typed line has no catalog product behind it.
+		if !item.IsCustom {
+			p, pErr := s.pRepo.FindByID(ctx, item.ProductID)
+			if pErr != nil {
+				return cartparam.MyActiveCartBackofficeResponse{}, richerror.New(op).WithWarpError(pErr)
+			}
+			detail.ProductID = p.ID
+			detail.Url = p.GetMainGallery().URL
+		}
+		itemsManualDiscount += adj
+		cartItems = append(cartItems, detail)
 	}
 
+	subtotal := cart.CalculateSubtotal()
+	// payable is computed in int64 to allow markup to increase it.
+	payable := int64(subtotal) - itemsManualDiscount
+	cartManualDiscount := cart.ManualDiscount
+	if int64(cartManualDiscount) > payable {
+		cartManualDiscount = uint(payable)
+	}
+	payable -= int64(cartManualDiscount)
+
 	c := cartparam.BackofficeCartDetail{
-		ID:        cart.ID,
-		Status:    string(cart.Status),
-		UserID:    cart.UserID,
-		Items:     cartItems,
-		CreatedAt: cart.CreatedAt,
-		UpdatedAt: time.Now(),
-		Subtotal:  cart.CalculateSubtotal(),
+		ID:                  cart.ID,
+		Status:              string(cart.Status),
+		UserID:              cart.UserID,
+		Items:               cartItems,
+		CreatedAt:           cart.CreatedAt,
+		UpdatedAt:           time.Now(),
+		Subtotal:            subtotal,
+		ManualDiscount:      cartManualDiscount,
+		ItemsManualDiscount: itemsManualDiscount,
+		PayableAmount:       payable,
 	}
 	return cartparam.MyActiveCartBackofficeResponse{
 		Cart: c,
@@ -275,10 +310,35 @@ func (s BackofficeService) CancelExpiredPendingCart(ctx context.Context, req car
 	g, gCtx := errgroup.WithContext(ctx)
 
 	for _, cart := range carts {
+		cart := cart
 		cartID := cart.ID
 		g.Go(func() error {
 			var cErr error
+
+			// Only stock-tracked variants can have stock returned to them;
+			// an on-demand item or a service never held any, so crediting it
+			// back would invent inventory that does not exist.
+			variantIDs := make([]string, 0, len(cart.Items))
 			for _, item := range cart.Items {
+				// A hand-typed line never held catalog stock.
+				if item.IsCustom {
+					continue
+				}
+				variantIDs = append(variantIDs, item.VariantID)
+			}
+			variantsResp, vErr := s.productProvider.GetVariantsByIDs(gCtx, productparam.GetVariantsByIDsRequest{IDs: variantIDs})
+			if vErr != nil {
+				logger.L().Error("failed to resolve variants while cancelling cart", "cart_id", cartID, "err", vErr)
+				return vErr
+			}
+
+			for _, item := range cart.Items {
+				if item.IsCustom {
+					continue
+				}
+				if variant, ok := variantsResp.Variants[item.VariantID]; ok && !variant.IsStockTracked() {
+					continue
+				}
 				_, cErr = s.productProvider.UpdateVariantQuantity(gCtx,
 					productparam.UpdateProductVariantQuantityAfterCancelOrderRequest{
 						ProductID: item.ProductID,
@@ -301,4 +361,99 @@ func (s BackofficeService) CancelExpiredPendingCart(ctx context.Context, req car
 	_ = g.Wait()
 
 	return cartparam.CancelExpiredPendingCartResponse{}, nil
+}
+
+// UpsertCustomItemBackoffice adds or edits a hand-typed line on an in-person
+// invoice — a repair fee, an Apple ID, or a part bought from another shop —
+// which exists only on this invoice and has no catalog product behind it.
+func (s *BackofficeService) UpsertCustomItemBackoffice(ctx context.Context, req cartparam.UpsertCustomItemBackofficeRequest) (cartparam.UpsertCustomItemBackofficeResponse, error) {
+	const op = "cartservice.UpsertCustomItemBackoffice"
+
+	kind := req.Kind
+	if kind == "" {
+		kind = entity.ProductKindPhysical
+	}
+	// A service costs the shop nothing to hold, so carrying a unit cost on it
+	// would only distort the profit report.
+	unitCost := req.UnitCost
+	if kind == entity.ProductKindService {
+		unitCost = 0
+	}
+
+	item := entity.CartItem{
+		VariantID:   req.VariantID,
+		ProductName: req.Title,
+		Quantity:    req.Quantity,
+		PriceAtTime: req.UnitPrice,
+		IsCustom:    true,
+		Kind:        kind,
+		UnitCost:    unitCost,
+	}
+
+	variantID, err := s.repo.UpsertCustomItem(ctx, req.UserID, item)
+	if err != nil {
+		return cartparam.UpsertCustomItemBackofficeResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	return cartparam.UpsertCustomItemBackofficeResponse{VariantID: variantID}, nil
+}
+
+// SetItemManualDiscountBackoffice records the discount the salesperson gave on
+// one line of an in-person invoice.
+// SetItemUnitPriceBackoffice sets the unit price for a cart line. The backend
+// derives manual_discount = (price_at_time - unit_price) * quantity and stores
+// it, supporting both discounts (positive) and markups (negative).
+func (s *BackofficeService) SetItemUnitPriceBackoffice(ctx context.Context, req cartparam.SetItemUnitPriceBackofficeRequest) (cartparam.SetItemUnitPriceBackofficeResponse, error) {
+	const op = "cartservice.SetItemUnitPriceBackoffice"
+
+	cart, err := s.repo.GetUserActiveCart(ctx, req.UserID)
+	if err != nil {
+		return cartparam.SetItemUnitPriceBackofficeResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	var found *entity.CartItem
+	for i := range cart.Items {
+		if cart.Items[i].VariantID == req.VariantID {
+			found = &cart.Items[i]
+			break
+		}
+	}
+	if found == nil {
+		return cartparam.SetItemUnitPriceBackofficeResponse{}, richerror.New(op).
+			WithKind(richerror.KindNotFound).
+			WithMessageKey("cart.item_not_found")
+	}
+
+	var adjustment int64
+	if req.UnitPrice == 0 || req.UnitPrice == found.PriceAtTime {
+		// Reset: clear the adjustment.
+		adjustment = 0
+	} else {
+		adjustment = (found.PriceAtTime - req.UnitPrice) * int64(found.Quantity)
+	}
+
+	if err := s.repo.SetItemManualDiscount(ctx, req.UserID, req.VariantID, adjustment); err != nil {
+		return cartparam.SetItemUnitPriceBackofficeResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return cartparam.SetItemUnitPriceBackofficeResponse{}, nil
+}
+
+func (s *BackofficeService) SetItemManualDiscountBackoffice(ctx context.Context, req cartparam.SetItemManualDiscountBackofficeRequest) (cartparam.SetItemManualDiscountBackofficeResponse, error) {
+	const op = "cartservice.SetItemManualDiscountBackoffice"
+
+	if err := s.repo.SetItemManualDiscount(ctx, req.UserID, req.VariantID, int64(req.Amount)); err != nil {
+		return cartparam.SetItemManualDiscountBackofficeResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return cartparam.SetItemManualDiscountBackofficeResponse{}, nil
+}
+
+// SetCartManualDiscountBackoffice records the discount the salesperson gave on
+// the in-person invoice as a whole.
+func (s *BackofficeService) SetCartManualDiscountBackoffice(ctx context.Context, req cartparam.SetCartManualDiscountBackofficeRequest) (cartparam.SetCartManualDiscountBackofficeResponse, error) {
+	const op = "cartservice.SetCartManualDiscountBackoffice"
+
+	if err := s.repo.SetCartManualDiscount(ctx, req.UserID, req.Amount); err != nil {
+		return cartparam.SetCartManualDiscountBackofficeResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return cartparam.SetCartManualDiscountBackofficeResponse{}, nil
 }

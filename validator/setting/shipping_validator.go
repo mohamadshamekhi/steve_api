@@ -30,7 +30,8 @@ func (v ShippingValidator) ValidateAddShippingRequest(req settingparam.AddShippi
 		validation.Field(&req.IsActive,
 			validation.NotNil.Error("validation.required")),
 		validation.Field(&req.Cost,
-			validation.Required.Error("validation.required"),
+			// 0 is allowed and means a free shipping method
+			validation.Min(uint64(0)),
 		)); err != nil {
 
 		var vErrs validation.Errors
@@ -57,7 +58,8 @@ func (v ShippingValidator) ValidateUpdateShippingRequest(req settingparam.Update
 		validation.Field(&req.Name,
 			validation.When(req.Name != nil, validation.Required.Error("validation.required"))),
 		validation.Field(&req.Cost,
-			validation.When(req.Cost != nil, validation.Required.Error("validation.required"))),
+			// 0 is allowed and means a free shipping method
+			validation.When(req.Cost != nil, validation.Min(uint64(0)))),
 		validation.Field(&req.ShippingID,
 			validation.Required.Error("validation.required"), validation.By(v.checkShippingIsExist)),
 	); err != nil {

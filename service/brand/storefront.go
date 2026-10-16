@@ -37,6 +37,7 @@ func (s StorefrontService) GetAllBrands(ctx context.Context, req brandparam.GetA
 		brands = append(brands, brandparam.BrandInfo{
 			ID:          b.ID,
 			Name:        b.Name,
+			Slug:        b.Slug,
 			Description: b.Description,
 			URL:         r.URL,
 			IsFavorite:  b.IsFavorite,

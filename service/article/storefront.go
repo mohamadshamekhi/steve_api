@@ -12,17 +12,54 @@ import (
 )
 
 type StorefrontService struct {
-	aRepo    ArticleReader
-	mediaSvc MediaService
-	bRepo    BackOfficeReader
+	aRepo       ArticleReader
+	mediaSvc    MediaService
+	bRepo       BackOfficeReader
+	viewCounter ArticleViewCounter
+	viewDedup   ArticleViewDeduplicator
 }
 
-func NewStorefrontService(articleRepo ArticleReader, mediaSvc MediaService, backOffice BackOfficeReader) StorefrontService {
+func NewStorefrontService(
+	articleRepo ArticleReader,
+	mediaSvc MediaService,
+	backOffice BackOfficeReader,
+	viewCounter ArticleViewCounter,
+	viewDedup ArticleViewDeduplicator,
+) StorefrontService {
 	return StorefrontService{
-		aRepo:    articleRepo,
-		mediaSvc: mediaSvc,
-		bRepo:    backOffice,
+		aRepo:       articleRepo,
+		mediaSvc:    mediaSvc,
+		bRepo:       backOffice,
+		viewCounter: viewCounter,
+		viewDedup:   viewDedup,
 	}
+}
+
+// registerView records a unique-per-visitor view for an article and returns
+// the delta (0 or 1) that should be added to the count already read from
+// storage, so the response reflects this view too. It never fails the
+// request: view tracking is best-effort, so errors are only logged.
+func (s StorefrontService) registerView(ctx context.Context, articleID, visitorID string) int64 {
+	const op = "ArticleService.registerView"
+	if articleID == "" || visitorID == "" {
+		return 0
+	}
+
+	isNewViewer, err := s.viewDedup.AddViewer(ctx, articleID, visitorID)
+	if err != nil {
+		logger.L().Error(fmt.Sprintf("%s: dedup check failed for article %s", op, articleID), "error", err)
+		return 0
+	}
+	if !isNewViewer {
+		return 0
+	}
+
+	if err := s.viewCounter.IncrementViewCount(ctx, articleID); err != nil {
+		logger.L().Error(fmt.Sprintf("%s: increment failed for article %s", op, articleID), "error", err)
+		return 0
+	}
+
+	return 1
 }
 
 func (s StorefrontService) GetSingleStorefrontArticle(ctx context.Context, req articleparam.GetStorefrontArticleRequest) (articleparam.GetStorefrontArticleResponse, error) {
@@ -56,9 +93,11 @@ func (s StorefrontService) GetSingleStorefrontArticle(ctx context.Context, req a
 		BackOfficeName:  backOfficeInfo.Name,
 		MediaUrl:        res.URL,
 		Alt:             article.Alt,
+		ViewCount:       article.ViewCount,
 		CreatedAt:       article.CreatedAt,
 		UpdatedAt:       article.UpdatedAt,
 	}
+	a.ViewCount += s.registerView(ctx, article.ID, req.VisitorID)
 	return articleparam.GetStorefrontArticleResponse{
 		Article: a,
 	}, nil
@@ -95,9 +134,11 @@ func (s StorefrontService) GetSingleBySlugStorefrontArticle(ctx context.Context,
 		BackOfficeName:  backOfficeInfo.Name,
 		MediaUrl:        res.URL,
 		Alt:             article.Alt,
+		ViewCount:       article.ViewCount,
 		CreatedAt:       article.CreatedAt,
 		UpdatedAt:       article.UpdatedAt,
 	}
+	a.ViewCount += s.registerView(ctx, article.ID, req.VisitorID)
 	return articleparam.GetBySlugStorefrontArticleResponse{
 		Article: a,
 	}, nil
@@ -145,6 +186,7 @@ func (s StorefrontService) GetAllStorefrontArticles(ctx context.Context, req art
 			BackOfficeName: backOfficeInfo.Name,
 			MediaUrl:       urlMap.URLs[a.MediaID],
 			Alt:            a.Alt,
+			ViewCount:      a.ViewCount,
 			CreatedAt:      a.CreatedAt,
 			UpdatedAt:      a.UpdatedAt,
 		})

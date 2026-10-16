@@ -11,6 +11,7 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.POST("/create", h.Create, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.CreateProduct))
 	g.GET("/:id", h.Get, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ViewProduct))
 	g.GET("", h.All, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ListProducts))
+	g.GET("/export-excel", h.ExportExcel, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ExportProducts))
 	g.PATCH("/:id", h.Update, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
 	g.PATCH("/publish/:id", h.Publish, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
 	g.PATCH("/un-publish/:id", h.UnPublish, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
@@ -26,6 +27,7 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.PATCH("/:id/add-variant", h.AddVariant, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
 	g.PATCH("/:id/update-variant/:varid", h.UpdateVariant, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
 	g.PATCH("/:id/delete-variant/:varid", h.DeleteVariant, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
+	g.PATCH("/bulk-update-variants", h.BulkUpdateVariants, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
 
 	g.GET("/storefront/with-auto-discount", h.StorefrontGetProductsWithAutoDiscount)
 	g.GET("/storefront", h.StorefrontGetFilterableProduct)
@@ -33,4 +35,7 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.GET("/storefront/get-products-with-special-discount", h.GetProductsWithSpecialDiscount)
 	g.GET("/storefront/:id", h.StorefrontGetProduct)
 	g.GET("/storefront/get-by-slug/:slug", h.StorefrontGetProductBySlug)
+	// Public: target of the printed variant QR label; the variant ID is the
+	// stable code (survives renames and slug changes).
+	g.GET("/variant/:variant_id/resolve", h.ResolveVariant)
 }

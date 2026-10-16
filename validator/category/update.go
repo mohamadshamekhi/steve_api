@@ -29,6 +29,16 @@ func (v Validator) ValidateUpdateCategoryRequest(req categoryparam.UpdateCategor
 				validation.By(v.mediaIsExist),
 			),
 		),
+		validation.Field(&req.ParentID,
+			validation.When(req.ParentID != nil,
+				validation.By(v.categoryIsExist),
+			),
+		),
+		validation.Field(&req.AttributeSetID,
+			validation.When(req.AttributeSetID != nil,
+				validation.By(v.AttrIsExist),
+			),
+		),
 	); err != nil {
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {

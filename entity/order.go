@@ -50,12 +50,38 @@ type Order struct {
 	SubtotalAmount   uint              `bson:"subtotal_amount"`
 	ShippingAmount   uint              `bson:"shipping_amount"`
 	AppliedDiscounts []AppliedDiscount `bson:"applied_discounts,omitempty"`
-	FinalAmount      uint              `bson:"final_amount"`
-	Shipping         Shipping          `bson:"shipping,omitempty"`
-	Status           OrderStatus       `bson:"status"`
-	PurchaseType     PurchaseType      `bson:"purchase_type"`
-	CreatedAt        time.Time         `bson:"created_at"`
-	UpdatedAt        time.Time         `bson:"updated_at"`
+	// ManualDiscountAmount is the discount applied to the invoice as a whole
+	// at the counter, on top of the per-line discounts, in Toman.
+	ManualDiscountAmount uint     `bson:"manual_discount_amount,omitempty"`
+	FinalAmount          uint     `bson:"final_amount"`
+	Shipping             Shipping `bson:"shipping,omitempty"`
+	// IsPostPayShipping marks an order whose cart contains at least one
+	// freight-only (باربری) item, so the shipping fee is collected on
+	// delivery instead of at checkout; ShippingAmount is forced to 0.
+	IsPostPayShipping bool         `bson:"is_post_pay_shipping,omitempty"`
+	Status            OrderStatus  `bson:"status"`
+	PurchaseType      PurchaseType `bson:"purchase_type"`
+	// Partner (colleague-sales) order metadata. Set when the order is placed
+	// from the partner panel; used for financial reporting and the in-person
+	// handover flow.
+	IsPartnerOrder bool       `bson:"is_partner_order,omitempty"`
+	PartnerID      string     `bson:"partner_id,omitempty"`
+	HandoverBy     string     `bson:"handover_by,omitempty"`
+	HandoverAt     *time.Time `bson:"handover_at,omitempty"`
+	// DeliveryToken is the unguessable secret printed as a QR code on the
+	// package; the customer scans it and confirms receipt with an OTP.
+	// Minted lazily the first time the backoffice asks for the QR.
+	DeliveryToken       string     `bson:"delivery_token,omitempty"`
+	DeliveredAt         *time.Time `bson:"delivered_at,omitempty"`
+	DeliveryConfirmedBy string     `bson:"delivery_confirmed_by,omitempty"`
+	// ThankYouClaimed guards the one-time post-purchase thank-you coupon so a
+	// replayed status change never mints a second one.
+	ThankYouClaimed    bool   `bson:"thank_you_claimed,omitempty"`
+	ThankYouDiscountID string `bson:"thank_you_discount_id,omitempty"`
+	// Edits is the audit trail of super-admin corrections, oldest first.
+	Edits     []OrderEdit `bson:"edits,omitempty"`
+	CreatedAt time.Time   `bson:"created_at"`
+	UpdatedAt time.Time   `bson:"updated_at"`
 }
 
 func (o *Order) BeforeCreate() {
@@ -68,6 +94,20 @@ func (o *Order) BeforeCreate() {
 	}
 }
 
+// SupplySource records where the units of one order line actually came from.
+type SupplySource string
+
+const (
+	// SupplySourceStock — از موجودی مغازه تأمین شد.
+	SupplySourceStock SupplySource = "stock"
+	// SupplySourceExternal — در لحظه از تأمین‌کننده/مغازه دیگر تهیه شد.
+	SupplySourceExternal SupplySource = "external"
+	// SupplySourceMixed — بخشی از انبار، بخشی تأمین بیرونی (backorder).
+	SupplySourceMixed SupplySource = "mixed"
+	// SupplySourceService — خدمات؛ تأمینی در کار نیست.
+	SupplySourceService SupplySource = "service"
+)
+
 type OrderItem struct {
 	ProductID         string             `bson:"product_id"`
 	VariantID         string             `bson:"variant_id"`
@@ -77,7 +117,55 @@ type OrderItem struct {
 
 	PriceAtTime uint `bson:"price_at_time"`
 
-	//DiscountAmount uint `bson:"discount_amount,omitempty"`
+	// DiscountAmount is everything taken off this line: campaign/coupon
+	// discounts plus the manual discount given at the counter, in Toman for
+	// the whole line.
+	DiscountAmount uint `bson:"discount_amount,omitempty"`
+
+	// ManualDiscount is the part of DiscountAmount that the salesperson gave
+	// by hand, kept separately so a campaign's real cost stays measurable.
+	ManualDiscount uint `bson:"manual_discount,omitempty"`
+
+	// IsCustom marks a hand-typed invoice line (repair fee, Apple ID, a part
+	// sourced from outside) with no catalog product behind it.
+	IsCustom bool `bson:"is_custom,omitempty"`
+
+	// --- inventory & accounting, captured at the moment of sale ---
+
+	// Kind mirrors the product's kind so an invoice line stays readable even
+	// if the catalog entry changes later. Empty is read as physical.
+	Kind ProductKind `bson:"kind,omitempty"`
+	// CostAtTime is the unit cost basis (weighted-average stock cost, or the
+	// expected external supply cost) frozen when the order was placed.
+	CostAtTime uint `bson:"cost_at_time,omitempty"`
+	// Supply says how these units were sourced.
+	Supply SupplySource `bson:"supply,omitempty"`
+	// StockQuantity / ExternalQuantity split Quantity across the two sources.
+	StockQuantity    uint `bson:"stock_quantity,omitempty"`
+	ExternalQuantity uint `bson:"external_quantity,omitempty"`
+	// SupplierID is the supplier the external part was sourced from.
+	SupplierID string `bson:"supplier_id,omitempty"`
+
+	// ProductThumbnailURL is the product's current primary image, filled at
+	// read time for listings; never stored, so a later image change shows.
+	ProductThumbnailURL string `bson:"-"`
+}
+
+// GetKind normalises pre-inventory order lines.
+func (i OrderItem) GetKind() ProductKind {
+	if i.Kind == "" {
+		return ProductKindPhysical
+	}
+	return i.Kind
+}
+
+// GrossProfit is revenue minus cost for this line, in the order's currency.
+// Revenue is what the customer actually paid, so every discount taken off the
+// line — campaign or counter — is subtracted before the cost.
+// Signed: selling below cost is a real loss and must report as one.
+func (i OrderItem) GrossProfit() int64 {
+	revenue := int64(i.PriceAtTime)*int64(i.Quantity) - int64(i.DiscountAmount)
+	return revenue - int64(i.CostAtTime)*int64(i.Quantity)
 }
 
 type AppliedDiscount struct {
@@ -111,4 +199,61 @@ func CanTransitionOrderStatus(from, to OrderStatus) bool {
 	}
 
 	return false
+}
+
+// OrderEdit records one super-admin correction of a mistakenly registered
+// order, with the order as it was before and after, so a correction is never
+// silent.
+type OrderEdit struct {
+	ID       string    `bson:"id" json:"id"`
+	EditedBy string    `bson:"edited_by" json:"edited_by"`
+	EditedAt time.Time `bson:"edited_at" json:"edited_at"`
+	Reason   string    `bson:"reason" json:"reason"`
+	// Changes names the parts that changed: items, user_id, shipping_address,
+	// shipping_amount, manual_discount_amount.
+	Changes []string      `bson:"changes" json:"changes"`
+	Before  OrderSnapshot `bson:"before" json:"before"`
+	After   OrderSnapshot `bson:"after" json:"after"`
+	// CashDifference is what was booked in the cashbox for this edit:
+	// positive = received from the customer, negative = paid back, 0 = none.
+	CashDifference int64 `bson:"cash_difference,omitempty" json:"cash_difference,omitempty"`
+}
+
+type OrderSnapshot struct {
+	UserID               string      `bson:"user_id" json:"user_id"`
+	Items                []OrderItem `bson:"items" json:"items"`
+	ShippingAddress      Address     `bson:"shipping_address" json:"shipping_address"`
+	SubtotalAmount       uint        `bson:"subtotal_amount" json:"subtotal_amount"`
+	ShippingAmount       uint        `bson:"shipping_amount" json:"shipping_amount"`
+	ManualDiscountAmount uint        `bson:"manual_discount_amount" json:"manual_discount_amount"`
+	FinalAmount          uint        `bson:"final_amount" json:"final_amount"`
+}
+
+func (o Order) Snapshot() OrderSnapshot {
+	items := make([]OrderItem, len(o.Items))
+	copy(items, o.Items)
+	return OrderSnapshot{
+		UserID:               o.UserID,
+		Items:                items,
+		ShippingAddress:      o.ShippingAddress,
+		SubtotalAmount:       o.SubtotalAmount,
+		ShippingAmount:       o.ShippingAmount,
+		ManualDiscountAmount: o.ManualDiscountAmount,
+		FinalAmount:          o.FinalAmount,
+	}
+}
+
+// StockApplied reports whether this order has already taken its units out of
+// stock and written its sale lines to the ledger. A storefront or partner
+// order does so at registration; a counter sale only when it is completed. A
+// cancelled order has had its stock put back.
+func (o Order) StockApplied() bool {
+	switch o.Status {
+	case OrderStatusCancelled, OrderStatusRefunded:
+		return false
+	case OrderStatusPendingPayment:
+		return o.PurchaseType != PurchaseTypeInPerson || o.IsPartnerOrder
+	default:
+		return true
+	}
 }

@@ -2,6 +2,7 @@ package productservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
@@ -20,7 +21,9 @@ type ListResult struct {
 type ProductReader interface {
 	FindByID(ctx context.Context, id string) (entity.Product, error)
 	FindBySlug(ctx context.Context, slug string) (entity.Product, error)
+	FindByVariantID(ctx context.Context, variantID string) (entity.Product, error)
 	All(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
+	AllForExport(ctx context.Context, filter commonparam.FilterRequest) ([]entity.Product, error)
 	GetProductCategoriesForCartItems(ctx context.Context, items []entity.CartItem) (map[string][]string, error)
 	GetVariantsByIDs(ctx context.Context, variantIDs []string) (map[string]entity.Variant, error)
 	GetProductsByIDs(ctx context.Context, ids []string) ([]entity.Product, error)
@@ -50,6 +53,7 @@ type ProductWriter interface {
 	UpdateQuantity(ctx context.Context, ProductID string, variant entity.Variant, finalQuantity uint) error
 	UpdateProductSalesCount(ctx context.Context, ProductID string, quantity uint) error
 	UpdateVariantQuantity(ctx context.Context, productID string, variantID string, quantity uint) error
+	MarkPriceReviewed(ctx context.Context, productID string, at time.Time) error
 }
 
 type ProductReadWriter interface {

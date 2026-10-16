@@ -28,10 +28,9 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 			}
 		}
 	}
-	var sortValue any
-	if filter["sort"] == "desc" {
-		sortValue = -1
-	} else {
+	// default order is newest-first; only an explicit "asc" flips it
+	sortValue := -1
+	if sort, ok := filter["sort"].(string); ok && strings.EqualFold(strings.TrimSpace(sort), "asc") {
 		sortValue = 1
 	}
 	delete(filter, "sort")
@@ -47,7 +46,7 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 	findOptions := options.Find().
 		SetSkip(int64(offset)).
 		SetLimit(int64(limit)).
-		SetSort(bson.D{{Key: "created_at", Value: sortValue}})
+		SetSort(bson.D{{Key: "created_at", Value: sortValue}, {Key: "_id", Value: sortValue}})
 
 	cursor, err := d.collection.Find(ctx, filter, findOptions)
 	if err != nil {

@@ -14,6 +14,9 @@ const (
 	KindUnexpected
 	KindBadRequest
 	KindUnauthorized
+	// KindConflict: the resource changed under the caller (409); retry after
+	// reloading.
+	KindConflict
 )
 
 type RichError struct {
@@ -108,7 +111,7 @@ func (r *RichError) MessageKey() string {
 
 func (r *RichError) TemplateData() map[string]any {
 	if r.templateData != nil {
-		return r.meta
+		return r.templateData
 	}
 	var re *RichError
 	if errors.As(r.wrappedError, &re) {

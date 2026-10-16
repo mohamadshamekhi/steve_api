@@ -23,6 +23,11 @@ func New(c *mongodb.DB) *DB {
 			Keys:    bson.D{{Key: "user_id", Value: 1}, {Key: "cart_id", Value: 1}},
 			Options: options.Index().SetUnique(false),
 		},
+		{
+			Keys: bson.D{{Key: "delivery_token", Value: 1}},
+			Options: options.Index().SetUnique(true).
+				SetPartialFilterExpression(bson.M{"delivery_token": bson.M{"$type": "string"}}),
+		},
 	}
 
 	_, err := collection.Indexes().CreateMany(context.Background(), indexes)

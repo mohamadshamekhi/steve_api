@@ -38,4 +38,7 @@ type CartItemDetail struct {
 	VariantAttributes []entity.VariantAttribute `bson:"variant_attributes"`
 	PriceAtTime       int64                     `bson:"price_at_time"`
 	Url               string                    `json:"url"`
+	IsCustom          bool                      `json:"is_custom,omitempty"`
+	Kind              entity.ProductKind        `json:"kind,omitempty"`
+	ManualDiscount    int64                     `json:"manual_discount,omitempty"`
 }

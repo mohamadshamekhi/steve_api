@@ -45,15 +45,19 @@ func (s BackofficeService) GetAllProducts(ctx context.Context, req productparam.
 			}
 		}
 		productList = append(productList, productparam.ProductList{
-			ID:           p.ID,
-			Name:         p.Name,
-			EnTitle:      p.ENTitle,
-			Brand:        brandsRes.Brands[p.BrandID].Name,
-			Category:     cateRes.Categories[p.CategoryID].Name,
-			IsPublished:  p.IsPublished,
-			IsSecondHand: p.IsSecondHand,
-			Slug:         p.Slug,
-			ThumbnailURL: url,
+			ID:                      p.ID,
+			Name:                    p.Name,
+			EnTitle:                 p.ENTitle,
+			Brand:                   brandsRes.Brands[p.BrandID].Name,
+			Category:                cateRes.Categories[p.CategoryID].Name,
+			IsPublished:             p.IsPublished,
+			IsSecondHand:            p.IsSecondHand,
+			RequiresFreightShipping: p.RequiresFreightShipping,
+			Slug:                    p.Slug,
+			ThumbnailURL:            url,
+			Kind:                    p.GetKind(),
+			SalesChannels:           p.GetSalesChannels(),
+			Price:                   p.ServicePrice(),
 		})
 	}
 

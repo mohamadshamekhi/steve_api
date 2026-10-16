@@ -17,11 +17,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.PaginationRequest) (productservice.ListResult, error) {
-	const op = "mongodbproduct.All"
+// buildListFilter turns the generic key/value filter (as used by the backoffice product
+// list and export endpoints) into a Mongo query, always excluding soft-deleted products.
+func buildListFilter(f commonparam.FilterRequest) bson.M {
 	filter := bson.M{
 		"deleted_at": bson.M{"$exists": false},
 	}
+	// Filters that need their own $or (the backward-compatible "field missing
+	// means the old default" shapes) are collected here so several of them can
+	// coexist instead of overwriting one another's $or.
+	andConditions := make([]bson.M, 0, 2)
+
 	for _, filterItem := range f.Filter {
 		for key, value := range filterItem {
 			valueStr := fmt.Sprintf("%v", value)
@@ -42,11 +48,43 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 			case "brand_id", "category_id":
 				filter[key] = valueStr
 
+			case "kind":
+				// Documents written before the kind field existed are goods;
+				// asking for "physical" must therefore also match a missing
+				// field, not just an explicit one.
+				if valueStr == string(entity.ProductKindPhysical) {
+					andConditions = append(andConditions, bson.M{"$or": []bson.M{
+						{"kind": bson.M{"$exists": false}},
+						{"kind": entity.ProductKindPhysical},
+					}})
+					continue
+				}
+				filter[key] = valueStr
+
+			case "sales_channel":
+				// Same backward-compatible shape: a document with no channel
+				// list was sellable on both channels.
+				andConditions = append(andConditions, bson.M{"$or": []bson.M{
+					{"sales_channels": bson.M{"$exists": false}},
+					{"sales_channels": bson.M{"$size": 0}},
+					{"sales_channels": valueStr},
+				}})
+
 			default:
 				filter[key] = value
 			}
 		}
 	}
+
+	if len(andConditions) > 0 {
+		filter["$and"] = andConditions
+	}
+	return filter
+}
+
+func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.PaginationRequest) (productservice.ListResult, error) {
+	const op = "mongodbproduct.All"
+	filter := buildListFilter(f)
 
 	totalCount, err := d.collection.CountDocuments(ctx, filter)
 	if err != nil {
@@ -76,6 +114,26 @@ func (d DB) All(ctx context.Context, f commonparam.FilterRequest, p commonparam.
 		Products:   products,
 		TotalCount: totalCount,
 	}, nil
+}
+
+func (d DB) AllForExport(ctx context.Context, f commonparam.FilterRequest) ([]entity.Product, error) {
+	const op = "mongodbproduct.AllForExport"
+	filter := buildListFilter(f)
+	findOptions := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+
+	cursor, err := d.collection.Find(ctx, filter, findOptions)
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err).
+			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
+	}
+	defer cursor.Close(ctx)
+
+	var products []entity.Product
+	if err := cursor.All(ctx, &products); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).
+			WithMessageKey("global.something_wrong").WithKind(richerror.KindUnexpected)
+	}
+	return products, nil
 }
 
 func (d DB) GetFilteredProducts(ctx context.Context, filter *productparam.StorefrontFilterProduct, p commonparam.PaginationRequest) (productservice.ListResult, error) {
@@ -177,6 +235,7 @@ func (d DB) buildBasePipeline(filter productparam.StorefrontFilterProduct) ([]bs
 	initialMatch := bson.D{
 		{"is_published", true},
 		{"deleted_at", bson.M{"$exists": false}},
+		{"$or", websiteChannelCondition()["$or"]},
 	}
 	if filter.BrandID != nil && *filter.BrandID != "" {
 		initialMatch = append(initialMatch, bson.E{"brand_id", *filter.BrandID})
@@ -309,6 +368,7 @@ func (d DB) GetSearchProduct(ctx context.Context, search commonparam.SearchReque
 	}
 
 	andConditions := bson.A{
+		websiteChannelCondition(),
 		bson.M{
 			"$or": bson.A{
 				bson.M{"deleted_at": bson.M{"$exists": false}},

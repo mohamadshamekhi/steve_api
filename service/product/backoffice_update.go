@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	categoryparam "github.com/abolfazlnorzad/steve/param/category"
@@ -61,28 +62,99 @@ func (s BackofficeService) UpdateProduct(ctx context.Context, req productparam.U
 	if req.IsSecondHand != nil {
 		p.IsSecondHand = *req.IsSecondHand
 	}
+	if req.RequiresFreightShipping != nil {
+		p.RequiresFreightShipping = *req.RequiresFreightShipping
+	}
+	if req.Kind != nil {
+		p.Kind = *req.Kind
+	}
+	if req.SalesChannels != nil {
+		p.SalesChannels = req.SalesChannels
+	}
+
+	// Editing a service's fee goes through the product, not the variant: the
+	// pricing row is an implementation detail the caller should not have to
+	// address. The whole document is replaced below, so mutating it in place
+	// keeps the price change atomic with the rest of the update.
+	if req.Price != nil && p.IsService() {
+		if len(p.Variants) == 0 {
+			p.Variants = []entity.Variant{entity.NewServiceVariant(*req.Price)}
+			p.Variants[0].BeforeCreate()
+			p.Variants[0].StockMode = entity.StockModeNone
+		} else {
+			p.Variants[0].Price = *req.Price
+		}
+		// A price change counts as the admin having just reviewed it, so the
+		// price-review timer resets instead of flagging this product again
+		// right away.
+		p.PriceReviewedAt = time.Now()
+	}
 
 	if err := s.repo.Update(ctx, p); err != nil {
 		return productparam.UpdateProductResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	return productparam.UpdateProductResponse{Product: p}, nil
+	return productparam.UpdateProductResponse{Product: productparam.NewProductCreated(p)}, nil
 }
 
+// UpdateProductVariantQuantityAfterRegisterOrder draws the sold units out of
+// shop stock. It is inventory-aware: services and on-demand variants hold no
+// stock at all, and for a backordered line only the part that really came out
+// of the shop is deducted — the rest was sourced externally and never sat in
+// the warehouse.
+//
+// The ledger entries for the same sale are written separately by the
+// inventory service; this function only maintains the Variant.Quantity cache.
 func (s BackofficeService) UpdateProductVariantQuantityAfterRegisterOrder(ctx context.Context, req productparam.UpdateProductVariantQuantityAfterRegisterOrderRequest) (productparam.UpdateProductVariantQuantityAfterRegisterOrderResponse, error) {
 	const op = "productservice.UpdateProductVariantQuantityAfterRegisterOrder"
 
 	for _, item := range req.Order.Items {
-		p, _ := s.repo.FindByID(ctx, item.ProductID)
+		if item.GetKind() == entity.ProductKindService {
+			continue
+		}
+		// A hand-typed counter line has no catalog product, and nothing of it
+		// ever sat in the warehouse.
+		if item.IsCustom || item.ProductID == "" {
+			continue
+		}
+
+		p, err := s.repo.FindByID(ctx, item.ProductID)
+		if err != nil {
+			return productparam.UpdateProductVariantQuantityAfterRegisterOrderResponse{}, richerror.New(op).WithWarpError(err)
+		}
+
 		var v entity.Variant
 		for _, variant := range p.Variants {
 			if variant.ID == item.VariantID {
 				v = variant
 			}
 		}
-		if uint(v.Quantity) < item.Quantity {
-			return productparam.UpdateProductVariantQuantityAfterRegisterOrderResponse{}, richerror.New(op).WithKind(richerror.KindUnexpected)
+		if v.ID == "" {
+			return productparam.UpdateProductVariantQuantityAfterRegisterOrderResponse{}, richerror.New(op).
+				WithKind(richerror.KindNotFound).
+				WithMessageKey("product.variant_not_found").
+				WithMeta(map[string]any{"product_id": item.ProductID, "variant_id": item.VariantID})
 		}
-		finalQuantity := uint(v.Quantity) - item.Quantity
+		if !v.IsStockTracked() {
+			continue
+		}
+
+		// Trust the split frozen on the order line when it is there; fall back
+		// to recomputing it for orders placed before the feature existed.
+		fromStock := uint64(item.StockQuantity)
+		if item.Supply == "" {
+			fromStock, _ = v.SplitSupply(uint64(item.Quantity))
+		}
+		if fromStock == 0 {
+			continue
+		}
+		if fromStock > v.Quantity {
+			return productparam.UpdateProductVariantQuantityAfterRegisterOrderResponse{}, richerror.New(op).
+				WithKind(richerror.KindInvalid).
+				WithMessageKey("product.insufficient_stock").
+				WithMeta(map[string]any{"product_id": item.ProductID, "variant_id": item.VariantID})
+		}
+
+		finalQuantity := uint(v.Quantity - fromStock)
 		if err := s.repo.UpdateQuantity(ctx, p.ID, v, finalQuantity); err != nil {
 			return productparam.UpdateProductVariantQuantityAfterRegisterOrderResponse{}, richerror.New(op).WithWarpError(err)
 		}
@@ -94,6 +166,9 @@ func (s BackofficeService) UpdateProductSalesCountAfterRegisterOrder(ctx context
 	const op = "productservice.UpdateProductSalesCountAfterRegisterOrder"
 
 	for _, item := range req.Order.Items {
+		if item.IsCustom || item.ProductID == "" {
+			continue
+		}
 		if err := s.repo.UpdateProductSalesCount(ctx, item.ProductID, item.Quantity); err != nil {
 			return productparam.UpdateProductSalesCountAfterRegisterOrderResponse{}, richerror.New(op).WithWarpError(err)
 		}

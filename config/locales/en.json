@@ -8,11 +8,339 @@
     "translation": "The provided input data is invalid."
   },
   {
+    "id": "validation.brand_slug_is_already_exist",
+    "translation": "This brand slug is already taken."
+  },
+  {
     "id": "auth.login_successful",
     "translation": "You have logged in successfully."
   },
   {
     "id": "auth.invalid_otp",
     "translation": "The OTP code '{{.Code}}' is not valid."
+  },
+  {
+    "id": "discount.not_applicable_to_cart_items",
+    "translation": "This discount code is not applicable to the items in your cart."
+  },
+  {
+    "id": "product.variant_not_found",
+    "translation": "Variant not found."
+  },
+  {
+    "id": "partner.application_submitted",
+    "translation": "Your partnership request has been submitted and you will be notified after review."
+  },
+  {
+    "id": "partner.already_applied",
+    "translation": "You already have a pending or approved partnership request."
+  },
+  {
+    "id": "partner.not_approved",
+    "translation": "Partner panel access is not active for your account."
+  },
+  {
+    "id": "partner.not_found",
+    "translation": "Partner not found."
+  },
+  {
+    "id": "partner.invalid_status_transition",
+    "translation": "This partner status change is not allowed."
+  },
+  {
+    "id": "partner.must_be_approved_for_pricing",
+    "translation": "The partner must be approved before pricing can be set."
+  },
+  {
+    "id": "partner.invalid_discount_percent",
+    "translation": "The partner discount percent is invalid."
+  },
+  {
+    "id": "partner.program_disabled",
+    "translation": "The colleague-sales program is currently disabled."
+  },
+  {
+    "id": "partner.variant_not_found",
+    "translation": "The selected product variant was not found."
+  },
+  {
+    "id": "partner.insufficient_stock",
+    "translation": "Not enough stock for this product."
+  },
+  {
+    "id": "partner.cart_empty",
+    "translation": "Your cart is empty."
+  },
+  {
+    "id": "partner.invalid_payment_method",
+    "translation": "Invalid payment method."
+  },
+  {
+    "id": "partner.order_not_pending_payment",
+    "translation": "This order is not awaiting payment."
+  },
+  {
+    "id": "partner.order_not_ready_for_handover",
+    "translation": "Handover cannot be recorded until the order is paid."
+  },
+  {
+    "id": "partner.not_a_partner_order",
+    "translation": "This order is not a partner order."
+  },
+  {
+    "id": "attr.company_name",
+    "translation": "company name"
+  },
+  {
+    "id": "attr.national_id",
+    "translation": "national id"
+  },
+  {
+    "id": "attr.business_field",
+    "translation": "business field"
+  },
+  {
+    "id": "attr.city",
+    "translation": "city"
+  },
+  {
+    "id": "attr.discount_percent",
+    "translation": "discount percent"
+  },
+  {
+    "id": "attr.reason",
+    "translation": "reason"
+  },
+  {
+    "id": "referral.program_disabled",
+    "translation": "The invite-a-friend program is currently disabled."
+  },
+  {
+    "id": "referral.invite_sent",
+    "translation": "The invitation was sent to this number by SMS."
+  },
+  {
+    "id": "referral.already_invited",
+    "translation": "An invitation has already been sent to this number."
+  },
+  {
+    "id": "referral.already_registered",
+    "translation": "This number is already registered; an invitation cannot be sent to it."
+  },
+  {
+    "id": "referral.cannot_invite_self",
+    "translation": "You cannot invite your own number."
+  },
+  {
+    "id": "referral.sms_failed",
+    "translation": "Sending the invite SMS failed. Please try again later."
+  },
+  {
+    "id": "referral.account_conflict",
+    "translation": "Could not generate an invite code. Please try again."
+  },
+  {
+    "id": "referral.invite_recorded_sms_failed",
+    "translation": "The invite SMS could not be sent; share the invite link manually and try again later."
+  },
+  {
+    "id": "supplier.not_found",
+    "translation": "Supplier not found."
+  },
+  {
+    "id": "purchase.not_found",
+    "translation": "Purchase invoice not found."
+  },
+  {
+    "id": "purchase.only_draft_editable",
+    "translation": "Only a draft purchase invoice can be edited. Cancel and re-enter a confirmed one."
+  },
+  {
+    "id": "purchase.only_draft_confirmable",
+    "translation": "Only a draft purchase invoice can be confirmed."
+  },
+  {
+    "id": "purchase.already_canceled",
+    "translation": "This purchase invoice is already canceled."
+  },
+  {
+    "id": "purchase.items_required",
+    "translation": "A purchase invoice needs at least one item."
+  },
+  {
+    "id": "purchase.service_cannot_be_purchased",
+    "translation": "A service cannot be purchased from a supplier."
+  },
+  {
+    "id": "product.insufficient_stock",
+    "translation": "Not enough stock for this product."
+  },
+  {
+    "id": "inventory.adjustment_quantity_required",
+    "translation": "The adjustment quantity must be non-zero."
+  },
+  {
+    "id": "inventory.adjustment_exceeds_stock",
+    "translation": "The adjustment exceeds the current stock."
+  },
+  {
+    "id": "inventory.variant_not_stock_tracked",
+    "translation": "This variant does not hold stock and cannot be adjusted."
+  },
+  {
+    "id": "inventory.invalid_stock_mode",
+    "translation": "Invalid stock mode."
+  },
+  {
+    "id": "product.not_sellable_in_person",
+    "translation": "This item is not available for in-person sale."
+  },
+  {
+    "id": "cart.item_not_found",
+    "translation": "Item not found in the cart."
+  },
+  {
+    "id": "cart.unit_price_invalid",
+    "translation": "Unit price cannot be negative."
+  },
+  {
+    "id": "cart.not_found",
+    "translation": "No active cart found."
+  },
+  {
+    "id": "product.invalid_kind",
+    "translation": "Invalid product kind."
+  },
+  {
+    "id": "validation.min",
+    "translation": "The value is below the allowed minimum."
+  },
+  {
+    "id": "order.manual_discount_exceeds_total",
+    "translation": "The manual discount exceeds the invoice total."
+  },
+  {
+    "id": "product.service_single_variant",
+    "translation": "A service can have only one price. Edit the service itself to change it."
+  },
+  {
+    "id": "product.service_variant_not_deletable",
+    "translation": "A service's price cannot be deleted. Edit the service itself to change it."
+  },
+  {
+    "id": "expense.not_found",
+    "translation": "Expense not found."
+  },
+  {
+    "id": "cash.not_found",
+    "translation": "Cash transaction not found."
+  },
+  {
+    "id": "cash.auto_transaction_not_deletable",
+    "translation": "This transaction was recorded automatically from another document (order, purchase, expense or return) and cannot be deleted; record a manual correction instead."
+  },
+  {
+    "id": "sales_return.not_found",
+    "translation": "Sales return not found."
+  },
+  {
+    "id": "sales_return.item_not_in_order",
+    "translation": "This item does not exist in the selected order."
+  },
+  {
+    "id": "sales_return.quantity_exceeds_sold",
+    "translation": "The returned quantity exceeds what was sold (including previous returns)."
+  },
+  {
+    "id": "sales_return.refund_exceeds_items_amount",
+    "translation": "The refund amount exceeds the value of the returned items."
+  },
+  {
+    "id": "order.delivery_not_found",
+    "translation": "Invalid order delivery code."
+  },
+  {
+    "id": "order.delivery_already_confirmed",
+    "translation": "Delivery of this order has already been confirmed."
+  },
+  {
+    "id": "order.delivery_not_confirmable",
+    "translation": "This order is not in a state where delivery can be confirmed."
+  },
+  {
+    "id": "order.delivery_phone_mismatch",
+    "translation": "The phone number does not match the order owner's number."
+  },
+  {
+    "id": "order.delivery_invoice_unauthorized",
+    "translation": "Invoice access has expired or is invalid. Please verify with the SMS code again."
+  },
+  {
+    "id": "order.delivery_too_many_attempts",
+    "translation": "Too many attempts. Please try again in a few minutes."
+  },
+  {
+    "id": "order.delivery_otp_sent",
+    "translation": "A verification code was sent to your phone."
+  },
+  {
+    "id": "order.delivery_confirmed",
+    "translation": "Order delivery confirmed successfully."
+  },
+  {
+    "id": "inventory.stocktake_duplicate_item",
+    "translation": "A product variant appears more than once in the stocktake list."
+  },
+  {
+    "id": "inventory.stocktake_too_many_items",
+    "translation": "A stocktake request can contain at most 2000 items."
+  },
+  {
+    "id": "dashboard.invalid_period",
+    "translation": "Invalid date range: from and to must be YYYY-MM-DD, from must not be after to, and the range must be at most 366 days."
+  },
+  {
+    "id": "order.edited",
+    "translation": "The order was updated successfully."
+  },
+  {
+    "id": "order.edit_conflict",
+    "translation": "This order was changed by someone else meanwhile. Refresh and try again."
+  },
+  {
+    "id": "order.edit_no_changes",
+    "translation": "There are no changes to save."
+  },
+  {
+    "id": "order.edit_items_not_allowed",
+    "translation": "Items of a cancelled or refunded order cannot be edited."
+  },
+  {
+    "id": "order.edit_has_returns",
+    "translation": "This order has sales returns, so its items cannot be edited."
+  },
+  {
+    "id": "order.edit_empty_items",
+    "translation": "An order must have at least one item."
+  },
+  {
+    "id": "order.edit_duplicate_line",
+    "translation": "The same variant cannot appear twice in an order."
+  },
+  {
+    "id": "order.edit_line_kind_mismatch",
+    "translation": "A custom line cannot be turned into a catalog line (or vice versa)."
+  },
+  {
+    "id": "order.edit_discount_exceeds_line",
+    "translation": "The line discount exceeds the line amount."
+  },
+  {
+    "id": "order.edit_negative_total",
+    "translation": "These changes would make the order total negative."
+  },
+  {
+    "id": "user.not_found",
+    "translation": "User not found."
   }
 ]

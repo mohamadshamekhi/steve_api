@@ -3,6 +3,7 @@ package productvalidator
 import (
 	"errors"
 
+	"github.com/abolfazlnorzad/steve/entity"
 	productparam "github.com/abolfazlnorzad/steve/param/product"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -25,6 +26,12 @@ func (v Validator) ValidateUpdateProductRequest(req productparam.UpdateProductRe
 		validation.Field(&req.CategoryID,
 			validation.When(req.CategoryID != nil, validation.Required.Error("validation.required"),
 				validation.By(v.checkCategoryIsExist))),
+		validation.Field(&req.Price,
+			validation.When(req.Price != nil,
+				validation.Min(uint64(1)).Error("validation.invalid_format"))),
+		validation.Field(&req.Kind,
+			validation.When(req.Kind != nil, validation.By(validateKindPtr))),
+		validation.Field(&req.SalesChannels, validation.By(validateSalesChannels)),
 	); err != nil {
 
 		var vErrs validation.Errors
@@ -42,5 +49,18 @@ func (v Validator) ValidateUpdateProductRequest(req productparam.UpdateProductRe
 	}
 
 	//nolint
+	return nil
+}
+
+// validateKindPtr applies the same rule as validateKind to the update DTO's
+// optional pointer field.
+func validateKindPtr(value any) error {
+	kind, ok := value.(*entity.ProductKind)
+	if !ok || kind == nil || *kind == "" {
+		return nil
+	}
+	if !kind.IsValid() {
+		return errors.New("validation.invalid_format")
+	}
 	return nil
 }

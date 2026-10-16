@@ -26,6 +26,8 @@ type StoreFrontService struct {
 	userProvider     StorefrontUserProvider
 	shippingProvider ShippingProvider
 	paymentProvider  StorefrontPaymentProvider
+	inventory        InventoryRecorder
+	images           ProductImageReader
 }
 
 type ShippingProvider interface {
@@ -76,6 +78,23 @@ func (s *StoreFrontService) SetPaymentProvider(p StorefrontPaymentProvider) {
 	s.paymentProvider = p
 }
 
+// SetInventoryRecorder wires the stock ledger in after construction, keeping
+// the order service free of a hard dependency on the inventory domain.
+func (s *StoreFrontService) SetInventoryRecorder(r InventoryRecorder) {
+	s.inventory = r
+}
+
+// recordSale books the sale in the inventory ledger without ever failing the
+// order: the customer has bought the item either way.
+func (s StoreFrontService) recordSale(ctx context.Context, order entity.Order) {
+	if s.inventory == nil {
+		return
+	}
+	if err := s.inventory.RecordOrderSale(ctx, order); err != nil {
+		logger.L().Error("failed to record inventory movements for order", "order_id", order.ID, "err", err)
+	}
+}
+
 func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.RegisterOrderRequest) (orderparam.RegisterOrderResponse, error) {
 	const op = "orderservice.RegisterOrder"
 	userID, _ := ctx.Value("user_id").(string)
@@ -95,7 +114,11 @@ func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.Reg
 		}
 	}
 	var cartItem []entity.CartItem
+	var isPostPayShipping bool
 	for _, item := range activeCartResp.Cart.Items {
+		if item.RequiresFreightShipping {
+			isPostPayShipping = true
+		}
 		cartItem = append(cartItem, entity.CartItem{
 			ProductID:         item.ProductID,
 			VariantID:         item.VariantID,
@@ -123,25 +146,42 @@ func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.Reg
 			WithMeta(map[string]any{"summary": summary})
 	}
 
-	add, err := s.userProvider.FindAddressByID(ctx, userparam.FindAddressByIDRequest{UserID: userID, AddressID: req.AddressID})
-	if err != nil {
-		return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(err)
+	// A cart holding nothing but services has nothing to deliver, so it must
+	// not be forced to name a postal address or pay a shipping fee.
+	var (
+		address  entity.Address
+		shipment entity.Shipping
+		shipCost uint
+	)
+	if !isServiceOnly(summary.Items) {
+		add, aErr := s.userProvider.FindAddressByID(ctx, userparam.FindAddressByIDRequest{UserID: userID, AddressID: req.AddressID})
+		if aErr != nil {
+			return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(aErr)
+		}
+		shipping, sErr := s.shippingProvider.FindByID(ctx, settingparam.FindByIDShippingRequest{ShippingID: req.ShippingID})
+		if sErr != nil {
+			return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(sErr)
+		}
+		address = add.Address
+		shipment = shipping.Shipping
+		shipCost = uint(shipping.Shipping.Cost)
+		if isPostPayShipping {
+			shipCost = 0
+		}
 	}
-	shipping, err := s.shippingProvider.FindByID(ctx, settingparam.FindByIDShippingRequest{ShippingID: req.ShippingID})
-	if err != nil {
-		return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(err)
-	}
+
 	newOrder := entity.Order{
-		UserID:           userID,
-		CartID:           cart.ID,
-		Items:            buildOrderItems(summary.Items),
-		ShippingAddress:  add.Address,
-		SubtotalAmount:   uint(summary.Subtotal),
-		ShippingAmount:   uint(shipping.Shipping.Cost),
-		AppliedDiscounts: summary.AppliedDiscounts,
-		FinalAmount:      uint(summary.FinalPrice) + uint(shipping.Shipping.Cost),
-		Shipping:         shipping.Shipping,
-		Status:           entity.OrderStatusPendingPayment,
+		UserID:            userID,
+		CartID:            cart.ID,
+		Items:             buildOrderItems(summary.Items),
+		ShippingAddress:   address,
+		SubtotalAmount:    uint(summary.Subtotal),
+		ShippingAmount:    shipCost,
+		AppliedDiscounts:  summary.AppliedDiscounts,
+		FinalAmount:       uint(summary.FinalPrice) + shipCost,
+		Shipping:          shipment,
+		IsPostPayShipping: isPostPayShipping,
+		Status:            entity.OrderStatusPendingPayment,
 	}
 	newOrder.BeforeCreate()
 	if err := s.repo.Create(ctx, newOrder); err != nil {
@@ -151,6 +191,8 @@ func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.Reg
 	if _, err = s.productProvider.UpdateProductVariantQuantityAfterRegisterOrder(ctx, productparam.UpdateProductVariantQuantityAfterRegisterOrderRequest{Order: newOrder}); err != nil {
 		return orderparam.RegisterOrderResponse{}, richerror.New(op).WithWarpError(err)
 	}
+
+	s.recordSale(ctx, newOrder)
 
 	s.discountProvider.UpdateDiscountUsageAfterRegisterOrder(ctx, discountparam.UpdateDiscountUsageAfterRegisterOrderRequest{AppliedDiscount: newOrder.AppliedDiscounts})
 
@@ -164,6 +206,55 @@ func (s StoreFrontService) RegisterOrder(ctx context.Context, req orderparam.Reg
 	return orderparam.RegisterOrderResponse{OrderID: newOrder.ID}, nil
 }
 
+// isServiceOnly reports whether every line of the checkout is a service, in
+// which case the order has nothing physical to ship.
+func isServiceOnly(items []entity.CheckoutItemResult) bool {
+	if len(items) == 0 {
+		return false
+	}
+	for _, item := range items {
+		if item.Kind != entity.ProductKindService {
+			return false
+		}
+	}
+	return true
+}
+
+// applySourcing freezes onto the checkout line where its units will come from
+// and what they cost, so the order — and every later accounting report — no
+// longer depends on catalog state that may change afterwards.
+func applySourcing(item *entity.CheckoutItemResult, v entity.Variant) {
+	item.CostAtTime = uint(v.UnitCost())
+	item.SupplierID = v.SupplierID
+
+	// A variant with no stock semantics at all is a service line.
+	if v.GetStockMode() == entity.StockModeNone {
+		item.Kind = entity.ProductKindService
+		item.Supply = entity.SupplySourceService
+		return
+	}
+
+	item.Kind = entity.ProductKindPhysical
+	fromStock, external := v.SplitSupply(uint64(item.Quantity))
+	item.StockQuantity = uint(fromStock)
+	item.ExternalQuantity = uint(external)
+
+	switch {
+	case external == 0:
+		item.Supply = entity.SupplySourceStock
+	case fromStock == 0:
+		item.Supply = entity.SupplySourceExternal
+	default:
+		item.Supply = entity.SupplySourceMixed
+	}
+
+	// Units bought in on the spot cost the supply price, not the average of
+	// what is sitting on the shelf.
+	if external > 0 && v.SupplyCost > 0 && fromStock == 0 {
+		item.CostAtTime = uint(v.SupplyCost)
+	}
+}
+
 func buildOrderItems(checkoutItems []entity.CheckoutItemResult) []entity.OrderItem {
 	orderItems := make([]entity.OrderItem, len(checkoutItems))
 	for i, item := range checkoutItems {
@@ -174,6 +265,15 @@ func buildOrderItems(checkoutItems []entity.CheckoutItemResult) []entity.OrderIt
 			ProductName:       item.ProductName,
 			VariantAttributes: item.VariantAttributes,
 			PriceAtTime:       uint(item.PriceAtTime),
+			DiscountAmount:    item.DiscountAmount,
+			ManualDiscount:    uint(max(int64(0), item.ManualDiscount)),
+			IsCustom:          item.IsCustom,
+			Kind:              item.Kind,
+			CostAtTime:        item.CostAtTime,
+			Supply:            item.Supply,
+			StockQuantity:     item.StockQuantity,
+			ExternalQuantity:  item.ExternalQuantity,
+			SupplierID:        item.SupplierID,
 		}
 	}
 	return orderItems
@@ -194,12 +294,43 @@ func (s StoreFrontService) FinalizeCartForCheckout(ctx context.Context, cart ent
 		return summary, nil
 	}
 
+	if discountCode != "" {
+		discountResp, gErr := s.discountProvider.GetByCode(ctx, discountparam.GetSingleDiscountByCodeRequest{Code: discountCode})
+		if gErr != nil {
+			return entity.CheckoutSummary{}, richerror.New(op).WithWarpError(gErr)
+		}
+		if vErr := discountResp.Discount.CheckIsValidForUser(cart.UserID, uint(summary.Subtotal)); vErr != nil {
+			return entity.CheckoutSummary{}, richerror.New(op).WithWarpError(vErr)
+		}
+	}
+
 	validDiscountsResp, err := s.discountProvider.GetValidDiscountsForCart(ctx, discountparam.GetValidDiscountsForSpecificCartRequest{
 		DiscountCode: discountCode,
 		Cart:         cart,
 	})
 	if err != nil {
 		return entity.CheckoutSummary{}, richerror.New(op).WithWarpError(err)
+	}
+
+	// CheckIsValidForUser above only covers the code's own state (active/dates/usage
+	// limit/minimum purchase/user restriction); it doesn't know whether the code is
+	// scoped to specific products/categories that aren't in this cart. Catch that case
+	// here too, otherwise a code that fails only this check would silently apply as if
+	// nothing was entered instead of telling the user why (see GetValidDiscountsForCart /
+	// isDiscountValid for the product/category scoping check).
+	if discountCode != "" {
+		codeIsUsable := false
+		for _, d := range validDiscountsResp.Discounts {
+			if d.Code == discountCode {
+				codeIsUsable = true
+				break
+			}
+		}
+		if !codeIsUsable {
+			return entity.CheckoutSummary{}, richerror.New(op).
+				WithKind(richerror.KindBadRequest).
+				WithMessageKey("discount.not_applicable_to_cart_items")
+		}
 	}
 
 	s.calculateFinalPrice(ctx, &cart, &summary, validDiscountsResp.Discounts, discountCode)
@@ -210,6 +341,9 @@ func (s StoreFrontService) FinalizeCartForCheckout(ctx context.Context, cart ent
 func (s StoreFrontService) validateCartItems(ctx context.Context, cart entity.Cart, summary *entity.CheckoutSummary) error {
 	variantIDs := make([]string, 0, len(cart.Items))
 	for _, item := range cart.Items {
+		if item.IsCustom {
+			continue
+		}
 		variantIDs = append(variantIDs, item.VariantID)
 	}
 
@@ -221,15 +355,23 @@ func (s StoreFrontService) validateCartItems(ctx context.Context, cart entity.Ca
 
 	for _, item := range cart.Items {
 		itemResult := entity.CheckoutItemResult{CartItem: item}
+		if item.IsCustom {
+			summary.Items = append(summary.Items, itemResult)
+			continue
+		}
 		currentVariant, ok := currentVariants[item.VariantID]
 		if !ok {
 			return fmt.Errorf("could not find variant %s for product %s", item.VariantID, item.ProductID)
 		}
 
-		if currentVariant.Quantity < uint64(item.Quantity) {
+		// A variant is sellable either out of stock or by being sourced on
+		// demand / backordered from a supplier, so "not enough in the
+		// warehouse" is no longer the same thing as "can't be sold".
+		if !currentVariant.CanSell(uint64(item.Quantity)) {
 			itemResult.HasStockIssue = true
 			summary.IsReady = false
 		}
+		applySourcing(&itemResult, currentVariant)
 		if currentVariant.Price != uint64(item.PriceAtTime) {
 			itemResult.HasPriceChanged = true
 			itemResult.CurrentPrice = int64(currentVariant.Price)
@@ -411,7 +553,8 @@ func (s *StoreFrontService) isDiscountApplicableToItem(
 
 	case entity.ApplicableToProducts:
 		if len(d.ApplicableProductIDs) == 0 {
-			return false
+			// no specific products selected -> applies to every product
+			return true
 		}
 
 		for _, sdi := range d.ApplicableProductIDs {
@@ -431,7 +574,8 @@ func (s *StoreFrontService) isDiscountApplicableToItem(
 
 	case entity.ApplicableToCategories:
 		if len(d.ApplicableCategoryIDs) == 0 {
-			return false
+			// no specific categories selected -> applies to every category
+			return true
 		}
 
 		allowedCategorySet := make(map[string]struct{}, len(d.ApplicableCategoryIDs))
@@ -471,6 +615,8 @@ func (s StoreFrontService) GetUserOrders(ctx context.Context, req orderparam.Get
 
 		resp.Orders[i].Payments = payments.Payments
 	}
+
+	s.attachThumbnailsStorefront(ctx, resp.Orders)
 
 	return orderparam.GetUserOrderResponse{
 		Pagination: commonparam.PaginationResponse{

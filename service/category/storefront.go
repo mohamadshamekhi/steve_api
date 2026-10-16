@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/abolfazlnorzad/steve/entity"
 	attributeparam "github.com/abolfazlnorzad/steve/param/attribute"
 	categoryparam "github.com/abolfazlnorzad/steve/param/category"
 	mediaparam "github.com/abolfazlnorzad/steve/param/media"
@@ -66,6 +65,7 @@ func (s StorefrontService) GetAllCategories(ctx context.Context, req categorypar
 			Level:       c.Level,
 			Ancestors:   c.Ancestors,
 			Slug:        c.Slug,
+			ParentID:    strPtrOrNil(c.ParentID),
 		})
 	}
 
@@ -89,28 +89,27 @@ func (s StorefrontService) GetFilterForCategory(ctx context.Context, req categor
 		return categoryparam.GetFilterForCategoryResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	fmt.Println("aggregatedOptions", aggregatedOptions.AggregatedFilterOption)
-	definitionsMap := make(map[string]entity.AttributeDefinition)
-
 	attrRes, err := s.AttrProvider.FindByID(ctx, attributeparam.GetAttributeRequest{ID: category.AttributeSetID})
 	if err != nil {
 		return categoryparam.GetFilterForCategoryResponse{}, richerror.New(op).WithWarpError(err)
 	}
 
-	if category.AttributeSetID != "" {
-		for _, def := range attrRes.Attr.Attributes {
-			definitionsMap[def.Key] = def
-		}
+	aggregatedMap := make(map[string]productparam.AggregatedFilterOption, len(aggregatedOptions.AggregatedFilterOption))
+	for _, opt := range aggregatedOptions.AggregatedFilterOption {
+		aggregatedMap[opt.Key] = opt
 	}
 
-	finalFilters := make([]categoryparam.FilterOption, 0, len(aggregatedOptions.AggregatedFilterOption))
-	for _, option := range aggregatedOptions.AggregatedFilterOption {
-		if def, ok := definitionsMap[option.Key]; ok {
-			finalFilters = append(finalFilters, categoryparam.FilterOption{
-				Key:     option.Key,
-				Name:    def.Name,
-				Unit:    def.Unit,
-				Options: option.Values,
-			})
+	finalFilters := make([]categoryparam.FilterOption, 0, len(attrRes.Attr.Attributes))
+	if category.AttributeSetID != "" {
+		for _, def := range attrRes.Attr.Attributes {
+			if opt, ok := aggregatedMap[def.Key]; ok {
+				finalFilters = append(finalFilters, categoryparam.FilterOption{
+					Key:     def.Key,
+					Name:    def.Name,
+					Unit:    def.Unit,
+					Options: opt.Values,
+				})
+			}
 		}
 	}
 	minMaxRes, err := s.productProvider.GetMinAdnMaxPriceOfProductWithSpecialCategory(ctx, productparam.GetMinAdnMaxPriceOfProductWithSpecialCategoryRequest{CategoryID: category.ID})

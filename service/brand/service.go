@@ -15,6 +15,7 @@ type ListResult struct {
 
 type BrandReader interface {
 	FindByID(ctx context.Context, id string) (entity.Brand, error)
+	FindBySlug(ctx context.Context, slug string) (entity.Brand, error)
 	All(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
 }
 

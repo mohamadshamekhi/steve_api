@@ -25,6 +25,7 @@ type ArticleInfo struct {
 	BackOfficeName  string    `json:"back_office_name"`
 	MediaUrl        string    `json:"media_url"`
 	Alt             string    `json:"alt"`
+	ViewCount       int64     `json:"view_count"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }

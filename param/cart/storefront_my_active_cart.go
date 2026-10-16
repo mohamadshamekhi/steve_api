@@ -32,12 +32,13 @@ type StoreFrontCartDetail struct {
 	Subtotal  uint      `json:"subtotal"`
 }
 type StoreFrontCartItemDetail struct {
-	ProductID         string                    `json:"product_id"`
-	VariantID         string                    `json:"variant_id"`
-	Quantity          int                       `bson:"quantity"`
-	ProductName       string                    `bson:"product_name"`
-	VariantAttributes []entity.VariantAttribute `bson:"variant_attributes"`
-	PriceAtTime       int64                     `bson:"price_at_time"`
-	Url               string                    `json:"url"`
-	Summary           entity.CheckoutSummary    `json:"summary"`
+	ProductID               string                    `json:"product_id"`
+	VariantID               string                    `json:"variant_id"`
+	Quantity                int                       `bson:"quantity"`
+	ProductName             string                    `bson:"product_name"`
+	VariantAttributes       []entity.VariantAttribute `bson:"variant_attributes"`
+	PriceAtTime             int64                     `bson:"price_at_time"`
+	Url                     string                    `json:"url"`
+	Summary                 entity.CheckoutSummary    `json:"summary"`
+	RequiresFreightShipping bool                      `json:"requires_freight_shipping"`
 }

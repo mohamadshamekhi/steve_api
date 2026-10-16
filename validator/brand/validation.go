@@ -11,6 +11,7 @@ type Repository interface {
 	CheckBrandNameIsExist(ctx context.Context, brandName string) (bool, error)
 	CheckBrandIDIsExist(ctx context.Context, id string) (bool, error)
 	FindByName(ctx context.Context, name string) (entity.Brand, error)
+	FindBySlug(ctx context.Context, slug string) (entity.Brand, error)
 }
 type Validator struct {
 	repo     Repository

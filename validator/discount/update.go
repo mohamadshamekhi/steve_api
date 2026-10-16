@@ -19,14 +19,13 @@ func (v Validator) ValidateUpdateDiscountRequest(req discountparam.UpdateDiscoun
 		validation.Field(&req.ApplicableTo, validation.When(req.ApplicableTo != nil, validation.Required.Error("validation.required"), validation.In(string(entity.ApplicableToCategories), string(entity.ApplicableToProducts), string(entity.ApplicableToUsers)))),
 		validation.Field(&req.MinimumPurchaseAmount,
 			validation.When(req.MinimumPurchaseAmount != nil,
-				validation.When(req.MinimumPurchaseAmount != nil,
-					validation.Min(0).Error("validation.must_be_positive_number"),
-				)),
+				validation.Min(uint(0)).Error("validation.must_be_positive_number"),
+			),
 		),
 		validation.Field(&req.TotalUsageLimit,
-			validation.When(req.TotalUsageLimit != nil, validation.When(req.MinimumPurchaseAmount != nil,
+			validation.When(req.TotalUsageLimit != nil,
 				validation.Min(0).Error("validation.must_be_positive_number"),
-			)),
+			),
 		),
 	); err != nil {
 

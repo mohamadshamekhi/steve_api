@@ -87,11 +87,10 @@ func (s BackofficeService) validateApplicableTo(d entity.Discount, req discountp
 	const op = "backoffice.validateApplicableTo"
 	switch d.ApplicableTo {
 	case entity.ApplicableToCategories:
-		if req.ApplicableCategoryIDs == nil {
-			return discountparam.AddDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_category_required")
-		} else {
-			// todo - check category is exist
-		}
+		// no categories selected -> the discount applies to all categories (see
+		// isDiscountApplicableToItem in service/order), so this is intentionally
+		// not a required field.
+		// todo - check category is exist
 	case entity.ApplicableToUsers:
 		if req.ApplicableUserIDs == nil {
 			return discountparam.AddDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_user_required")
@@ -99,11 +98,10 @@ func (s BackofficeService) validateApplicableTo(d entity.Discount, req discountp
 			// todo - check user is exist
 		}
 	case entity.ApplicableToProducts:
-		if req.ApplicableProductIDs == nil {
-			return discountparam.AddDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_product_required")
-		} else {
-			// todo - check product & variant is exist
-		}
+		// no products selected -> the discount applies to all products (see
+		// isDiscountApplicableToItem in service/order), so this is intentionally
+		// not a required field.
+		// todo - check product & variant is exist
 
 	}
 	return discountparam.AddDiscountResponse{}, nil
@@ -153,9 +151,11 @@ func (s BackofficeService) Update(ctx context.Context, req discountparam.UpdateD
 		discount.ApplicableTo = entity.ApplicableTo(*req.ApplicableTo)
 		switch *req.ApplicableTo {
 		case string(entity.ApplicableToCategories):
-			if req.ApplicableCategoryIDs == nil {
-				return discountparam.UpdateDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_category_required")
-			} else {
+			// no categories selected -> the discount applies to all categories (see
+			// isDiscountApplicableToItem in service/order), so this is intentionally
+			// not a required field. req.ApplicableCategoryIDs == nil just means the
+			// field was omitted from this update, leave the existing list as-is.
+			if req.ApplicableCategoryIDs != nil {
 				discount.ApplicableCategoryIDs = *req.ApplicableCategoryIDs
 				// todo - check category is exist
 			}
@@ -167,9 +167,11 @@ func (s BackofficeService) Update(ctx context.Context, req discountparam.UpdateD
 				// todo - check user is exist
 			}
 		case string(entity.ApplicableToProducts):
-			if req.ApplicableProductIDs == nil {
-				return discountparam.UpdateDiscountResponse{}, richerror.New(op).WithKind(richerror.KindInvalid).WithMessageKey("discount.applicable_to_product_required")
-			} else {
+			// no products selected -> the discount applies to all products (see
+			// isDiscountApplicableToItem in service/order), so this is intentionally
+			// not a required field. req.ApplicableProductIDs == nil just means the
+			// field was omitted from this update, leave the existing list as-is.
+			if req.ApplicableProductIDs != nil {
 				discount.ApplicableProductIDs = *req.ApplicableProductIDs
 				// todo - check product & variant is exist
 			}
@@ -670,6 +672,10 @@ func (s BackofficeService) validateCartItems(ctx context.Context, cart entity.Ca
 
 	var variantIDs []string
 	for _, item := range cart.Items {
+		// A hand-typed counter line has no variant behind it.
+		if item.IsCustom {
+			continue
+		}
 		variantIDs = append(variantIDs, item.VariantID)
 	}
 	resp, pErr := s.productInfoProvider.GetVariantsByIDs(ctx, productparam.GetVariantsByIDsRequest{IDs: variantIDs})
@@ -679,11 +685,20 @@ func (s BackofficeService) validateCartItems(ctx context.Context, cart entity.Ca
 
 	for _, item := range cart.Items {
 		nItem := entity.CheckoutItemResult{CartItem: item}
+		// There is nothing to check on a hand-typed line: its price and its
+		// availability are whatever the salesperson typed at the counter.
+		if item.IsCustom {
+			summary.Items = append(summary.Items, nItem)
+			continue
+		}
 		variant, ok := resp.Variants[item.VariantID]
 		if !ok {
 			return richerror.New(op).WithWarpError(fmt.Errorf("could not find variant %s for product %s", item.VariantID, item.ProductID))
 		}
-		if variant.Quantity < uint64(item.Quantity) {
+		// An on-demand variant, a backorderable one and a service are all
+		// sellable without stock on the shelf, so "warehouse count is lower
+		// than the order" no longer means the line cannot be sold.
+		if !variant.CanSell(uint64(item.Quantity)) {
 			nItem.HasStockIssue = true
 			summary.IsReady = false
 		}
@@ -701,7 +716,15 @@ func (s BackofficeService) validateCartItems(ctx context.Context, cart entity.Ca
 func (s BackofficeService) calculateFinalPriceBackoffice(ctx context.Context, cart entity.Cart, summary *entity.CheckoutSummary, allValidDiscounts []entity.Discount, userCode string) error {
 	const op = "orderservice.calculateFinalPrice"
 
-	productCategories, err := s.productInfoProvider.GetProductCategoriesForCartItems(ctx, productparam.GetProductCategoriesForCartItemsRequest{Items: cart.Items})
+	// Only catalog lines have categories to match a campaign against.
+	catalogItems := make([]entity.CartItem, 0, len(cart.Items))
+	for _, item := range cart.Items {
+		if item.IsCustom {
+			continue
+		}
+		catalogItems = append(catalogItems, item)
+	}
+	productCategories, err := s.productInfoProvider.GetProductCategoriesForCartItems(ctx, productparam.GetProductCategoriesForCartItemsRequest{Items: catalogItems})
 	if err != nil {
 		return richerror.New(op).WithWarpError(err)
 	}
@@ -721,6 +744,11 @@ func (s BackofficeService) calculateFinalPriceBackoffice(ctx context.Context, ca
 	appliedDiscountsMap := make(map[string]entity.AppliedDiscount)
 
 	for i, item := range summary.Items {
+		// A hand-typed line is priced by hand; campaigns never touch it, and
+		// the counter discount is applied later, at registration.
+		if item.IsCustom {
+			continue
+		}
 		var itemTotalDiscount int64 = 0
 		itemBasePrice := item.PriceAtTime * int64(item.Quantity)
 

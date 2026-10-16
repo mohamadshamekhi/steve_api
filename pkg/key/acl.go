@@ -10,6 +10,11 @@ const (
 	FinancialManager     = "financial_manager"
 	RepairTechnician     = "repair_technician"
 	UsedPhoneSpecialist  = "used_phone_specialist"
+	// PartnerManager is admin staff who review and manage partners.
+	PartnerManager = "partner_manager"
+	// Partner is the colleague themselves — a heavily restricted backoffice
+	// account that can only use the partner shop and see its own purchases.
+	Partner = "partner"
 )
 const (
 	// --- دسترسی‌های کلی پنل ---
@@ -38,11 +43,12 @@ const (
 	BanUser         = "user:ban"
 
 	// --- مدیریت کاتالوگ محصولات ---
-	ListProducts  = "product:list"
-	ViewProduct   = "product:view"
-	CreateProduct = "product:create"
-	UpdateProduct = "product:update"
-	DeleteProduct = "product:delete"
+	ListProducts   = "product:list"
+	ViewProduct    = "product:view"
+	CreateProduct  = "product:create"
+	UpdateProduct  = "product:update"
+	DeleteProduct  = "product:delete"
+	ExportProducts = "product:export"
 
 	// --- مدیریت موجودیت‌های وابسته به محصول ---
 	ListBrands  = "brand:list"
@@ -75,6 +81,9 @@ const (
 	ViewOrderDetails  = "order:view_details"
 	UpdateOrderStatus = "order:update_status"
 	CreateOrder       = "order:create"
+	// EditOrder corrects a registered order (items, prices, customer, ...)
+	// with stock/ledger/cash reconciliation. Seeded for SuperAdmin only.
+	EditOrder = "order:edit"
 
 	ListCarts       = "cart:list"
 	ViewCartDetails = "cart:view_details"
@@ -104,4 +113,76 @@ const (
 
 	// --- مدیریت تنظیمات ---
 	UpdateSettings = "settings:update"
+
+	// --- بازبینی دوره‌ای قیمت محصولات ---
+	ViewPriceReview   = "price_review:view"
+	ManagePriceReview = "price_review:manage"
+
+	// --- مدیریت همکاران (سمت کارمند) ---
+	ListPartners          = "partner:list"
+	ViewPartner           = "partner:view"
+	ApprovePartner        = "partner:approve"
+	RejectPartner         = "partner:reject"
+	SuspendPartner        = "partner:suspend"
+	UpdatePartnerPricing  = "partner:update_pricing"
+	RecordPartnerHandover = "partner:record_handover"
+
+	// --- پنل خرید همکار (سمت خود همکار) ---
+	PartnerShopAccess = "partner_shop:access"
+	PartnerShopOrder  = "partner_shop:order"
+
+	// --- برنامه دعوت از دوستان (referral) ---
+	ListReferrals  = "referral:list"
+	ViewReferral   = "referral:view"
+	ManageReferral = "referral:manage"
+
+	// --- مدیریت تأمین‌کنندگان ---
+	ListSuppliers  = "supplier:list"
+	ViewSupplier   = "supplier:view"
+	CreateSupplier = "supplier:create"
+	UpdateSupplier = "supplier:update"
+	DeleteSupplier = "supplier:delete"
+
+	// --- مدیریت فاکتورهای خرید ---
+	ListPurchases   = "purchase:list"
+	ViewPurchase    = "purchase:view"
+	CreatePurchase  = "purchase:create"
+	UpdatePurchase  = "purchase:update"
+	ConfirmPurchase = "purchase:confirm"
+	CancelPurchase  = "purchase:cancel"
+
+	// --- انبارداری ---
+	ViewInventory   = "inventory:view"
+	AdjustInventory = "inventory:adjust"
+	// UpdateStockConfig covers per-variant stock mode / backorder / supplier
+	// / cost settings.
+	UpdateStockConfig = "inventory:update_stock_config"
+
+	// --- هزینه‌های عملیاتی ---
+	ListExpenses  = "expense:list"
+	ViewExpense   = "expense:view"
+	CreateExpense = "expense:create"
+	UpdateExpense = "expense:update"
+	DeleteExpense = "expense:delete"
+
+	// --- صندوق و نقدینگی ---
+	ViewCash   = "cash:view"
+	CreateCash = "cash:create"
+	DeleteCash = "cash:delete"
+
+	// --- برگشت از فروش (مرجوعی) ---
+	ListSalesReturns  = "sales_return:list"
+	ViewSalesReturn   = "sales_return:view"
+	CreateSalesReturn = "sales_return:create"
+	RefundSalesReturn = "sales_return:refund"
+
+	// --- گزارش‌های مالی ---
+	ViewProfitReport    = "report:profit"
+	ViewInventoryReport = "report:inventory"
+	// ViewProfitLossReport is the full صورت سود و زیان (فروش، بهای تمام‌شده،
+	// هزینه‌ها، سود خالص) — wider than the gross-profit report above.
+	ViewProfitLossReport   = "report:profit_loss"
+	ViewSupplierLedger     = "report:supplier_ledger"
+	ViewCashReport         = "report:cash"
+	ExportFinancialReports = "report:export"
 )

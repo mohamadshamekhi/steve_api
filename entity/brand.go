@@ -9,6 +9,7 @@ import (
 type Brand struct {
 	ID          string    `bson:"_id"`
 	Name        string    `bson:"name"`
+	Slug        string    `bson:"slug"`
 	Description string    `bson:"description,omitempty"`
 	IsFavorite  bool      `bson:"is_favorite,omitempty"`
 	MediaID     string    `bson:"media_id,omitempty"`
