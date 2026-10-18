@@ -62,6 +62,30 @@ func (d DB) Recent(ctx context.Context, limit int64) ([]entity.Order, error) {
 	return orders, nil
 }
 
+// CancelledOrdersBetween lists the orders cancelled in the window (matched
+// by created_at, same as the rest of this file). Used to break down
+// cancellations by reason/payment status for reporting.
+func (d DB) CancelledOrdersBetween(ctx context.Context, from, to time.Time) ([]entity.Order, error) {
+	const op = "mongodborder.CancelledOrdersBetween"
+
+	filter := createdBetween(from, to)
+	filter["status"] = entity.OrderStatusCancelled
+
+	cursor, err := d.collection.Find(ctx, filter, options.Find().SetProjection(bson.M{"items": 0, "shipping_address": 0}))
+	if err != nil {
+		return nil, richerror.New(op).WithWarpError(err).
+			WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
+	}
+	defer cursor.Close(ctx)
+
+	orders := make([]entity.Order, 0)
+	if err := cursor.All(ctx, &orders); err != nil {
+		return nil, richerror.New(op).WithWarpError(err).
+			WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
+	}
+	return orders, nil
+}
+
 // SoldOrdersBetween lists the orders in the window that count as a sale
 // (neither awaiting payment nor cancelled). Used to backfill the sales
 // ledger for orders registered before it existed.

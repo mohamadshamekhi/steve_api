@@ -34,6 +34,20 @@ const (
 	OrderStatusRefunded OrderStatus = "refunded"
 )
 
+// CancelReason records why a cancelled order was cancelled, for reporting.
+// Orders cancelled before this field existed have it empty ("unknown").
+type CancelReason string
+
+const (
+	// CancelReasonPaymentExpired — scheduler-cancelled: payment deadline
+	// passed while the order sat in pending_payment.
+	CancelReasonPaymentExpired CancelReason = "payment_expired"
+	// CancelReasonAdmin — a backoffice user manually set the order to cancelled.
+	CancelReasonAdmin CancelReason = "admin_cancelled"
+	// CancelReasonUser — the customer cancelled their own order.
+	CancelReasonUser CancelReason = "user_cancelled"
+)
+
 type PurchaseType string
 
 const (
@@ -78,6 +92,8 @@ type Order struct {
 	// replayed status change never mints a second one.
 	ThankYouClaimed    bool   `bson:"thank_you_claimed,omitempty"`
 	ThankYouDiscountID string `bson:"thank_you_discount_id,omitempty"`
+	// CancelReason is set alongside Status when it transitions to cancelled.
+	CancelReason CancelReason `bson:"cancel_reason,omitempty" json:"cancel_reason,omitempty"`
 	// Edits is the audit trail of super-admin corrections, oldest first.
 	Edits     []OrderEdit `bson:"edits,omitempty"`
 	CreatedAt time.Time   `bson:"created_at"`

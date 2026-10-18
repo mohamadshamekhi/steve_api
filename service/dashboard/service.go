@@ -45,6 +45,17 @@ type CategoryRepository interface {
 	GetCategoriesByIDs(ctx context.Context, ids []string) (map[string]entity.Category, error)
 }
 
+// CancelledOrderRepository backs the AI summary's cancellation breakdowns.
+type CancelledOrderRepository interface {
+	CancelledOrdersBetween(ctx context.Context, from, to time.Time) ([]entity.Order, error)
+}
+
+// PaymentRepository resolves each order's latest payment status, for the AI
+// summary's cancelled_by_payment_status breakdown.
+type PaymentRepository interface {
+	GetLatestStatusByOrderIDs(ctx context.Context, orderIDs []string) (map[string]entity.PaymentStatus, error)
+}
+
 type UserRepository interface {
 	CountCreatedBetween(ctx context.Context, from, to time.Time) (int64, error)
 	GetUsersByIDs(ctx context.Context, ids []string) ([]entity.User, error)
@@ -68,6 +79,8 @@ type Service struct {
 	repairs     RepairRepository
 	permissions PermissionProvider
 	categories  CategoryRepository
+	cancelled   CancelledOrderRepository
+	payments    PaymentRepository
 }
 
 func New(
@@ -80,6 +93,8 @@ func New(
 	repairs RepairRepository,
 	permissions PermissionProvider,
 	categories CategoryRepository,
+	cancelled CancelledOrderRepository,
+	payments PaymentRepository,
 ) Service {
 	return Service{
 		accounting:  accounting,
@@ -91,5 +106,7 @@ func New(
 		repairs:     repairs,
 		permissions: permissions,
 		categories:  categories,
+		cancelled:   cancelled,
+		payments:    payments,
 	}
 }

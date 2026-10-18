@@ -692,5 +692,10 @@ func (s StoreFrontService) UpdateOrderStatus(ctx context.Context, req orderparam
 	if err := s.repo.UpdateOrderStatus(ctx, req.OrderID, req.Status); err != nil {
 		return orderparam.UpdateStatusResponse{}, richerror.New(op).WithWarpError(err)
 	}
+	if req.Status == entity.OrderStatusCancelled {
+		if err := s.repo.SetCancelReason(ctx, req.OrderID, entity.CancelReasonUser); err != nil {
+			logger.L().Error("failed to set cancel reason", "order_id", req.OrderID, "err", err)
+		}
+	}
 	return orderparam.UpdateStatusResponse{}, nil
 }

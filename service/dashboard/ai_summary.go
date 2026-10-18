@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/abolfazlnorzad/steve/entity"
 	dashboardparam "github.com/abolfazlnorzad/steve/param/dashboard"
 	inventoryparam "github.com/abolfazlnorzad/steve/param/inventory"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -22,16 +23,17 @@ const (
 func (s Service) AISummary(ctx context.Context, req dashboardparam.AISummaryRequest) (dashboardparam.AISummaryResponse, error) {
 	const op = "dashboardservice.AISummary"
 
-	cur, _, err := resolvePeriod(req.FromRaw, req.ToRaw, time.Now())
+	cur, prev, err := resolvePeriod(req.FromRaw, req.ToRaw, time.Now())
 	if err != nil {
 		return dashboardparam.AISummaryResponse{}, err
 	}
 
 	var (
-		byStatus []dashboardparam.OrderStatusCount
-		daily    []inventoryparam.DailySalesRow
-		products []inventoryparam.ProfitRow
-		inv      inventoryparam.InventoryValueResponse
+		byStatus  []dashboardparam.OrderStatusCount
+		daily     []inventoryparam.DailySalesRow
+		products  []inventoryparam.ProfitRow
+		inv       inventoryparam.InventoryValueResponse
+		cancelled []entity.Order
 	)
 
 	g, gCtx := errgroup.WithContext(ctx)
@@ -50,12 +52,37 @@ func (s Service) AISummary(ctx context.Context, req dashboardparam.AISummaryRequ
 		inv, err = s.inventory.InventoryValue(gCtx, inventoryparam.InventoryValueRequest{Pagination: req.Pagination})
 		return
 	})
+	g.Go(func() (err error) {
+		cancelled, err = s.cancelled.CancelledOrdersBetween(gCtx, cur.from, cur.to)
+		return
+	})
 	if err := g.Wait(); err != nil {
 		return dashboardparam.AISummaryResponse{}, richerror.New(op).WithWarpError(err)
 	}
 
 	resp := dashboardparam.AISummaryResponse{
-		Period:         dashboardparam.Period{From: cur.fromDay(), To: cur.toDay()},
+		Period: dashboardparam.Period{
+			From: cur.fromDay(), To: cur.toDay(),
+			PrevFrom: prev.fromDay(), PrevTo: prev.toDay(),
+		},
+		Definitions: dashboardparam.AISummaryDefinitions{
+			Currency: "toman",
+			DailySales: "Sales-ledger entries: written when an order is registered " +
+				"(before payment), excluded from this query if the order's CURRENT " +
+				"status is pending_payment or cancelled. A cancelled order's earlier " +
+				"entry is not deleted, only excluded live — so this reflects " +
+				"confirmed/non-cancelled orders only, not all registrations.",
+			TopProductsCategories: "Same ledger/exclusion rule as daily_sales, grouped " +
+				"by product/category. Ranked by revenue. See non_catalog_revenue for the " +
+				"part of daily_sales' total these two lists cannot show.",
+			OrdersByStatus: "Every order created in the window, grouped by its CURRENT " +
+				"status — includes pending_payment and cancelled, unlike daily_sales/" +
+				"top_products/top_categories above. This is why its total order count " +
+				"is usually much higher.",
+			NonCatalogRevenue: "Revenue from hand-typed invoice lines with no catalog " +
+				"product_id (e.g. a repair fee, a non-catalog part) — counted in " +
+				"daily_sales but not attributable to any product/category.",
+		},
 		OrdersByStatus: byStatus,
 	}
 
@@ -91,7 +118,11 @@ func (s Service) AISummary(ctx context.Context, req dashboardparam.AISummaryRequ
 	catAgg := make(map[string]*dashboardparam.AISummaryTopCategory)
 	for _, p := range products {
 		if p.Key == "" {
-			continue // hand-typed invoice lines have no product id
+			// Hand-typed invoice lines have no product id: their revenue is
+			// in daily_sales but can't be attributed to a product/category.
+			resp.NonCatalogRevenue += p.Revenue
+			resp.NonCatalogUnits += p.UnitsSold
+			continue
 		}
 		if len(resp.TopProducts) < aiSummaryTopProductsLimit {
 			resp.TopProducts = append(resp.TopProducts, dashboardparam.AISummaryTopProduct{
@@ -158,6 +189,47 @@ func (s Service) AISummary(ctx context.Context, req dashboardparam.AISummaryRequ
 		})
 	}
 	resp.InventoryPage = inv.Pagination
+
+	cancelOrderIDs := make([]string, 0, len(cancelled))
+	reasonCounts := make(map[entity.CancelReason]int64, len(cancelled))
+	for _, o := range cancelled {
+		cancelOrderIDs = append(cancelOrderIDs, o.ID)
+		reason := o.CancelReason
+		if reason == "" {
+			reason = "unknown"
+		}
+		reasonCounts[reason]++
+	}
+	resp.CancelledByReason = make([]dashboardparam.AISummaryCancelReasonRow, 0, len(reasonCounts))
+	for reason, count := range reasonCounts {
+		resp.CancelledByReason = append(resp.CancelledByReason, dashboardparam.AISummaryCancelReasonRow{
+			Reason: string(reason), Count: count,
+		})
+	}
+	sort.Slice(resp.CancelledByReason, func(i, j int) bool { return resp.CancelledByReason[i].Count > resp.CancelledByReason[j].Count })
+
+	paymentStatusByOrder, err := s.payments.GetLatestStatusByOrderIDs(ctx, cancelOrderIDs)
+	if err != nil {
+		return dashboardparam.AISummaryResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	paymentCounts := make(map[string]int64, len(cancelOrderIDs))
+	for _, id := range cancelOrderIDs {
+		status, ok := paymentStatusByOrder[id]
+		key := "no_payment_record"
+		if ok {
+			key = string(status)
+		}
+		paymentCounts[key]++
+	}
+	resp.CancelledByPaymentStatus = make([]dashboardparam.AISummaryCancelPaymentStatusRow, 0, len(paymentCounts))
+	for status, count := range paymentCounts {
+		resp.CancelledByPaymentStatus = append(resp.CancelledByPaymentStatus, dashboardparam.AISummaryCancelPaymentStatusRow{
+			PaymentStatus: status, Count: count,
+		})
+	}
+	sort.Slice(resp.CancelledByPaymentStatus, func(i, j int) bool {
+		return resp.CancelledByPaymentStatus[i].Count > resp.CancelledByPaymentStatus[j].Count
+	})
 
 	return resp, nil
 }

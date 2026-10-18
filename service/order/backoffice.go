@@ -229,6 +229,11 @@ func (s BackofficeService) UpdateStatus(ctx context.Context, req orderparam.Upda
 	if err := s.repo.UpdateOrderStatus(ctx, req.OrderID, req.Status); err != nil {
 		return orderparam.UpdateStatusOrderResponse{}, richerror.New(op).WithWarpError(err)
 	}
+	if req.Status == entity.OrderStatusCancelled {
+		if err := s.repo.SetCancelReason(ctx, req.OrderID, entity.CancelReasonAdmin); err != nil {
+			logger.L().Error("failed to set cancel reason", "order_id", req.OrderID, "err", err)
+		}
+	}
 	return orderparam.UpdateStatusOrderResponse{}, nil
 }
 
@@ -276,6 +281,9 @@ func (s BackofficeService) CancelExpiredPendingOrders(ctx context.Context, req o
 			if cErr = s.repo.UpdateOrderStatus(gCtx, orderID, entity.OrderStatusCancelled); err != nil {
 				logger.L().Error("failed to update status", "order_id", orderID, "err", cErr)
 				return cErr
+			}
+			if cErr = s.repo.SetCancelReason(gCtx, orderID, entity.CancelReasonPaymentExpired); cErr != nil {
+				logger.L().Error("failed to set cancel reason", "order_id", orderID, "err", cErr)
 			}
 			return nil
 		})
