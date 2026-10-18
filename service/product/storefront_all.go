@@ -77,7 +77,7 @@ func (s StorefrontService) GetFilteredProduct(ctx context.Context, req productpa
 				IsPublished:    product.IsPublished,
 				IsSecondHand:   product.IsSecondHand,
 				Discount:       res.DiscountMap[product.ID],
-				Variant:        product.Variants,
+				Variant:        productparam.ToStorefrontVariants(product.Variants),
 				Rating:         product.Rating,
 				Specifications: specs,
 			}

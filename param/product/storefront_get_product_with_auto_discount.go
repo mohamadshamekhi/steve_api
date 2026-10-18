@@ -24,7 +24,7 @@ type StorefrontProductList struct {
 	IsPublished    bool                    `json:"is_published"`
 	IsSecondHand   bool                    `json:"is_second_hand"`
 	Discount       []ProductDiscount       `json:"discount"`
-	Variant        []entity.Variant        `json:"variant" bson:"variant"`
+	Variant        []StorefrontVariant     `json:"variant" bson:"variant"`
 	Specifications []Specification         `json:"specifications,omitempty"`
 }
 

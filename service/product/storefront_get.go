@@ -74,7 +74,7 @@ func (s StorefrontService) GetProduct(ctx context.Context, req productparam.Stor
 		}
 	}
 
-	res := productparam.ProductInfo{
+	res := productparam.StorefrontProductInfo{
 		ID:             p.ID,
 		Name:           p.Name,
 		ENTitle:        p.ENTitle,
@@ -83,7 +83,7 @@ func (s StorefrontService) GetProduct(ctx context.Context, req productparam.Stor
 		IsPublished:    p.IsPublished,
 		IsSecondHand:   p.IsSecondHand,
 		Description:    p.Description,
-		Variants:       p.Variants,
+		Variants:       productparam.ToStorefrontVariants(p.Variants),
 		CreatedAt:      p.CreatedAt,
 		UpdatedAt:      p.UpdatedAt,
 		Discount:       disRes.DiscountMap[p.ID],
@@ -177,7 +177,7 @@ func (s StorefrontService) GetProductBySlug(ctx context.Context, req productpara
 		}
 	}
 
-	res := productparam.ProductInfo{
+	res := productparam.StorefrontProductInfo{
 		ID:             p.ID,
 		Name:           p.Name,
 		ENTitle:        p.ENTitle,
@@ -186,7 +186,7 @@ func (s StorefrontService) GetProductBySlug(ctx context.Context, req productpara
 		IsPublished:    p.IsPublished,
 		IsSecondHand:   p.IsSecondHand,
 		Description:    p.Description,
-		Variants:       p.Variants,
+		Variants:       productparam.ToStorefrontVariants(p.Variants),
 		Discount:       disRes.DiscountMap[p.ID],
 		CreatedAt:      p.CreatedAt,
 		UpdatedAt:      p.UpdatedAt,

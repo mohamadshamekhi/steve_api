@@ -58,7 +58,7 @@ func (s StorefrontService) GetProductsWithSpecialDiscount(
 				Rating:       prod.Rating,
 				IsPublished:  prod.IsPublished,
 				IsSecondHand: prod.IsSecondHand,
-				Variant:      prod.Variants,
+				Variant:      productparam.ToStorefrontVariants(prod.Variants),
 				Discount:     []productparam.ProductDiscount{},
 			}
 			productMap[prod.ID] = p

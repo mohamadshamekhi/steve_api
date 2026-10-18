@@ -48,6 +48,41 @@ type ProductInfo struct {
 	FAQ            []entity.ProductFAQ `json:"faq,omitempty"`
 }
 
+// StorefrontVariant is the public-facing shape of entity.Variant: it drops
+// internal cost/supplier fields (AvgCost, SupplierID, SupplyCost) that must
+// never reach unauthenticated storefront clients (they expose profit margin).
+type StorefrontVariant struct {
+	ID               string                    `json:"id"`
+	Price            uint64                    `json:"price"`
+	Quantity         uint64                    `json:"quantity"`
+	VariantAttribute []entity.VariantAttribute `json:"variant_attribute,omitempty"`
+	Warranty         string                    `json:"warranty"`
+	StockMode        entity.StockMode          `json:"stock_mode,omitempty"`
+	AllowBackorder   bool                      `json:"allow_backorder,omitempty"`
+	BackorderLimit   *uint64                   `json:"backorder_limit,omitempty"`
+}
+
+func ToStorefrontVariant(v entity.Variant) StorefrontVariant {
+	return StorefrontVariant{
+		ID:               v.ID,
+		Price:            v.Price,
+		Quantity:         v.Quantity,
+		VariantAttribute: v.VariantAttribute,
+		Warranty:         v.Warranty,
+		StockMode:        v.StockMode,
+		AllowBackorder:   v.AllowBackorder,
+		BackorderLimit:   v.BackorderLimit,
+	}
+}
+
+func ToStorefrontVariants(vs []entity.Variant) []StorefrontVariant {
+	out := make([]StorefrontVariant, 0, len(vs))
+	for _, v := range vs {
+		out = append(out, ToStorefrontVariant(v))
+	}
+	return out
+}
+
 type Specification struct {
 	Key   string `bson:"key" json:"key"`
 	Value string `bson:"value" json:"value"`
