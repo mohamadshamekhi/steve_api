@@ -31,11 +31,18 @@ type CashRepository interface {
 
 type InventoryProvider interface {
 	InventoryValue(ctx context.Context, req inventoryparam.InventoryValueRequest) (inventoryparam.InventoryValueResponse, error)
+	GetProductsByIDs(ctx context.Context, ids []string) ([]entity.Product, error)
 }
 
 type OrderRepository interface {
 	CountByStatus(ctx context.Context, from, to time.Time) ([]dashboardparam.OrderStatusCount, error)
 	Recent(ctx context.Context, limit int64) ([]entity.Order, error)
+}
+
+// CategoryRepository resolves category ids to their names, for the AI
+// summary's top-categories breakdown.
+type CategoryRepository interface {
+	GetCategoriesByIDs(ctx context.Context, ids []string) (map[string]entity.Category, error)
 }
 
 type UserRepository interface {
@@ -60,6 +67,7 @@ type Service struct {
 	users       UserRepository
 	repairs     RepairRepository
 	permissions PermissionProvider
+	categories  CategoryRepository
 }
 
 func New(
@@ -71,6 +79,7 @@ func New(
 	users UserRepository,
 	repairs RepairRepository,
 	permissions PermissionProvider,
+	categories CategoryRepository,
 ) Service {
 	return Service{
 		accounting:  accounting,
@@ -81,5 +90,6 @@ func New(
 		users:       users,
 		repairs:     repairs,
 		permissions: permissions,
+		categories:  categories,
 	}
 }

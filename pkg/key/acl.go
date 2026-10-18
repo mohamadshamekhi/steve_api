@@ -27,6 +27,10 @@ const (
 	// --- مدیریت داشبورد و گزارشات ---
 	ViewDashboardAnalytics = "dashboard:view_analytics"
 	ExportReports          = "reports:export"
+	// AIAgentReport gates GET /backoffice/dashboard/ai-summary: a read-only,
+	// aggregated-only sales/inventory view for the ai_agent role, with no
+	// customer PII and no cost/profit fields.
+	AIAgentReport = "ai_agent:report"
 
 	// --- مدیریت کاربران پنل (Backoffice) ---
 	ListBackofficeUsers  = "backoffice_user:list"

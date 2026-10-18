@@ -366,8 +366,8 @@ func main() {
 	accountingHandler := accountinghandler.New(accountingSvc, translator, accountingvalidator.New(), authSvc, cfg.Auth, aclSvc)
 
 	dashboardSvc := dashboardservice.New(accountingSvc, inventoryRepo, cashRepo, productRepo,
-		mongodborder.New(mongoRepo), userRepo, repairRepo, aclSvc)
-	dashboardHandler := dashboardhandler.New(dashboardSvc, translator, authSvc, cfg.Auth)
+		mongodborder.New(mongoRepo), userRepo, repairRepo, aclSvc, categoryRepo)
+	dashboardHandler := dashboardhandler.New(dashboardSvc, translator, authSvc, cfg.Auth, aclSvc)
 	salesReturnHandler := salesreturnhandler.New(salesReturnSvc, translator, salesreturnvalidator.New(), authSvc, cfg.Auth, aclSvc)
 
 	orderDeliverySvc := orderdeliveryservice.New(cfg.OrderDelivery, orderRepo, userRepo, authSvc, redisotp)

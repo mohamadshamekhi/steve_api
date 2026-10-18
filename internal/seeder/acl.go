@@ -17,6 +17,7 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.AccessAdminPanel, Description: "اجازه ورود به پنل مدیریت"},
 	{Name: key.ViewDashboardAnalytics, Description: "مشاهده تحلیل‌های داشبورد"},
 	{Name: key.ExportReports, Description: "خروجی گرفتن از گزارشات"},
+	{Name: key.AIAgentReport, Description: "مشاهده خلاصه تجمیعی فروش و موجودی (بدون اطلاعات مشتری و سود)"},
 	{Name: key.ListBackofficeUsers, Description: "مشاهده لیست کاربران پنل"},
 	{Name: key.ViewBackofficeUser, Description: "مشاهده جزئیات کاربر پنل"},
 	{Name: key.CreateBackofficeUser, Description: "ایجاد کاربر جدید برای پنل"},
@@ -279,6 +280,7 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 			key.AccessAdminPanel,
 			key.ListArticles, key.ViewArticle, key.CreateArticle, key.UpdateArticle,
 			key.ListProducts, key.ViewProduct, key.UpdateProduct,
+			key.AIAgentReport,
 		},
 	}
 
