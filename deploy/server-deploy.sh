@@ -72,7 +72,7 @@ ok "containers restarted"
 # ---------------------------------------------------------------------------
 step "Smoke test (port 7777)"
 for i in $(seq 1 30); do
-  curl -fsS -o /dev/null -m 5 http://localhost:7777/ && { ok "app is up"; break; } || true
+  curl -fsS -o /dev/null -m 5 http://localhost:7777/health && { ok "app is up"; break; } || true
   [[ $i -eq 30 ]] && {
     echo "app did not answer within 60s:"
     docker compose logs --tail=80 app

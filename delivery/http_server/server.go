@@ -192,6 +192,10 @@ func (s Server) Serve() {
 
 	s.Router.Use(middleware.Recover())
 
+	s.Router.GET("/health", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+	})
+
 	//set routes
 	s.backofficeAuthHandler.SetRoutes(s.Router)
 
