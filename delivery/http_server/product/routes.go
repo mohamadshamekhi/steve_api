@@ -20,6 +20,7 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.PATCH("/add-product-gallery", h.AddGallery, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
 	g.PATCH("/set-primary", h.SetPrimary, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
 	g.PATCH("/delete-product-gallery", h.DeleteGallery, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
+	g.PATCH("/set-gallery-alt", h.SetGalleryAlt, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
 
 	g.PATCH("/:id/update-attrs", h.UpdateAttrs, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))
 	g.PATCH("/:id/update-single-attr/:key", h.UpdateSingleAttrs, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.UpdateProduct))

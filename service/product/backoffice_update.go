@@ -71,6 +71,18 @@ func (s BackofficeService) UpdateProduct(ctx context.Context, req productparam.U
 	if req.SalesChannels != nil {
 		p.SalesChannels = req.SalesChannels
 	}
+	if req.SeoTitle != nil {
+		p.SeoTitle = *req.SeoTitle
+	}
+	if req.SeoDescription != nil {
+		p.SeoDescription = *req.SeoDescription
+	}
+	if req.FocusKeyword != nil {
+		p.FocusKeyword = *req.FocusKeyword
+	}
+	if req.FAQ != nil {
+		p.FAQ = req.FAQ
+	}
 
 	// Editing a service's fee goes through the product, not the variant: the
 	// pricing row is an implementation detail the caller should not have to

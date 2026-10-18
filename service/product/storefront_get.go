@@ -88,6 +88,10 @@ func (s StorefrontService) GetProduct(ctx context.Context, req productparam.Stor
 		UpdatedAt:      p.UpdatedAt,
 		Discount:       disRes.DiscountMap[p.ID],
 		Specifications: specs,
+		SeoTitle:       p.SeoTitle,
+		SeoDescription: p.SeoDescription,
+		FocusKeyword:   p.FocusKeyword,
+		FAQ:            p.FAQ,
 	}
 
 	if catRes.Category.ID != "" {
@@ -187,6 +191,10 @@ func (s StorefrontService) GetProductBySlug(ctx context.Context, req productpara
 		CreatedAt:      p.CreatedAt,
 		UpdatedAt:      p.UpdatedAt,
 		Specifications: specs,
+		SeoTitle:       p.SeoTitle,
+		SeoDescription: p.SeoDescription,
+		FocusKeyword:   p.FocusKeyword,
+		FAQ:            p.FAQ,
 	}
 
 	if catRes.Category.ID != "" {

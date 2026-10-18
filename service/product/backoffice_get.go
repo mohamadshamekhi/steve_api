@@ -82,6 +82,10 @@ func (s BackofficeService) GetProduct(ctx context.Context, req productparam.GetP
 		CreatedAt:               p.CreatedAt,
 		UpdatedAt:               p.UpdatedAt,
 		Specifications:          specs,
+		SeoTitle:                p.SeoTitle,
+		SeoDescription:          p.SeoDescription,
+		FocusKeyword:            p.FocusKeyword,
+		FAQ:                     p.FAQ,
 	}
 
 	if catRes.Category.ID != "" {

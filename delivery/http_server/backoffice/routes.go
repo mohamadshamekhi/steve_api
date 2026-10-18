@@ -14,4 +14,5 @@ func (h Handler) SetRoutes(e *echo.Echo) {
 	g.GET("/me", h.MyProfile, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg))
 	g.POST("/logout", h.Logout, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg))
 	g.GET("/:id", h.Get, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ViewBackofficeUser))
+	g.POST("/:id/issue-service-token", h.IssueServiceToken, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.IssueServiceToken))
 }

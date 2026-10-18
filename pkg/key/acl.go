@@ -15,6 +15,10 @@ const (
 	// Partner is the colleague themselves — a heavily restricted backoffice
 	// account that can only use the partner shop and see its own purchases.
 	Partner = "partner"
+	// AIAgent is a service account for the external SEO/content agent. It
+	// may create draft articles and edit product SEO fields, but can never
+	// delete or publish anything.
+	AIAgent = "ai_agent"
 )
 const (
 	// --- دسترسی‌های کلی پنل ---
@@ -25,11 +29,14 @@ const (
 	ExportReports          = "reports:export"
 
 	// --- مدیریت کاربران پنل (Backoffice) ---
-	ListBackofficeUsers   = "backoffice_user:list"
-	ViewBackofficeUser    = "backoffice_user:view"
-	CreateBackofficeUser  = "backoffice_user:create"
-	UpdateBackofficeUser  = "backoffice_user:update"
-	DeleteBackofficeUser  = "backoffice_user:delete"
+	ListBackofficeUsers  = "backoffice_user:list"
+	ViewBackofficeUser   = "backoffice_user:view"
+	CreateBackofficeUser = "backoffice_user:create"
+	UpdateBackofficeUser = "backoffice_user:update"
+	DeleteBackofficeUser = "backoffice_user:delete"
+	// IssueServiceToken gates minting a long-lived token for a service/
+	// automation backoffice account (e.g. the external SEO/content agent).
+	IssueServiceToken     = "backoffice_user:issue_service_token"
 	AssignBackofficeRoles = "backoffice_user:assign_roles"
 	ListPermissions       = "permission:list"
 	ListRole              = "role:list"

@@ -16,8 +16,9 @@ func Default() Config {
 			Port: 7777,
 		},
 		Auth: authservice.Config{
-			AccessExpirationTime: BackOfficeAccessTokenExpireDuration,
-			AccessSubject:        AccessTokenSubject,
+			AccessExpirationTime:       BackOfficeAccessTokenExpireDuration,
+			AccessSubject:              AccessTokenSubject,
+			ServiceTokenExpirationTime: ServiceTokenExpireDuration,
 		},
 		Partner: partnerservice.Config{
 			Enabled:               true,

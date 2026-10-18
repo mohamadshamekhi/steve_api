@@ -24,6 +24,12 @@ type CreateProductRequest struct {
 	// complete and sellable in one call — the caller never deals with the
 	// variant the price is stored on.
 	Price uint64 `json:"price"`
+
+	// SEO fields, all optional.
+	SeoTitle       string              `json:"seo_title"`
+	SeoDescription string              `json:"seo_description"`
+	FocusKeyword   string              `json:"focus_keyword"`
+	FAQ            []entity.ProductFAQ `json:"faq"`
 }
 type CreateProductResponse struct {
 	Product ProductCreated `json:"product"`
@@ -53,6 +59,11 @@ type ProductCreated struct {
 	// client that still speaks variants can find it. New callers should use
 	// Price and the product-level update instead.
 	VariantID string `json:"variant_id,omitempty"`
+
+	SeoTitle       string              `json:"seo_title,omitempty"`
+	SeoDescription string              `json:"seo_description,omitempty"`
+	FocusKeyword   string              `json:"focus_keyword,omitempty"`
+	FAQ            []entity.ProductFAQ `json:"faq,omitempty"`
 }
 
 // NewProductCreated normalises the entity's defaulted fields (kind and sales
@@ -71,6 +82,10 @@ func NewProductCreated(p entity.Product) ProductCreated {
 		IsSecondHand:            p.IsSecondHand,
 		RequiresFreightShipping: p.RequiresFreightShipping,
 		Description:             p.Description,
+		SeoTitle:                p.SeoTitle,
+		SeoDescription:          p.SeoDescription,
+		FocusKeyword:            p.FocusKeyword,
+		FAQ:                     p.FAQ,
 	}
 	if v, ok := p.ServiceVariant(); ok {
 		created.Price = v.Price

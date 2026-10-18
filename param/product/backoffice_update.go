@@ -17,6 +17,11 @@ type UpdateProductRequest struct {
 	// Price updates a service's fee without the caller having to know about
 	// the variant it is stored on. Ignored for goods.
 	Price *uint64 `json:"price"`
+
+	SeoTitle       *string             `json:"seo_title"`
+	SeoDescription *string             `json:"seo_description"`
+	FocusKeyword   *string             `json:"focus_keyword"`
+	FAQ            []entity.ProductFAQ `json:"faq"`
 }
 
 type UpdateProductResponse struct {

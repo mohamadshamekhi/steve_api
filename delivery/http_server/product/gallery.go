@@ -82,3 +82,27 @@ func (h Handler) SetPrimary(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, apiResponse)
 }
+
+func (h Handler) SetGalleryAlt(c echo.Context) error {
+	const op = "producthandler.SetGalleryAlt"
+	var req productparam.SetProductGalleryAltRequest
+	if bErr := c.Bind(&req); bErr != nil {
+		return richerror.New(op).
+			WithKind(richerror.KindInvalid).
+			WithMessageKey("validation.invalid_input").
+			WithWarpError(bErr)
+	}
+
+	if err := h.vld.ValidateSetGalleryAltRequest(req); err != nil {
+		return err
+	}
+	resp, err := h.backofficeProductSvc.SetGalleryAlt(c.Request().Context(), req)
+	if err != nil {
+		return err
+	}
+	lang := getLanguageFromHeader(c.Request().Header)
+	successMessage := h.translator.Translate(lang, "global.action_successful", nil)
+	apiResponse := response.NewSuccessResponse(successMessage, resp)
+
+	return c.JSON(http.StatusOK, apiResponse)
+}

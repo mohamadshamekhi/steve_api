@@ -6,11 +6,15 @@ import (
 )
 
 type Config struct {
-	SignKey                  string        `koanf:"sign_key"`
-	AccessSubject            string        `koanf:"access_subject"`
-	AccessExpirationTime     time.Duration `koanf:"access_expiration_time"`
-	ExpirationTimeOptCode    time.Duration `koanf:"expiration_time_opt_code"`
-	ExpirationTimeOtpContext time.Duration `koanf:"expiration_time_otp_context"`
+	SignKey              string        `koanf:"sign_key"`
+	AccessSubject        string        `koanf:"access_subject"`
+	AccessExpirationTime time.Duration `koanf:"access_expiration_time"`
+	// ServiceTokenExpirationTime is the TTL for long-lived tokens issued to
+	// service/automation accounts (e.g. the external SEO/content agent) via
+	// the backoffice "issue service token" endpoint.
+	ServiceTokenExpirationTime time.Duration `koanf:"service_token_expiration_time"`
+	ExpirationTimeOptCode      time.Duration `koanf:"expiration_time_opt_code"`
+	ExpirationTimeOtpContext   time.Duration `koanf:"expiration_time_otp_context"`
 }
 
 type Repository interface {

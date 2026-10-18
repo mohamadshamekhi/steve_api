@@ -34,3 +34,12 @@ func (s Service) generateToken(id string, subject string, kind string, expireDur
 func (s Service) GenerateAccessToken(id string, kind string, roleKeys []string, permissionKeys []string) (string, error) {
 	return s.generateToken(id, s.cfg.AccessSubject, kind, s.cfg.AccessExpirationTime, roleKeys, permissionKeys)
 }
+
+// GenerateServiceToken issues a long-lived access token (TTL from
+// cfg.ServiceTokenExpirationTime) for a service/automation backoffice
+// account, e.g. the external SEO/content agent. It carries the same claim
+// shape as a normal access token, so it works with the existing
+// BackofficeAuth + ACL middleware unchanged.
+func (s Service) GenerateServiceToken(id string, kind string, roleKeys []string, permissionKeys []string) (string, error) {
+	return s.generateToken(id, s.cfg.AccessSubject, kind, s.cfg.ServiceTokenExpirationTime, roleKeys, permissionKeys)
+}

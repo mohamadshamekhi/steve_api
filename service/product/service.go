@@ -45,6 +45,7 @@ type ProductWriter interface {
 	AddProductGallery(ctx context.Context, productID string, g entity.ProductGallery) error
 	DeleteProductGallery(ctx context.Context, productID string, mediaID string) error
 	SetPrimary(ctx context.Context, productID string, mediaID string) error
+	SetGalleryAlt(ctx context.Context, productID string, mediaID string, alt string) error
 	UpdateSpecifications(ctx context.Context, productID string, specs []entity.Specification) error
 	UpdateSingleSpecification(ctx context.Context, productID string, key string, value string) error
 	AddVariant(ctx context.Context, ProductID string, v entity.Variant) error

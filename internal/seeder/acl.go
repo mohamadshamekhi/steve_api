@@ -22,6 +22,7 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.CreateBackofficeUser, Description: "ایجاد کاربر جدید برای پنل"},
 	{Name: key.UpdateBackofficeUser, Description: "ویرایش اطلاعات کاربران پنل"},
 	{Name: key.DeleteBackofficeUser, Description: "حذف کاربر از پنل"},
+	{Name: key.IssueServiceToken, Description: "صدور توکن بلندمدت برای کاربر سرویسی/ایجنت"},
 	{Name: key.AssignBackofficeRoles, Description: "تخصیص و تغییر نقش‌های کاربران پنل"},
 	{Name: key.ListUsers, Description: "مشاهده لیست مشتریان"},
 	{Name: key.ViewUserDetails, Description: "مشاهده جزئیات پروفایل مشتری"},
@@ -269,6 +270,15 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 		key.Partner: {
 			key.AccessAdminPanel,
 			key.PartnerShopAccess, key.PartnerShopOrder,
+		},
+
+		// key.AIAgent is the external SEO/content agent's service account.
+		// It may draft (unpublished) articles and edit product SEO fields,
+		// but can never delete or publish anything.
+		key.AIAgent: {
+			key.AccessAdminPanel,
+			key.ListArticles, key.ViewArticle, key.CreateArticle, key.UpdateArticle,
+			key.ListProducts, key.ViewProduct, key.UpdateProduct,
 		},
 	}
 

@@ -124,3 +124,22 @@ func (d DB) SetPrimary(ctx context.Context, productID string, mediaID string) er
 
 	return nil
 }
+
+func (d DB) SetGalleryAlt(ctx context.Context, productID string, mediaID string, alt string) error {
+	const op = "mongodbproduct.SetGalleryAlt"
+
+	filter := bson.M{"_id": productID, "gallery.media_id": mediaID}
+	update := bson.M{"$set": bson.M{"gallery.$.alt": alt}}
+	result, err := d.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return richerror.New(op).WithWarpError(err).WithKind(richerror.KindUnexpected)
+	}
+	if result.MatchedCount == 0 {
+		return richerror.New(op).
+			WithKind(richerror.KindNotFound).
+			WithMessageKey("product.media_not_found_in_gallery").
+			WithMeta(map[string]any{"product_id": productID, "media_id": mediaID})
+	}
+
+	return nil
+}

@@ -41,6 +41,11 @@ type ProductInfo struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	DeletedAt time.Time `json:"deleted_at,omitempty"`
+
+	SeoTitle       string              `json:"seo_title,omitempty"`
+	SeoDescription string              `json:"seo_description,omitempty"`
+	FocusKeyword   string              `json:"focus_keyword,omitempty"`
+	FAQ            []entity.ProductFAQ `json:"faq,omitempty"`
 }
 
 type Specification struct {

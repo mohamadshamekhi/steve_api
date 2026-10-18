@@ -73,11 +73,22 @@ type Product struct {
 	// product's price. Used by the periodic price-review feature to flag
 	// products whose price hasn't been checked in a configured interval.
 	PriceReviewedAt time.Time `bson:"price_reviewed_at,omitempty"`
+	// SEO fields, editable by the content/SEO agent. All optional so old
+	// documents keep working unchanged.
+	SeoTitle       string       `bson:"seo_title,omitempty"`
+	SeoDescription string       `bson:"seo_description,omitempty"`
+	FocusKeyword   string       `bson:"focus_keyword,omitempty"`
+	FAQ            []ProductFAQ `bson:"faq,omitempty"`
 }
 type ProductGallery struct {
 	MediaID   string `bson:"media_id" json:"media_id"`
 	URL       string `bson:"url" json:"url"`
 	IsPrimary bool   `bson:"is_primary" json:"is_primary"`
+	Alt       string `bson:"alt,omitempty" json:"alt,omitempty"`
+}
+type ProductFAQ struct {
+	Question string `bson:"question" json:"question"`
+	Answer   string `bson:"answer" json:"answer"`
 }
 type Specification struct {
 	Key   string `bson:"key" json:"key"`     // ex: "cpu_processor"

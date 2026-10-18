@@ -24,6 +24,10 @@ func (s BackofficeService) Create(ctx context.Context, req productparam.CreatePr
 		Description:             req.Description,
 		Kind:                    req.Kind,
 		SalesChannels:           req.SalesChannels,
+		SeoTitle:                req.SeoTitle,
+		SeoDescription:          req.SeoDescription,
+		FocusKeyword:            req.FocusKeyword,
+		FAQ:                     req.FAQ,
 	}
 	slg := slug.GenerateSlug(p.ENTitle)
 	counter := 1

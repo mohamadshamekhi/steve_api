@@ -177,18 +177,19 @@ func (s StorefrontService) GetAllStorefrontArticles(ctx context.Context, req art
 		}
 
 		articlesInfo = append(articlesInfo, articleparam.StorefrontArticle{
-			ID:             a.ID,
-			Title:          a.Title,
-			Slug:           a.Slug,
-			IsPublished:    a.IsPublished,
-			Tags:           a.Tags,
-			BackOfficeID:   a.BackOfficeID,
-			BackOfficeName: backOfficeInfo.Name,
-			MediaUrl:       urlMap.URLs[a.MediaID],
-			Alt:            a.Alt,
-			ViewCount:      a.ViewCount,
-			CreatedAt:      a.CreatedAt,
-			UpdatedAt:      a.UpdatedAt,
+			ID:              a.ID,
+			Title:           a.Title,
+			Slug:            a.Slug,
+			IsPublished:     a.IsPublished,
+			Tags:            a.Tags,
+			MetaDescription: a.MetaDescription,
+			BackOfficeID:    a.BackOfficeID,
+			BackOfficeName:  backOfficeInfo.Name,
+			MediaUrl:        urlMap.URLs[a.MediaID],
+			Alt:             a.Alt,
+			ViewCount:       a.ViewCount,
+			CreatedAt:       a.CreatedAt,
+			UpdatedAt:       a.UpdatedAt,
 		})
 	}
 

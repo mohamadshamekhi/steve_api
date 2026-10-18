@@ -18,12 +18,21 @@ func (s BackofficeService) AddGallery(ctx context.Context, req productparam.AddP
 		MediaID:   req.MediaID,
 		URL:       req.MediaURL,
 		IsPrimary: req.IsPrimary,
+		Alt:       req.Alt,
 	}
 	if err := s.repo.AddProductGallery(ctx, req.ProductID, g); err != nil {
 		return productparam.AddProductGalleryResponse{}, richerror.New(op).WithWarpError(err)
 	}
 
 	return productparam.AddProductGalleryResponse{}, nil
+}
+
+func (s BackofficeService) SetGalleryAlt(ctx context.Context, req productparam.SetProductGalleryAltRequest) (productparam.SetProductGalleryAltResponse, error) {
+	const op = "productservice.SetGalleryAlt"
+	if err := s.repo.SetGalleryAlt(ctx, req.ProductID, req.MediaID, req.Alt); err != nil {
+		return productparam.SetProductGalleryAltResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	return productparam.SetProductGalleryAltResponse{}, nil
 }
 
 func (s BackofficeService) DeleteGallery(ctx context.Context, req productparam.DeleteProductGalleryRequest) (productparam.DeleteProductGalleryResponse, error) {

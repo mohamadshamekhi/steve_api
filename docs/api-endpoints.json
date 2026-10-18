@@ -158,6 +158,14 @@
       "in": "-",
       "out": "{user}",
       "desc": "جزئیات یک کاربر پنل"
+    },
+    {
+      "method": "POST",
+      "path": "/back-office/:id/issue-service-token",
+      "auth": "backoffice+ACL:IssueServiceToken",
+      "in": "-",
+      "out": "{token}",
+      "desc": "صدور توکن بلندمدت برای کاربر سرویسی/ایجنت (مثل ایجنت سئو)"
     }
   ],
   "acl": [
@@ -258,6 +266,14 @@
       "in": "{product_id, media_id}",
       "out": "{message}",
       "desc": "تعیین تصویر اصلی"
+    },
+    {
+      "method": "PATCH",
+      "path": "/product/set-gallery-alt",
+      "auth": "backoffice+ACL:UpdateProduct",
+      "in": "{product_id, media_id, alt}",
+      "out": "{message}",
+      "desc": "تعیین متن alt تصویر گالری"
     },
     {
       "method": "PATCH",
