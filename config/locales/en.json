@@ -342,5 +342,21 @@
   {
     "id": "user.not_found",
     "translation": "User not found."
+  },
+  {
+    "id": "attr.name",
+    "translation": "Name"
+  },
+  {
+    "id": "attr.birth_date",
+    "translation": "Birth date"
+  },
+  {
+    "id": "validation.birth_date_invalid",
+    "translation": "Birth date is invalid."
+  },
+  {
+    "id": "validation.invalid_format",
+    "translation": "{{.Attribute}} format is invalid."
   }
 ]

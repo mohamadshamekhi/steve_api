@@ -7,12 +7,13 @@ import (
 )
 
 type User struct {
-	ID          string    `bson:"_id"`
-	Name        string    `bson:"name"`
-	PhoneNumber string    `bson:"phone_number"`
-	CreatedAt   time.Time `bson:"created_at"`
-	UpdatedAt   time.Time `bson:"updated_at"`
-	Addresses   []Address `bson:"addresses,omitempty"`
+	ID          string     `bson:"_id"`
+	Name        string     `bson:"name"`
+	PhoneNumber string     `bson:"phone_number"`
+	BirthDate   *time.Time `bson:"birth_date,omitempty"`
+	CreatedAt   time.Time  `bson:"created_at"`
+	UpdatedAt   time.Time  `bson:"updated_at"`
+	Addresses   []Address  `bson:"addresses,omitempty"`
 }
 
 type Address struct {

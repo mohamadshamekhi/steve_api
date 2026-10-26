@@ -2,11 +2,13 @@ package userservice
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	userparam "github.com/abolfazlnorzad/steve/param/user"
 	userauthparam "github.com/abolfazlnorzad/steve/param/user/auth"
+	"github.com/abolfazlnorzad/steve/pkg/constant"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/phonenumber"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
@@ -73,7 +75,14 @@ func (s StoreFrontService) VerifyOTPCode(ctx context.Context, req userauthparam.
 			existed = true // fail safe: skip attribution, never block login
 		}
 
-		user, iErr := s.repo.GetOrCreateUser(ctx, req.PhoneNumber)
+		var birthDate *time.Time
+		if !existed {
+			// Format already enforced by the validator for new users.
+			if t, pErr := time.Parse(constant.BirthDateLayout, req.BirthDate); pErr == nil {
+				birthDate = &t
+			}
+		}
+		user, iErr := s.repo.GetOrCreateUserWithProfile(ctx, req.PhoneNumber, strings.TrimSpace(req.Name), birthDate)
 		if iErr != nil {
 			return userauthparam.UserVerifyLoginCodeResponse{}, richerror.New(op).WithWarpError(iErr)
 		}
@@ -204,6 +213,7 @@ func (s StoreFrontService) Me(ctx context.Context, request userparam.MeRequest) 
 		ID:          u[0].ID,
 		Name:        u[0].Name,
 		PhoneNumber: u[0].PhoneNumber,
+		BirthDate:   u[0].BirthDate,
 		CreatedAt:   u[0].CreatedAt,
 		Addresses:   u[0].Addresses,
 	}
@@ -225,6 +235,7 @@ func (s StoreFrontService) GetUserByID(ctx context.Context, req userparam.GetUse
 		ID:          user.ID,
 		Name:        user.Name,
 		PhoneNumber: user.PhoneNumber,
+		BirthDate:   user.BirthDate,
 		CreatedAt:   user.CreatedAt,
 		Addresses:   user.Addresses,
 	}

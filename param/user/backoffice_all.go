@@ -21,6 +21,7 @@ type UserInfo struct {
 	ID          string           `json:"_id"`
 	Name        string           `json:"name,omitempty"`
 	PhoneNumber string           `json:"phone_number"`
+	BirthDate   *time.Time       `json:"birth_date,omitempty"`
 	CreatedAt   time.Time        `json:"created_at"`
 	Addresses   []entity.Address `json:"addresses,omitempty"`
 }

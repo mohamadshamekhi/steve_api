@@ -28,6 +28,7 @@ func (s BackofficeService) GetAllUsers(ctx context.Context, req userparam.GetAll
 			ID:          u.ID,
 			Name:        u.Name,
 			PhoneNumber: u.PhoneNumber,
+			BirthDate:   u.BirthDate,
 			CreatedAt:   u.CreatedAt,
 			Addresses:   u.Addresses,
 		})
@@ -56,6 +57,7 @@ func (s BackofficeService) GetUsersByIDs(ctx context.Context, req userparam.GetU
 			ID:          u.ID,
 			Name:        u.Name,
 			PhoneNumber: u.PhoneNumber,
+			BirthDate:   u.BirthDate,
 			CreatedAt:   u.CreatedAt,
 			Addresses:   u.Addresses,
 		})
@@ -74,6 +76,7 @@ func (s BackofficeService) UpsertUser(ctx context.Context, req userparam.UpsertU
 		ID:          user.ID,
 		Name:        user.Name,
 		PhoneNumber: user.PhoneNumber,
+		BirthDate:   user.BirthDate,
 		CreatedAt:   user.CreatedAt,
 		Addresses:   user.Addresses,
 	}
@@ -107,6 +110,7 @@ func (s BackofficeService) GetUserByID(ctx context.Context, req userparam.GetUse
 		ID:          user.ID,
 		Name:        user.Name,
 		PhoneNumber: user.PhoneNumber,
+		BirthDate:   user.BirthDate,
 		CreatedAt:   user.CreatedAt,
 		Addresses:   user.Addresses,
 	}

@@ -649,5 +649,13 @@
   {
     "id": "user.not_found",
     "translation": "کاربر پیدا نشد."
+  },
+  {
+    "id": "attr.birth_date",
+    "translation": "تاریخ تولد"
+  },
+  {
+    "id": "validation.birth_date_invalid",
+    "translation": "تاریخ تولد نامعتبر است."
   }
 ]

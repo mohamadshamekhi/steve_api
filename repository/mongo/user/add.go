@@ -22,18 +22,29 @@ func (d DB) AddNewUser(ctx context.Context, u entity.User) error {
 }
 
 func (d DB) GetOrCreateUser(ctx context.Context, phoneNumber string) (entity.User, error) {
-	const op = "mongodbuser.GetOrCreateUser"
+	return d.GetOrCreateUserWithProfile(ctx, phoneNumber, "", nil)
+}
+
+// GetOrCreateUserWithProfile upserts by phone number; name and birthDate are
+// written only when the document is inserted, never over an existing user.
+func (d DB) GetOrCreateUserWithProfile(ctx context.Context, phoneNumber, name string, birthDate *time.Time) (entity.User, error) {
+	const op = "mongodbuser.GetOrCreateUserWithProfile"
 
 	filter := bson.M{"phone_number": phoneNumber}
 
-	update := bson.M{
-		"$setOnInsert": bson.M{
-			"_id":          ulid.Make().String(),
-			"created_at":   time.Now(),
-			"updated_at":   time.Now(),
-			"phone_number": phoneNumber,
-		},
+	onInsert := bson.M{
+		"_id":          ulid.Make().String(),
+		"created_at":   time.Now(),
+		"updated_at":   time.Now(),
+		"phone_number": phoneNumber,
 	}
+	if name != "" {
+		onInsert["name"] = name
+	}
+	if birthDate != nil {
+		onInsert["birth_date"] = *birthDate
+	}
+	update := bson.M{"$setOnInsert": onInsert}
 
 	opts := options.FindOneAndUpdate().
 		SetUpsert(true).

@@ -16,6 +16,11 @@ type UserVerifyLoginCodeRequest struct {
 	// (?ref=<code> on the invite link). Only used when this verification
 	// results in a brand-new account.
 	Ref string `json:"ref"`
+	// Name and BirthDate (Gregorian, "YYYY-MM-DD") are required only when this
+	// verification creates a brand-new account (is_new_user from send-code);
+	// ignored for existing users.
+	Name      string `json:"name"`
+	BirthDate string `json:"birth_date"`
 }
 
 type UserVerifyLoginCodeResponse struct {

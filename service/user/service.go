@@ -2,6 +2,7 @@ package userservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
@@ -29,6 +30,7 @@ type Repository interface {
 	GetUserByID(ctx context.Context, phone string) (entity.User, error)
 	AddNewUser(ctx context.Context, u entity.User) error
 	GetOrCreateUser(ctx context.Context, phonenumber string) (entity.User, error)
+	GetOrCreateUserWithProfile(ctx context.Context, phoneNumber, name string, birthDate *time.Time) (entity.User, error)
 	CheckUserIsExistByPhoneNumber(ctx context.Context, phoneNumber string) (bool, error)
 	UpdateUser(ctx context.Context, u entity.User) error
 	AddAddress(ctx context.Context, userID string, address entity.Address) error
