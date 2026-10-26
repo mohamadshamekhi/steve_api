@@ -3,7 +3,9 @@ package config
 import (
 	"time"
 
+	birthdayscheduler "github.com/abolfazlnorzad/steve/scheduler/birthday"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
+	birthdayservice "github.com/abolfazlnorzad/steve/service/birthday"
 	orderdeliveryservice "github.com/abolfazlnorzad/steve/service/orderdelivery"
 	ordernotifyservice "github.com/abolfazlnorzad/steve/service/ordernotify"
 	partnerservice "github.com/abolfazlnorzad/steve/service/partner"
@@ -36,6 +38,16 @@ func Default() Config {
 			WelcomeDiscountType:    "percentage",
 			WelcomeDiscountValue:   5,
 			WelcomeValidDays:       30,
+		},
+		Birthday: birthdayservice.Config{
+			Enabled:       true,
+			DaysBefore:    3,
+			DiscountType:  "fixed_amount",
+			DiscountValue: 500000,
+			ValidDays:     10,
+		},
+		BirthdayScheduler: birthdayscheduler.Config{
+			RunAt: "0 10 * * *",
 		},
 		OrderNotify: ordernotifyservice.Config{
 			Enabled:                 true,

@@ -36,6 +36,10 @@ const (
 	OrderThanksKey = "order_thanks"
 	OrderStatusKey = "order_status"
 
+	// Birthday discount template.
+	// birthday_discount: {0}=name {1}=coupon code {2}=discount label {3}=valid days
+	BirthdayDiscountKey = "birthday_discount"
+
 	endpointPattern = "SendByBaseNumber"
 	endpointSimple  = "SendSimpleSMS2"
 )

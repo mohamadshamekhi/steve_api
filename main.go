@@ -23,7 +23,7 @@ import (
 	backofficehandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice"
 	backofficeauthhandler "github.com/abolfazlnorzad/steve/delivery/http_server/backoffice/auth"
 	bannerhandler "github.com/abolfazlnorzad/steve/delivery/http_server/banner"
-	pricereviewhandler "github.com/abolfazlnorzad/steve/delivery/http_server/pricereview"
+	birthdayhandler "github.com/abolfazlnorzad/steve/delivery/http_server/birthday"
 	brandhandler "github.com/abolfazlnorzad/steve/delivery/http_server/brand"
 	carthandler "github.com/abolfazlnorzad/steve/delivery/http_server/cart"
 	categoryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/category"
@@ -37,6 +37,7 @@ import (
 	orderdeliveryhandler "github.com/abolfazlnorzad/steve/delivery/http_server/orderdelivery"
 	partnerhandler "github.com/abolfazlnorzad/steve/delivery/http_server/partner"
 	paymenthandler "github.com/abolfazlnorzad/steve/delivery/http_server/payment"
+	pricereviewhandler "github.com/abolfazlnorzad/steve/delivery/http_server/pricereview"
 	producthandler "github.com/abolfazlnorzad/steve/delivery/http_server/product"
 	purchasehandler "github.com/abolfazlnorzad/steve/delivery/http_server/purchase"
 	ratinghandler "github.com/abolfazlnorzad/steve/delivery/http_server/rating"
@@ -59,7 +60,7 @@ import (
 	mongodbattributedefinition "github.com/abolfazlnorzad/steve/repository/mongo/attribute_definition"
 	mongodbbackoffice "github.com/abolfazlnorzad/steve/repository/mongo/backoffice"
 	mongodbbanner "github.com/abolfazlnorzad/steve/repository/mongo/banner"
-	mongodbpricereviewsetting "github.com/abolfazlnorzad/steve/repository/mongo/pricereviewsetting"
+	mongodbbirthday "github.com/abolfazlnorzad/steve/repository/mongo/birthday"
 	mongodbbrand "github.com/abolfazlnorzad/steve/repository/mongo/brand"
 	mongodbcart "github.com/abolfazlnorzad/steve/repository/mongo/cart"
 	mongodbcash "github.com/abolfazlnorzad/steve/repository/mongo/cash"
@@ -73,6 +74,7 @@ import (
 	mongodborder "github.com/abolfazlnorzad/steve/repository/mongo/order"
 	mongodbpartner "github.com/abolfazlnorzad/steve/repository/mongo/partner"
 	mongodbpayment "github.com/abolfazlnorzad/steve/repository/mongo/payment"
+	mongodbpricereviewsetting "github.com/abolfazlnorzad/steve/repository/mongo/pricereviewsetting"
 	mongodbproduct "github.com/abolfazlnorzad/steve/repository/mongo/product"
 	mongodbpurchase "github.com/abolfazlnorzad/steve/repository/mongo/purchase"
 	mongodbrating "github.com/abolfazlnorzad/steve/repository/mongo/rating"
@@ -85,6 +87,7 @@ import (
 	mongodbuser "github.com/abolfazlnorzad/steve/repository/mongo/user"
 	redisarticleview "github.com/abolfazlnorzad/steve/repository/redis/articleview"
 	redisotp "github.com/abolfazlnorzad/steve/repository/redis/otp"
+	birthdayscheduler "github.com/abolfazlnorzad/steve/scheduler/birthday"
 	cartscheduler "github.com/abolfazlnorzad/steve/scheduler/cart"
 	orderscheduler "github.com/abolfazlnorzad/steve/scheduler/order"
 	accountingservice "github.com/abolfazlnorzad/steve/service/accounting"
@@ -95,6 +98,7 @@ import (
 	attributeservice "github.com/abolfazlnorzad/steve/service/attribute"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
+	birthdayservice "github.com/abolfazlnorzad/steve/service/birthday"
 	brandservice "github.com/abolfazlnorzad/steve/service/brand"
 	cartservice "github.com/abolfazlnorzad/steve/service/cart"
 	categoryservice "github.com/abolfazlnorzad/steve/service/category"
@@ -110,6 +114,7 @@ import (
 	ordernotifyservice "github.com/abolfazlnorzad/steve/service/ordernotify"
 	partnerservice "github.com/abolfazlnorzad/steve/service/partner"
 	paymentservice "github.com/abolfazlnorzad/steve/service/payment"
+	pricereviewservice "github.com/abolfazlnorzad/steve/service/pricereview"
 	productservice "github.com/abolfazlnorzad/steve/service/product"
 	purchaseservice "github.com/abolfazlnorzad/steve/service/purchase"
 	ratingservice "github.com/abolfazlnorzad/steve/service/rating"
@@ -118,7 +123,6 @@ import (
 	salesreturnservice "github.com/abolfazlnorzad/steve/service/salesreturn"
 	searchservice "github.com/abolfazlnorzad/steve/service/search"
 	sellservice "github.com/abolfazlnorzad/steve/service/sell"
-	pricereviewservice "github.com/abolfazlnorzad/steve/service/pricereview"
 	settingservice "github.com/abolfazlnorzad/steve/service/setting"
 	supplierservice "github.com/abolfazlnorzad/steve/service/supplier"
 	userservice "github.com/abolfazlnorzad/steve/service/user"
@@ -128,6 +132,7 @@ import (
 	attributedefinitionvalidator "github.com/abolfazlnorzad/steve/validator/attributedefinition"
 	backofficevalidator "github.com/abolfazlnorzad/steve/validator/backoffice"
 	backofficevalidatorauth "github.com/abolfazlnorzad/steve/validator/backoffice/auth"
+	birthdayvalidator "github.com/abolfazlnorzad/steve/validator/birthday"
 	brandvalidator "github.com/abolfazlnorzad/steve/validator/brand"
 	cartvalidator "github.com/abolfazlnorzad/steve/validator/cart"
 	categoryvalidator "github.com/abolfazlnorzad/steve/validator/category"
@@ -229,6 +234,9 @@ func main() {
 	referralBackofficeSvc := referralservice.NewBackofficeService(cfg.Referral, referralRepo, userRepo)
 	userSvc := userservice.NewStoreFrontService(cfg.User, userRepo, authSvc, redisotp, referralSvc)
 	referralHandler := referralhandler.New(referralSvc, referralBackofficeSvc, referralVld, translator, authSvc, cfg.Auth, aclSvc)
+
+	birthdaySvc := birthdayservice.New(cfg.Birthday, mongodbbirthday.New(mongoRepo), userRepo, discountRepo, mp)
+	birthdayHandler := birthdayhandler.New(birthdaySvc, birthdayvalidator.New(), translator, authSvc, cfg.Auth, aclSvc)
 	backofficeUserSvc := userservice.NewBackofficeService(userRepo)
 	userHandler := userhandler.New(backofficeUserSvc, userSvc, userVld, translator, authSvc, cfg.Auth, aclSvc)
 	commentRepo := mongodbcomment.New(mongoRepo)
@@ -377,10 +385,11 @@ func main() {
 	server := httpserver.New(cfg, backOfficeHandler, brandHandler, mediaHandler, categoryHandler, articleHandler, attrHandler,
 		attrDefHandler, productHandler, backofficeHandler, userHandler, commentHandler, discountHandler, cartHandler,
 		orderHandler, shippingHandler, reapirHandler, sellHandler, aclHandler, contactHandler, ratingHandler, bannerHandler, paymentHandler, searchHandler, partnerHandler, referralHandler,
-		supplierHandler, purchaseHandler, inventoryHandler, accountingHandler, salesReturnHandler, orderDeliveryHandler, dashboardHandler, priceReviewHandler)
+		supplierHandler, purchaseHandler, inventoryHandler, accountingHandler, salesReturnHandler, orderDeliveryHandler, dashboardHandler, priceReviewHandler, birthdayHandler)
 
 	orderScheduler := orderscheduler.New(cfg.OrderScheduler, orderBackofficeSvc)
 	cartScheduler := cartscheduler.New(cfg.CartScheduler, cartBackofficeSvc)
+	birthdayScheduler := birthdayscheduler.New(cfg.BirthdayScheduler, birthdaySvc)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -394,6 +403,11 @@ func main() {
 
 	g.Go(func() error {
 		cartScheduler.CartSchedulerRun(ctx)
+		return nil
+	})
+
+	g.Go(func() error {
+		birthdayScheduler.BirthdaySchedulerRun(ctx)
 		return nil
 	})
 

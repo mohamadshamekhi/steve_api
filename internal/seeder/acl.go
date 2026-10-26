@@ -134,6 +134,8 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.ListReferrals, Description: "مشاهده لیست و آمار برنامه دعوت از دوستان"},
 	{Name: key.ViewReferral, Description: "مشاهده جزئیات دعوت‌های یک کاربر و کدهای تخفیف کسب‌شده"},
 	{Name: key.ManageReferral, Description: "ویرایش تنظیمات برنامه دعوت (نوع و مقدار تخفیف، آستانه پاداش)"},
+	{Name: key.ViewBirthdayDiscount, Description: "مشاهده تنظیمات و کدهای تخفیف تولد"},
+	{Name: key.ManageBirthdayDiscount, Description: "ویرایش تنظیمات کد تخفیف تولد (فعال‌سازی، چند روز قبل، مبلغ، اعتبار) و اجرای دستی"},
 
 	{Name: key.ViewPriceReview, Description: "مشاهده لیست محصولات نیازمند بازبینی قیمت"},
 	{Name: key.ManagePriceReview, Description: "تنظیم بازه بازبینی قیمت و تایید/ریست تایمر قیمت محصول"},
@@ -220,6 +222,7 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 			key.ListDiscounts, key.CreateDiscount, key.UpdateDiscount, key.DeleteDiscount,
 			key.ListUsers, key.ViewUserDetails,
 			key.ListReferrals, key.ViewReferral, key.ManageReferral,
+			key.ViewBirthdayDiscount, key.ManageBirthdayDiscount,
 		},
 
 		key.CustomerSupportLead: {

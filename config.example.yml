@@ -96,6 +96,17 @@ cart_scheduler:
   cancel_expired_pending_carts_time: 168h
   cart_scheduler_cycle_time: 10m
 
+# Defaults only — admins override these in the backoffice (/backoffice/birthday/settings).
+birthday:
+  enabled: true
+  days_before: 3
+  discount_type: "fixed_amount"
+  discount_value: 500000
+  valid_days: 10
+
+birthday_scheduler:
+  run_at: "0 10 * * *" # cron spec, Tehran time
+
 telegram_bot:
   admin_chat_id : 81390028
   developer_chat_id : 81390028

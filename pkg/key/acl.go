@@ -147,6 +147,10 @@ const (
 	ViewReferral   = "referral:view"
 	ManageReferral = "referral:manage"
 
+	// --- کد تخفیف تولد ---
+	ViewBirthdayDiscount   = "birthday:view"
+	ManageBirthdayDiscount = "birthday:manage"
+
 	// --- مدیریت تأمین‌کنندگان ---
 	ListSuppliers  = "supplier:list"
 	ViewSupplier   = "supplier:view"
