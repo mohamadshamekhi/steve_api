@@ -18,7 +18,9 @@ type BirthdaySettings struct {
 	Enabled bool `bson:"enabled" json:"enabled"`
 	// DaysBefore is how many days ahead of the birthday the code is sent
 	// (0 = on the birthday itself).
-	DaysBefore            int    `bson:"days_before" json:"days_before"`
+	DaysBefore int `bson:"days_before" json:"days_before"`
+	// SendHour is the Tehran hour (0-23) from which the day's codes and SMS go out.
+	SendHour              int    `bson:"send_hour" json:"send_hour"`
 	DiscountType          string `bson:"discount_type" json:"discount_type"` // "percentage" | "fixed_amount"
 	DiscountValue         uint   `bson:"discount_value" json:"discount_value"`
 	ValidDays             int    `bson:"valid_days" json:"valid_days"`

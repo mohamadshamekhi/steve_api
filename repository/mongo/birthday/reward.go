@@ -2,6 +2,7 @@ package mongodbbirthday
 
 import (
 	"context"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
@@ -24,6 +25,19 @@ func (d DB) ClaimReward(ctx context.Context, r entity.BirthdayReward) (bool, err
 			WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
 	}
 	return true, nil
+}
+
+// HasRewardSince reports whether the user was granted a birthday code at or
+// after since.
+func (d DB) HasRewardSince(ctx context.Context, userID string, since time.Time) (bool, error) {
+	const op = "mongodbbirthday.HasRewardSince"
+	n, err := d.rewards.CountDocuments(ctx, bson.M{"user_id": userID, "created_at": bson.M{"$gte": since}},
+		options.Count().SetLimit(1))
+	if err != nil {
+		return false, richerror.New(op).WithWarpError(err).
+			WithKind(richerror.KindUnexpected).WithMessageKey("global.something_wrong")
+	}
+	return n > 0, nil
 }
 
 // ReleaseReward deletes a claim whose coupon could not be minted, so the next

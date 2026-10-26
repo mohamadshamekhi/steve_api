@@ -100,12 +100,13 @@ cart_scheduler:
 birthday:
   enabled: true
   days_before: 3
+  send_hour: 10 # Tehran hour the day's codes/SMS go out
   discount_type: "fixed_amount"
   discount_value: 500000
   valid_days: 10
 
 birthday_scheduler:
-  run_at: "0 10 * * *" # cron spec, Tehran time
+  run_at: "0 * * * *" # hourly check; send hour is set in the backoffice
 
 telegram_bot:
   admin_chat_id : 81390028

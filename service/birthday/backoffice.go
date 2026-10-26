@@ -35,6 +35,7 @@ func (s Service) UpdateSettings(ctx context.Context, req birthdayparam.UpdateSet
 	st := entity.BirthdaySettings{
 		Enabled:               req.Enabled,
 		DaysBefore:            req.DaysBefore,
+		SendHour:              req.SendHour,
 		DiscountType:          req.DiscountType,
 		DiscountValue:         req.DiscountValue,
 		ValidDays:             req.ValidDays,
@@ -71,6 +72,7 @@ func toBody(st entity.BirthdaySettings) birthdayparam.SettingsBody {
 	return birthdayparam.SettingsBody{
 		Enabled:               st.Enabled,
 		DaysBefore:            st.DaysBefore,
+		SendHour:              st.SendHour,
 		DiscountType:          st.DiscountType,
 		DiscountValue:         st.DiscountValue,
 		ValidDays:             st.ValidDays,

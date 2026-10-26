@@ -42,12 +42,13 @@ func Default() Config {
 		Birthday: birthdayservice.Config{
 			Enabled:       true,
 			DaysBefore:    3,
+			SendHour:      10,
 			DiscountType:  "fixed_amount",
 			DiscountValue: 500000,
 			ValidDays:     10,
 		},
 		BirthdayScheduler: birthdayscheduler.Config{
-			RunAt: "0 10 * * *",
+			RunAt: "0 * * * *",
 		},
 		OrderNotify: ordernotifyservice.Config{
 			Enabled:                 true,

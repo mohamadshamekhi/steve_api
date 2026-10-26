@@ -2,6 +2,7 @@ package birthdayservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
@@ -13,6 +14,7 @@ type Repository interface {
 	GetSettings(ctx context.Context) (entity.BirthdaySettings, error)
 	UpsertSettings(ctx context.Context, s entity.BirthdaySettings) error
 
+	HasRewardSince(ctx context.Context, userID string, since time.Time) (bool, error)
 	ClaimReward(ctx context.Context, r entity.BirthdayReward) (bool, error)
 	ReleaseReward(ctx context.Context, id string) error
 	SetRewardDiscount(ctx context.Context, id, discountID, discountCode string) error

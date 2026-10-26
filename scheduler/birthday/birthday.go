@@ -14,13 +14,13 @@ import (
 var tehranTZ = time.FixedZone("IRST", 3*3600+30*60)
 
 type Config struct {
-	// RunAt is a standard 5-field cron spec evaluated in Tehran time,
-	// e.g. "0 10 * * *" = every day at 10:00.
+	// RunAt is a standard 5-field cron spec evaluated in Tehran time. Keep it
+	// hourly ("0 * * * *"): the admin-set send hour is enforced by the service.
 	RunAt string `koanf:"run_at"`
 }
 
 type BirthdaySvcProvider interface {
-	Run(ctx context.Context) (birthdayparam.RunResponse, error)
+	RunIfDue(ctx context.Context) (birthdayparam.RunResponse, error)
 }
 
 type BirthdayScheduler struct {
@@ -57,7 +57,7 @@ func (s *BirthdayScheduler) run() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
 
-	resp, err := s.svc.Run(ctx)
+	resp, err := s.svc.RunIfDue(ctx)
 	if err != nil {
 		logger.L().Error("birthday scheduler run failed", "error", err)
 		return

@@ -28,6 +28,7 @@ func New(c *mongodb.DB) *DB {
 		// One birthday code per user per year — the claim in ClaimReward relies on it.
 		{Keys: bson.D{{Key: "user_id", Value: 1}, {Key: "year", Value: 1}}, Options: options.Index().SetUnique(true)},
 		{Keys: bson.D{{Key: "created_at", Value: -1}}},
+		{Keys: bson.D{{Key: "user_id", Value: 1}, {Key: "created_at", Value: -1}}},
 	}); err != nil {
 		panic(err)
 	}

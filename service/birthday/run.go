@@ -18,6 +18,23 @@ import (
 // tehranTZ is fixed at +03:30; Iran has no DST since 2022.
 var tehranTZ = time.FixedZone("IRST", 3*3600+30*60)
 
+// RunIfDue is the scheduler entry point: it runs only once the Tehran clock
+// has reached the admin-set send hour. It fires hourly, so a restart or a
+// changed send hour still gets that day's codes out; already-rewarded users
+// are skipped on later runs.
+func (s Service) RunIfDue(ctx context.Context) (birthdayparam.RunResponse, error) {
+	const op = "birthdayservice.RunIfDue"
+
+	st, _, err := s.effective(ctx)
+	if err != nil {
+		return birthdayparam.RunResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	if !st.Enabled || time.Now().In(tehranTZ).Hour() < sendHour(st) {
+		return birthdayparam.RunResponse{Enabled: st.Enabled}, nil
+	}
+	return s.Run(ctx)
+}
+
 // Run grants birthday codes to every user whose birthday falls between today
 // and today+DaysBefore (Tehran time) and who has no code for that birthday yet.
 // Covering the whole window, not just the exact day, means a missed run or a
@@ -88,6 +105,14 @@ func (s Service) grant(ctx context.Context, st entity.BirthdaySettings, u entity
 		BirthdayOn:  birthday,
 	}
 	r.BeforeCreate()
+
+	recent, rErr := s.repo.HasRewardSince(ctx, u.ID, time.Now().Add(-rewardCooldown))
+	if rErr != nil {
+		return false, richerror.New(op).WithWarpError(rErr)
+	}
+	if recent {
+		return false, nil
+	}
 
 	ok, err := s.repo.ClaimReward(ctx, r)
 	if err != nil {

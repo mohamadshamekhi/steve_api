@@ -12,6 +12,7 @@ import (
 type SettingsBody struct {
 	Enabled               bool   `json:"enabled"`
 	DaysBefore            int    `json:"days_before"`
+	SendHour              int    `json:"send_hour"`     // 0-23, Tehran time
 	DiscountType          string `json:"discount_type"` // "percentage" | "fixed_amount"
 	DiscountValue         uint   `json:"discount_value"`
 	ValidDays             int    `json:"valid_days"`

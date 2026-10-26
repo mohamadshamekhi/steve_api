@@ -1788,14 +1788,14 @@
       "path": "/backoffice/birthday/settings",
       "auth": "backoffice+ACL:ViewBirthdayDiscount",
       "in": "-",
-      "out": "{settings:{enabled, days_before, discount_type, discount_value, valid_days, minimum_purchase_amount}, source, updated_at?, updated_by?}",
+      "out": "{settings:{enabled, days_before, send_hour, discount_type, discount_value, valid_days, minimum_purchase_amount}, source, updated_at?, updated_by?}",
       "desc": "تنظیمات کد تخفیف تولد (source=config تا وقتی ادمین ذخیره نکرده)"
     },
     {
       "method": "PUT",
       "path": "/backoffice/birthday/settings",
       "auth": "backoffice+ACL:ManageBirthdayDiscount",
-      "in": "{enabled, days_before(0-30), discount_type(percentage|fixed_amount), discount_value, valid_days(1-365), minimum_purchase_amount}",
+      "in": "{enabled, days_before(0-30), send_hour(0-23 Tehran), discount_type(percentage|fixed_amount), discount_value, valid_days(1-365), minimum_purchase_amount}",
       "out": "{settings}",
       "desc": "ویرایش تنظیمات کد تخفیف تولد؛ از اجرای بعدی اعمال می‌شود"
     },
