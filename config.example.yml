@@ -71,6 +71,7 @@ mellipayamak:
       otp : "422053"
       payment : "428066"
       backoffice : "446054"
+      birthday_discount : "568773"
     from_number: "50002710070797"
 
 payment:
