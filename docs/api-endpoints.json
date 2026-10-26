@@ -23,9 +23,9 @@
       "method": "POST",
       "path": "/user/verify-otp",
       "auth": "public",
-      "in": "{phone_number, code}",
+      "in": "{phone_number, code, ref?, name*, birth_date*}",
       "out": "{access_token, refresh_token, user}",
-      "desc": "تأیید OTP و صدور توکن کاربر"
+      "desc": "تأیید OTP و صدور توکن کاربر. name و birth_date (میلادی YYYY-MM-DD) فقط برای کاربر جدید (is_new_user) اجباری‌اند و قبل از مصرف OTP چک می‌شوند"
     },
     {
       "method": "POST",
@@ -1780,6 +1780,40 @@
       "in": "?from=YYYY-MM-DD&to=YYYY-MM-DD (پیش‌فرض ۳۰ روز اخیر تا امروز، به وقت تهران، حداکثر ۳۶۶ روز)",
       "out": "{period{from,to,prev_from,prev_to}, sales{net_revenue(_prev), net_profit(_prev), gross_profit, revenue, returns, net_cogs, expenses, gross_margin_percent, net_margin_percent, units_sold, order_count(_prev), avg_order_value}, trend[{day,revenue,gross_profit,order_count}], orders_by_status[{status,count}], top_products[{product_id,product_name,units_sold,revenue,gross_profit}], expense_breakdown[{category,amount,count}], cash{total_in,total_out,balance,by_day[{day,total_in,total_out}],by_method[{method,total_in}]}, inventory{total_stock_value,total_units,low_stock_count,out_of_stock_count,low_stock_threshold,low_stock[{product_id,variant_id,product_name,attributes[],quantity}]}, suppliers{total_debt,top_debtors[{supplier_id,supplier_name,balance}]}, recent_orders[{id,user_name,user_phone_number,final_amount,status,created_at}], customers{new_count,new_count_prev}, repairs{open_count}}",
       "desc": "داشبورد تجمیعی صفحه‌ی اول بک‌آفیس. مجوزها: sales/trend/top_products/expense_breakdown ← report:profit_loss؛ cash ← report:cash؛ inventory ← inventory:view؛ suppliers ← report:supplier_ledger؛ orders_by_status/recent_orders ← order:list؛ customers ← user:list؛ repairs ← repair:list. *_prev = بازه‌ی هم‌طول قبل از from. trend و cash.by_day برای همه‌ی روزها ردیف دارند. لیست‌ها حداکثر ۵ ردیف؛ top_products به ترتیب سود ناخالص؛ recent_orders آخرین ۵ سفارش (مستقل از بازه). خطای بازه‌ی نامعتبر: 400 با کلید dashboard.invalid_period"
+    }
+  ],
+  "birthday": [
+    {
+      "method": "GET",
+      "path": "/backoffice/birthday/settings",
+      "auth": "backoffice+ACL:ViewBirthdayDiscount",
+      "in": "-",
+      "out": "{settings:{enabled, days_before, discount_type, discount_value, valid_days, minimum_purchase_amount}, source, updated_at?, updated_by?}",
+      "desc": "تنظیمات کد تخفیف تولد (source=config تا وقتی ادمین ذخیره نکرده)"
+    },
+    {
+      "method": "PUT",
+      "path": "/backoffice/birthday/settings",
+      "auth": "backoffice+ACL:ManageBirthdayDiscount",
+      "in": "{enabled, days_before(0-30), discount_type(percentage|fixed_amount), discount_value, valid_days(1-365), minimum_purchase_amount}",
+      "out": "{settings}",
+      "desc": "ویرایش تنظیمات کد تخفیف تولد؛ از اجرای بعدی اعمال می‌شود"
+    },
+    {
+      "method": "GET",
+      "path": "/backoffice/birthday/rewards",
+      "auth": "backoffice+ACL:ViewBirthdayDiscount",
+      "in": "?page_number&page_size",
+      "out": "{pagination, items:[{id, user_id, user_name, phone_number, year, birthday_on, discount_id, discount_code, sms_sent, created_at}]}",
+      "desc": "تاریخچه‌ی کدهای تخفیف تولد صادرشده"
+    },
+    {
+      "method": "POST",
+      "path": "/backoffice/birthday/run",
+      "auth": "backoffice+ACL:ManageBirthdayDiscount",
+      "in": "-",
+      "out": "{enabled, matched, granted, skipped, failed}",
+      "desc": "اجرای دستی job تولد (idempotent؛ هر کاربر سالی یک کد)"
     }
   ]
 }
