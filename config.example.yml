@@ -72,6 +72,8 @@ mellipayamak:
       payment : "428066"
       backoffice : "446054"
       birthday_discount : "568773"
+      # {0}=name {1}=order id {2}=tracking code — bodyId of the order_shipped pattern
+      order_shipped : ""
     from_number: "50002710070797"
 
 payment:

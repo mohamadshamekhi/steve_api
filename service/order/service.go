@@ -37,6 +37,7 @@ type OrderWriter interface {
 	Create(ctx context.Context, order entity.Order) error
 	UpdateOrderStatus(ctx context.Context, orderID string, status entity.OrderStatus) error
 	SetCancelReason(ctx context.Context, orderID string, reason entity.CancelReason) error
+	SetTrackingCode(ctx context.Context, orderID string, trackingCode string) error
 }
 
 type OrderReadWriter interface {

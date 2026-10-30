@@ -33,8 +33,10 @@ const (
 	// Order lifecycle templates.
 	// order_thanks: {0}=name {1}=order id {2}=coupon code
 	// order_status: {0}=name {1}=order id {2}=status label (fa)
-	OrderThanksKey = "order_thanks"
-	OrderStatusKey = "order_status"
+	// order_shipped: {0}=name {1}=order id {2}=courier tracking code
+	OrderThanksKey  = "order_thanks"
+	OrderStatusKey  = "order_status"
+	OrderShippedKey = "order_shipped"
 
 	// Birthday discount template.
 	// birthday_discount: {0}=name {1}=coupon code {2}=discount label {3}=valid days

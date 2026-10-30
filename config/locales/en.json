@@ -358,5 +358,9 @@
   {
     "id": "validation.invalid_format",
     "translation": "{{.Attribute}} format is invalid."
+  },
+  {
+    "id": "attr.tracking_code",
+    "translation": "Tracking code"
   }
 ]

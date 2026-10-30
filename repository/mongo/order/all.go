@@ -95,6 +95,8 @@ func (d DB) GetUserOrderWithDetails(ctx context.Context, userID string, p common
 			FinalAmount:     o.FinalAmount,
 			Shipping:        o.Shipping,
 			Status:          o.Status,
+			TrackingCode:    o.TrackingCode,
+			ShippedAt:       o.ShippedAt,
 			CreatedAt:       o.CreatedAt,
 			UpdatedAt:       o.UpdatedAt,
 		})

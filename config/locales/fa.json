@@ -657,5 +657,9 @@
   {
     "id": "validation.birth_date_invalid",
     "translation": "تاریخ تولد نامعتبر است."
+  },
+  {
+    "id": "attr.tracking_code",
+    "translation": "کد رهگیری"
   }
 ]

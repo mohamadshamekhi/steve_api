@@ -85,6 +85,11 @@ type Order struct {
 	// DeliveryToken is the unguessable secret printed as a QR code on the
 	// package; the customer scans it and confirms receipt with an OTP.
 	// Minted lazily the first time the backoffice asks for the QR.
+	// TrackingCode is the courier's (e.g. Post) parcel tracking number,
+	// entered by the backoffice when the order is marked shipped and sent to
+	// the customer by SMS. Re-shipping overwrites it.
+	TrackingCode        string     `bson:"tracking_code,omitempty"`
+	ShippedAt           *time.Time `bson:"shipped_at,omitempty"`
 	DeliveryToken       string     `bson:"delivery_token,omitempty"`
 	DeliveredAt         *time.Time `bson:"delivered_at,omitempty"`
 	DeliveryConfirmedBy string     `bson:"delivery_confirmed_by,omitempty"`

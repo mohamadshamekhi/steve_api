@@ -716,7 +716,7 @@
       "path": "/order/all",
       "auth": "backoffice+ACL:ListOrders",
       "in": "?page_number&page_size&status(یک مقدار یا چندتا با کاما: processing,shipped)&order_id&user_id&phone(بخشی از شماره هم کافی است)&purchase_type(online|in_person)&is_partner_order(true|false)&from&to(YYYY-MM-DD به وقت تهران، هر دو شامل)&min_amount&max_amount(روی final_amount، تومان)؛ تاریخ نامعتبر → 400 validation.invalid_input",
-      "out": "{orders[{..., items[{ProductID, VariantID, ProductName, Quantity, PriceAtTime, ..., ProductThumbnailURL}], applied_discounts[{discount_id, discount_code?, amount}], total_discount_amount, manual_discount, is_edited, edits[]?}], pagination} — ProductThumbnailURL = تصویر اصلی فعلی محصول (سطر دستی: خالی)",
+      "out": "{orders[{..., items[{ProductID, VariantID, ProductName, Quantity, PriceAtTime, ..., ProductThumbnailURL}], applied_discounts[{discount_id, discount_code?, amount}], total_discount_amount, manual_discount, tracking_code?, shipped_at?, is_edited, edits[]?}], pagination} — ProductThumbnailURL = تصویر اصلی فعلی محصول (سطر دستی: خالی)",
       "desc": "لیست همه‌ی سفارش‌ها (ادمین)"
     },
     {
@@ -724,7 +724,7 @@
       "path": "/order/storefront/all",
       "auth": "user",
       "in": "?page",
-      "out": "{orders[], pagination}",
+      "out": "{orders[{..., status, tracking_code?, shipped_at?}], pagination}",
       "desc": "سفارش‌های کاربر جاری"
     },
     {
@@ -739,9 +739,9 @@
       "method": "PATCH",
       "path": "/order/update-status/:id",
       "auth": "backoffice+ACL:UpdateOrderStatus",
-      "in": "{status}",
+      "in": "{status, tracking_code?}",
       "out": "{message}",
-      "desc": "تغییر وضعیت سفارش"
+      "desc": "تغییر وضعیت سفارش — برای status=shipped فیلد tracking_code (کد رهگیری مرسوله، ۴ تا ۶۴ کاراکتر، عدد/حرف لاتین/خط تیره) الزامی است؛ روی سفارش ذخیره می‌شود و با پیامک order_shipped برای خریدار ارسال می‌شود"
     },
     {
       "method": "POST",
