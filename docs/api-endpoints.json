@@ -392,7 +392,7 @@
       "path": "/product/storefront/get-by-slug/:slug",
       "auth": "public",
       "in": "-",
-      "out": "{product: {..., slug, gallery[{media_id, url, is_primary, alt}], rating, variants[{id, price, variant_attribute, warranty, in_stock, stock_left?(فقط وقتی ۱۰ عدد یا کمتر مانده)}], seo_title?, seo_description?, focus_keyword?, faq?[{question, answer}]}}",
+      "out": "{product: {..., slug, gallery[{media_id, url, is_primary, alt}], rating, rating_count, variants[{id, price, variant_attribute, warranty, in_stock, stock_left?(فقط وقتی ۱۰ عدد یا کمتر مانده)}], seo_title?, seo_description?, focus_keyword?, faq?[{question, answer}]}}",
       "desc": "جزئیات محصول فروشگاه با slug — اسلاگ قدیمی (بعد از تغییر نام) هم جواب می‌دهد؛ اگر product.slug با slug درخواست فرق داشت، ریدایرکت ۳۰۱ بدهید"
     },
     {

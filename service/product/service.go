@@ -33,7 +33,7 @@ type ProductReader interface {
 	GetFilteredProducts(ctx context.Context, filter *productparam.StorefrontFilterProduct, p commonparam.PaginationRequest) (ListResult, error)
 	GetFilterMobileListWithMainInfo(ctx context.Context, name *string, brandID *string) ([]entity.Product, error)
 	GetMinAdnMaxPriceOfProductWithSpecialCategory(ctx context.Context, categoryID string) (uint64, uint64, error)
-	UpdateProductAvrRating(ctx context.Context, ProductID string, AverageRating float64) error
+	UpdateProductAvrRating(ctx context.Context, ProductID string, AverageRating float64, RatingCount int) error
 	GetProductIDsByCategories(ctx context.Context, catIDs []string) (map[string][]string, error)
 	GetPricesOfProducts(ctx context.Context, prodIDSlice []string, variantIDSlice []string) (map[string]map[string]float64, error)
 	GetSearchProduct(ctx context.Context, search commonparam.SearchRequest) (ListResult, error)

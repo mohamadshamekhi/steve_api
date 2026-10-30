@@ -10,7 +10,7 @@ import (
 func (s StorefrontService) UpdateProductRating(ctx context.Context, req productparam.UpdateProductRatingRequest) (productparam.UpdateProductRatingResponse, error) {
 	const op = "productservice.UpdateProductRating"
 
-	if err := s.repo.UpdateProductAvrRating(ctx, req.ProductID, req.AverageRating); err != nil {
+	if err := s.repo.UpdateProductAvrRating(ctx, req.ProductID, req.AverageRating, req.RatingCount); err != nil {
 		return productparam.UpdateProductRatingResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	return productparam.UpdateProductRatingResponse{}, nil

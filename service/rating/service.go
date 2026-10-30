@@ -16,7 +16,7 @@ type ProductProvider interface {
 	UpdateProductRating(ctx context.Context, req productparam.UpdateProductRatingRequest) (productparam.UpdateProductRatingResponse, error)
 }
 type Repository interface {
-	Upsert(ctx context.Context, UserID string, ProductID string, Rating float64) (float64, error)
+	Upsert(ctx context.Context, UserID string, ProductID string, Rating float64) (float64, int, error)
 }
 
 func New(r Repository, productProvider ProductProvider) Service {
@@ -28,11 +28,11 @@ func New(r Repository, productProvider ProductProvider) Service {
 
 func (s Service) UpsertRating(ctx context.Context, req ratingparam.UpsertRatingRequest) (ratingparam.UpsertRatingResponse, error) {
 	const op = "ratingservice.UpsertRating"
-	averageRating, err := s.repo.Upsert(ctx, req.UserID, req.ProductID, req.Rating)
+	averageRating, ratingCount, err := s.repo.Upsert(ctx, req.UserID, req.ProductID, req.Rating)
 	if err != nil {
 		return ratingparam.UpsertRatingResponse{}, richerror.New(op).WithWarpError(err)
 	}
-	_, err = s.productProvider.UpdateProductRating(ctx, productparam.UpdateProductRatingRequest{ProductID: req.ProductID, AverageRating: averageRating})
+	_, err = s.productProvider.UpdateProductRating(ctx, productparam.UpdateProductRatingRequest{ProductID: req.ProductID, AverageRating: averageRating, RatingCount: ratingCount})
 	if err != nil {
 		return ratingparam.UpsertRatingResponse{}, richerror.New(op).WithWarpError(err)
 	}

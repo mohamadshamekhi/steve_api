@@ -67,7 +67,7 @@ func (d DB) UpdateQuantity(ctx context.Context, productID string, variant entity
 	return nil
 }
 
-func (d DB) UpdateProductAvrRating(ctx context.Context, ProductID string, AverageRating float64) error {
+func (d DB) UpdateProductAvrRating(ctx context.Context, ProductID string, AverageRating float64, RatingCount int) error {
 	const op = "mongodbproduct.UpdateProductAvrRating"
 	filter := bson.M{
 		"_id": ProductID,
@@ -75,7 +75,8 @@ func (d DB) UpdateProductAvrRating(ctx context.Context, ProductID string, Averag
 
 	update := bson.M{
 		"$set": bson.M{
-			"rating": AverageRating,
+			"rating":       AverageRating,
+			"rating_count": RatingCount,
 		},
 	}
 

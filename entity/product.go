@@ -48,12 +48,15 @@ type Product struct {
 	IsSecondHand  bool             `bson:"is_second_hand"`
 	// RequiresFreightShipping marks an oversized product that can only be
 	// delivered via freight (باربری), not regular courier.
-	RequiresFreightShipping bool            `bson:"requires_freight_shipping,omitempty"`
-	Description             string          `bson:"description"`
-	Rating                  float64         `bson:"rating"`
-	Variants                []Variant       `bson:"variants"`
-	Specifications          []Specification `bson:"specifications,omitempty"`
-	SalesCount              uint            `bson:"sales_count"`
+	RequiresFreightShipping bool    `bson:"requires_freight_shipping,omitempty"`
+	Description             string  `bson:"description"`
+	Rating                  float64 `bson:"rating"`
+	// RatingCount is how many users rated the product; maintained with Rating
+	// since ratings were counted (0 on older documents until the next rating).
+	RatingCount    uint            `bson:"rating_count,omitempty"`
+	Variants       []Variant       `bson:"variants"`
+	Specifications []Specification `bson:"specifications,omitempty"`
+	SalesCount     uint            `bson:"sales_count"`
 	// Kind distinguishes a stockable good from a service. Empty value is read
 	// as ProductKindPhysical so pre-existing documents keep working.
 	Kind ProductKind `bson:"kind,omitempty"`
