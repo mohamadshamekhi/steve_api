@@ -661,5 +661,9 @@
   {
     "id": "attr.tracking_code",
     "translation": "کد رهگیری"
+  },
+  {
+    "id": "article.invalid_inline_image",
+    "translation": "یکی از تصاویر داخل متن مقاله خراب است و قابل آپلود نیست."
   }
 ]
