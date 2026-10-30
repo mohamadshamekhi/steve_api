@@ -46,33 +46,44 @@ type ProductInfo struct {
 	SeoDescription string              `json:"seo_description,omitempty"`
 	FocusKeyword   string              `json:"focus_keyword,omitempty"`
 	FAQ            []entity.ProductFAQ `json:"faq,omitempty"`
+
+	CompetitorInfo
 }
 
-// StorefrontVariant is the public-facing shape of entity.Variant: it drops
-// internal cost/supplier fields (AvgCost, SupplierID, SupplyCost) that must
-// never reach unauthenticated storefront clients (they expose profit margin).
+// StorefrontVariant is the public-facing shape of entity.Variant. It drops
+// internal cost/supplier fields (AvgCost, SupplierID, SupplyCost) and the
+// exact inventory setup (Quantity, StockMode, AllowBackorder,
+// BackorderLimit): the storefront only needs to know whether it can sell.
 type StorefrontVariant struct {
 	ID               string                    `json:"id"`
 	Price            uint64                    `json:"price"`
-	Quantity         uint64                    `json:"quantity"`
 	VariantAttribute []entity.VariantAttribute `json:"variant_attribute,omitempty"`
 	Warranty         string                    `json:"warranty"`
-	StockMode        entity.StockMode          `json:"stock_mode,omitempty"`
-	AllowBackorder   bool                      `json:"allow_backorder,omitempty"`
-	BackorderLimit   *uint64                   `json:"backorder_limit,omitempty"`
+	// InStock: at least one unit can be ordered now, from stock or sourced
+	// on demand / as a backorder.
+	InStock bool `json:"in_stock"`
+	// StockLeft is set only when the last few units are all that can be
+	// sold (tracked stock, no backorder), for an "only N left" hint and to
+	// cap the quantity picker. Omitted otherwise.
+	StockLeft *uint64 `json:"stock_left,omitempty"`
 }
 
+// lowStockThreshold is the most units StockLeft will ever reveal.
+const lowStockThreshold = 10
+
 func ToStorefrontVariant(v entity.Variant) StorefrontVariant {
-	return StorefrontVariant{
+	sv := StorefrontVariant{
 		ID:               v.ID,
 		Price:            v.Price,
-		Quantity:         v.Quantity,
 		VariantAttribute: v.VariantAttribute,
 		Warranty:         v.Warranty,
-		StockMode:        v.StockMode,
-		AllowBackorder:   v.AllowBackorder,
-		BackorderLimit:   v.BackorderLimit,
+		InStock:          v.CanSell(1),
 	}
+	if v.IsStockTracked() && !v.AllowBackorder && v.Quantity > 0 && v.Quantity <= lowStockThreshold {
+		left := v.Quantity
+		sv.StockLeft = &left
+	}
+	return sv
 }
 
 func ToStorefrontVariants(vs []entity.Variant) []StorefrontVariant {
