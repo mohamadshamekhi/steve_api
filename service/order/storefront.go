@@ -16,6 +16,7 @@ import (
 	userparam "github.com/abolfazlnorzad/steve/param/user"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	adminnotifyservice "github.com/abolfazlnorzad/steve/service/adminnotify"
 )
 
 type StoreFrontService struct {
@@ -28,6 +29,17 @@ type StoreFrontService struct {
 	paymentProvider  StorefrontPaymentProvider
 	inventory        InventoryRecorder
 	images           ProductImageReader
+	notifier         AdminNotifier
+}
+
+// AdminNotifier tells the shop's admins about a customer action by SMS.
+type AdminNotifier interface {
+	Notify(e adminnotifyservice.Event)
+}
+
+// SetAdminNotifier wires the admin SMS in after construction.
+func (s *StoreFrontService) SetAdminNotifier(n AdminNotifier) {
+	s.notifier = n
 }
 
 type ShippingProvider interface {
@@ -695,6 +707,13 @@ func (s StoreFrontService) UpdateOrderStatus(ctx context.Context, req orderparam
 	if req.Status == entity.OrderStatusCancelled {
 		if err := s.repo.SetCancelReason(ctx, req.OrderID, entity.CancelReasonUser); err != nil {
 			logger.L().Error("failed to set cancel reason", "order_id", req.OrderID, "err", err)
+		}
+		if s.notifier != nil {
+			e := adminnotifyservice.Event{Title: "لغو سفارش توسط مشتری", Detail: "سفارش " + req.OrderID}
+			if o, oErr := s.repo.GetOrderByID(ctx, req.OrderID); oErr == nil {
+				e.UserID = o.UserID
+			}
+			s.notifier.Notify(e)
 		}
 	}
 	return orderparam.UpdateStatusResponse{}, nil

@@ -9,6 +9,7 @@ import (
 	commentparam "github.com/abolfazlnorzad/steve/param/comment"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	adminnotifyservice "github.com/abolfazlnorzad/steve/service/adminnotify"
 )
 
 type ListResult struct {
@@ -33,6 +34,17 @@ type Service struct {
 	repo               Repository
 	commentableFetcher CommentableFetcher
 	commenterFetcher   CommenterFetcher
+	notifier           AdminNotifier
+}
+
+// AdminNotifier tells the shop's admins about a customer submission.
+type AdminNotifier interface {
+	Notify(e adminnotifyservice.Event)
+}
+
+// SetAdminNotifier wires the admin SMS in after construction.
+func (s *Service) SetAdminNotifier(n AdminNotifier) {
+	s.notifier = n
 }
 
 type Commentable interface {
@@ -109,6 +121,22 @@ func (s Service) AddComment(ctx context.Context, req commentparam.AddCommentRequ
 	newComment.BeforeCreate()
 	if err := s.repo.Create(ctx, *newComment); err != nil {
 		return commentparam.AddCommentResponse{}, richerror.New(op).WithWarpError(err)
+	}
+	// Only customers' comments wait for approval; an admin's own reply is not news.
+	if s.notifier != nil && newComment.CommenterType == "user" {
+		title := "دیدگاه جدید"
+		switch newComment.CommentableType {
+		case "product":
+			title = "دیدگاه جدید روی محصول"
+		case "article":
+			title = "دیدگاه جدید روی مقاله"
+		}
+		s.notifier.Notify(adminnotifyservice.Event{
+			Title:  title,
+			UserID: newComment.CommenterID,
+			Name:   newComment.CommenterName,
+			Detail: newComment.Body,
+		})
 	}
 	return commentparam.AddCommentResponse{}, nil
 }

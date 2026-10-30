@@ -10,6 +10,7 @@ import (
 	birthdayscheduler "github.com/abolfazlnorzad/steve/scheduler/birthday"
 	cartscheduler "github.com/abolfazlnorzad/steve/scheduler/cart"
 	"github.com/abolfazlnorzad/steve/scheduler/order"
+	adminnotifyservice "github.com/abolfazlnorzad/steve/service/adminnotify"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	backofficeservice "github.com/abolfazlnorzad/steve/service/backoffice"
 	birthdayservice "github.com/abolfazlnorzad/steve/service/birthday"
@@ -44,6 +45,7 @@ type Config struct {
 	Partner           partnerservice.Config       `koanf:"partner"`
 	Referral          referralservice.Config      `koanf:"referral"`
 	OrderNotify       ordernotifyservice.Config   `koanf:"order_notify"`
+	AdminNotify       adminnotifyservice.Config   `koanf:"admin_notify"`
 	OrderDelivery     orderdeliveryservice.Config `koanf:"order_delivery"`
 	Birthday          birthdayservice.Config      `koanf:"birthday"`
 	BirthdayScheduler birthdayscheduler.Config    `koanf:"birthday_scheduler"`

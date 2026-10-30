@@ -3,12 +3,14 @@ package partnerservice
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	partnerparam "github.com/abolfazlnorzad/steve/param/partner"
 	"github.com/abolfazlnorzad/steve/pkg/logger"
 	"github.com/abolfazlnorzad/steve/pkg/richerror"
+	adminnotifyservice "github.com/abolfazlnorzad/steve/service/adminnotify"
 )
 
 // StorefrontService is the application entry point: a normal storefront user
@@ -18,6 +20,17 @@ type StorefrontService struct {
 	repo     Repository
 	cfg      Config
 	telegram TelegramNotifier
+	notifier AdminNotifier
+}
+
+// AdminNotifier tells the shop's admins about a customer submission by SMS.
+type AdminNotifier interface {
+	Notify(e adminnotifyservice.Event)
+}
+
+// SetAdminNotifier wires the admin SMS in after construction.
+func (s *StorefrontService) SetAdminNotifier(n AdminNotifier) {
+	s.notifier = n
 }
 
 func NewStorefrontService(repo Repository, cfg Config, telegram TelegramNotifier) StorefrontService {
@@ -85,6 +98,13 @@ func (s StorefrontService) Apply(ctx context.Context, userID string, req partner
 }
 
 func (s StorefrontService) notifyAdminNewApplication(p entity.Partner) {
+	if s.notifier != nil {
+		s.notifier.Notify(adminnotifyservice.Event{
+			Title:  "درخواست همکاری",
+			UserID: p.UserID,
+			Detail: strings.TrimSpace(p.CompanyName + " - " + p.City),
+		})
+	}
 	if s.telegram == nil {
 		return
 	}

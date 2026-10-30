@@ -4,6 +4,7 @@ import (
 	"time"
 
 	birthdayscheduler "github.com/abolfazlnorzad/steve/scheduler/birthday"
+	adminnotifyservice "github.com/abolfazlnorzad/steve/service/adminnotify"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
 	birthdayservice "github.com/abolfazlnorzad/steve/service/birthday"
 	orderdeliveryservice "github.com/abolfazlnorzad/steve/service/orderdelivery"
@@ -49,6 +50,10 @@ func Default() Config {
 		},
 		BirthdayScheduler: birthdayscheduler.Config{
 			RunAt: "0 * * * *",
+		},
+		AdminNotify: adminnotifyservice.Config{
+			Enabled:    true,
+			SMSTimeout: 40 * time.Second,
 		},
 		OrderNotify: ordernotifyservice.Config{
 			Enabled:                 true,
