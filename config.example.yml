@@ -73,7 +73,9 @@ mellipayamak:
       backoffice : "446054"
       birthday_discount : "568773"
       # {0}=name {1}=order id {2}=tracking code — bodyId of the order_shipped pattern
-      order_shipped : ""
+      order_shipped : "572257"
+      # {0}=event title {1}=name {2}=phone {3}=detail {4}=date & time — sent to every super_admin
+      admin_notify : "572270"
     from_number: "50002710070797"
 
 payment:

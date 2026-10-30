@@ -94,6 +94,7 @@ import (
 	aclservice "github.com/abolfazlnorzad/steve/service/acl"
 	permissionservice "github.com/abolfazlnorzad/steve/service/acl/permission"
 	roleservice "github.com/abolfazlnorzad/steve/service/acl/role"
+	adminnotifyservice "github.com/abolfazlnorzad/steve/service/adminnotify"
 	articleservice "github.com/abolfazlnorzad/steve/service/article"
 	attributeservice "github.com/abolfazlnorzad/steve/service/attribute"
 	authservice "github.com/abolfazlnorzad/steve/service/auth"
@@ -223,6 +224,8 @@ func main() {
 	backofficeValidation := backofficevalidator.New(backOfficeMongoRepo)
 	backofficeHandler := backofficehandler.New(backOfficeSvc, backofficeValidation, translator, authSvc, cfg.Auth, aclSvc)
 	userRepo := mongodbuser.New(mongoRepo)
+	// SMS to every super_admin for customer submissions (contact form, comment, partner application, order cancel).
+	adminNotifier := adminnotifyservice.New(cfg.AdminNotify, backOfficeSvc, userRepo, mp)
 	userVld := uservalidator.New(userRepo)
 	// discountRepo is built here (ahead of the discount block below) so the
 	// referral service can mint reward/welcome coupons, and referralSvc is
@@ -245,6 +248,7 @@ func main() {
 	commentableFetecher := fetcherservice.NewCommentableFetcher(*productRepo, *articleRepo)
 	commenterFetecher := fetcherservice.NewCommenterFetcher(*userRepo, *backOfficeMongoRepo)
 	commentSvc := commentservice.New(commentRepo, commenterFetecher, commentableFetecher)
+	commentSvc.SetAdminNotifier(adminNotifier)
 	storefrontCommentSvc := commentservice.NewStorefrontService(commentRepo, commentableFetecher, commenterFetecher)
 	commentHandler := commenthandler.New(commentSvc, translator, commentVld, authSvc, cfg.Auth, aclSvc, storefrontCommentSvc)
 	discountVld := discountvalidator.New(discountRepo, categoryRepo, productRepo, userRepo)
@@ -271,6 +275,7 @@ func main() {
 	shippingBakcofficeSvc := settingservice.NewBackofficeShippingService(shippingRepo)
 	shippingStorefrontSvc := settingservice.NewStorefrontShippingService(shippingRepo)
 	orderSvc := orderservice.New(&cartSvc, discountbackofficeSvc, productSvc, orderRepo, userSvc, shippingBakcofficeSvc)
+	orderSvc.SetAdminNotifier(adminNotifier)
 	cartSvc.SetOrderProvider(orderSvc)
 	cartHandler := carthandler.New(cartSvc, cartBackofficeSvc, orderSvc, cartVld, translator, authSvc, cfg.Auth, aclSvc)
 	storefrontCategorySvc := categoryservice.NewStorefrontService(categoryRepo, mediaSvc, attrSvc, productStorefrontSvc)
@@ -298,6 +303,7 @@ func main() {
 	contactRepo := mongodbcontactus.New(mongoRepo)
 	contactVld := contactusvalidator.New()
 	storefrontContactUsSvc := contactusservice.NewStorefrontService(contactRepo)
+	storefrontContactUsSvc.SetAdminNotifier(adminNotifier)
 	backofficeContactUsSvc := contactusservice.NewBackofficeService(contactRepo)
 	contactHandler := contactushandler.New(storefrontContactUsSvc, translator, contactVld, authSvc, cfg.Auth, aclSvc, backofficeContactUsSvc)
 	ratingRepo := mongodbrating.New(mongoRepo)
@@ -325,6 +331,7 @@ func main() {
 	partnerRepo := mongodbpartner.New(mongoRepo)
 	partnerResolver := partnerservice.NewPartnerPriceResolver()
 	partnerStorefrontSvc := partnerservice.NewStorefrontService(partnerRepo, cfg.Partner, adminTelegramBot)
+	partnerStorefrontSvc.SetAdminNotifier(adminNotifier)
 	partnerShopSvc := partnerservice.NewShopService(partnerRepo, productRepo, orderRepo, cartRepo, orderRepo, productSvc, paymentSvc, partnerResolver, cfg.Partner)
 	partnerBackofficeSvc := partnerservice.NewBackofficeService(partnerRepo, productRepo, userRepo, backOfficeMongoRepo, orderRepo, paymentSvc, mp, cfg.Partner)
 	partnerVld := partnervalidator.New()

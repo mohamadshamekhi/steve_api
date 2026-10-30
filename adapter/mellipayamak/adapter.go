@@ -42,6 +42,10 @@ const (
 	// birthday_discount: {0}=name {1}=coupon code {2}=discount label {3}=valid days
 	BirthdayDiscountKey = "birthday_discount"
 
+	// Admin notification template (sent to every super_admin).
+	// admin_notify: {0}=event title {1}=name {2}=phone {3}=detail {4}=date & time
+	AdminNotifyKey = "admin_notify"
+
 	endpointPattern = "SendByBaseNumber"
 	endpointSimple  = "SendSimpleSMS2"
 )
