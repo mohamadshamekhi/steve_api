@@ -34,15 +34,18 @@ func (c SalesChannel) IsValid() bool {
 }
 
 type Product struct {
-	ID           string           `bson:"_id"`
-	Name         string           `bson:"name"`
-	ENTitle      string           `bson:"en_title"`
-	Slug         string           `bson:"slug"`
-	BrandID      string           `bson:"brand_id"`
-	CategoryID   string           `bson:"category_id"`
-	Gallery      []ProductGallery `bson:"gallery"`
-	IsPublished  bool             `bson:"is_published"`
-	IsSecondHand bool             `bson:"is_second_hand"`
+	ID      string `bson:"_id"`
+	Name    string `bson:"name"`
+	ENTitle string `bson:"en_title"`
+	Slug    string `bson:"slug"`
+	// PreviousSlugs keeps every slug the product had before a rename, so old
+	// links can be 301-redirected to the current one.
+	PreviousSlugs []string         `bson:"previous_slugs,omitempty"`
+	BrandID       string           `bson:"brand_id"`
+	CategoryID    string           `bson:"category_id"`
+	Gallery       []ProductGallery `bson:"gallery"`
+	IsPublished   bool             `bson:"is_published"`
+	IsSecondHand  bool             `bson:"is_second_hand"`
 	// RequiresFreightShipping marks an oversized product that can only be
 	// delivered via freight (باربری), not regular courier.
 	RequiresFreightShipping bool            `bson:"requires_freight_shipping,omitempty"`
@@ -79,12 +82,22 @@ type Product struct {
 	SeoDescription string       `bson:"seo_description,omitempty"`
 	FocusKeyword   string       `bson:"focus_keyword,omitempty"`
 	FAQ            []ProductFAQ `bson:"faq,omitempty"`
+	// Competitor pricing for the price agent. TorobURL is set by an admin;
+	// the Competitor* fields are written only by the competitor-price
+	// endpoint. None of these may ever reach a storefront response.
+	TorobURL              string     `bson:"torob_url,omitempty"`
+	CompetitorMinPrice    uint64     `bson:"competitor_min_price,omitempty"`
+	CompetitorMaxPrice    uint64     `bson:"competitor_max_price,omitempty"`
+	CompetitorOffersCount uint       `bson:"competitor_offers_count,omitempty"`
+	CompetitorCheckedAt   *time.Time `bson:"competitor_checked_at,omitempty"`
 }
 type ProductGallery struct {
 	MediaID   string `bson:"media_id" json:"media_id"`
 	URL       string `bson:"url" json:"url"`
 	IsPrimary bool   `bson:"is_primary" json:"is_primary"`
-	Alt       string `bson:"alt,omitempty" json:"alt,omitempty"`
+	// Alt is always serialised (empty when unset) so clients can tell the
+	// field exists and fall back to the product name.
+	Alt string `bson:"alt,omitempty" json:"alt"`
 }
 type ProductFAQ struct {
 	Question string `bson:"question" json:"question"`

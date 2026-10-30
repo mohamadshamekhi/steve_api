@@ -21,6 +21,7 @@ type ListResult struct {
 type ProductReader interface {
 	FindByID(ctx context.Context, id string) (entity.Product, error)
 	FindBySlug(ctx context.Context, slug string) (entity.Product, error)
+	FindByPreviousSlug(ctx context.Context, slug string) (entity.Product, error)
 	FindByVariantID(ctx context.Context, variantID string) (entity.Product, error)
 	All(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
 	AllForExport(ctx context.Context, filter commonparam.FilterRequest) ([]entity.Product, error)
@@ -36,6 +37,7 @@ type ProductReader interface {
 	GetProductIDsByCategories(ctx context.Context, catIDs []string) (map[string][]string, error)
 	GetPricesOfProducts(ctx context.Context, prodIDSlice []string, variantIDSlice []string) (map[string]map[string]float64, error)
 	GetSearchProduct(ctx context.Context, search commonparam.SearchRequest) (ListResult, error)
+	FindWithTorobURL(ctx context.Context) ([]entity.Product, error)
 }
 
 type ProductWriter interface {
@@ -55,6 +57,7 @@ type ProductWriter interface {
 	UpdateProductSalesCount(ctx context.Context, ProductID string, quantity uint) error
 	UpdateVariantQuantity(ctx context.Context, productID string, variantID string, quantity uint) error
 	MarkPriceReviewed(ctx context.Context, productID string, at time.Time) error
+	SetCompetitorPrice(ctx context.Context, productID string, minPrice, maxPrice uint64, offersCount uint, checkedAt time.Time) error
 }
 
 type ProductReadWriter interface {

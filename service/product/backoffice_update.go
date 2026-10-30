@@ -43,6 +43,9 @@ func (s BackofficeService) UpdateProduct(ctx context.Context, req productparam.U
 			counter++
 		}
 
+		if p.Slug != "" && p.Slug != slug {
+			p.PreviousSlugs = appendUnique(p.PreviousSlugs, p.Slug)
+		}
 		p.Slug = slug
 	}
 
@@ -82,6 +85,9 @@ func (s BackofficeService) UpdateProduct(ctx context.Context, req productparam.U
 	}
 	if req.FAQ != nil {
 		p.FAQ = req.FAQ
+	}
+	if req.TorobURL != nil {
+		p.TorobURL = *req.TorobURL
 	}
 
 	// Editing a service's fee goes through the product, not the variant: the
@@ -290,4 +296,13 @@ func (s BackofficeService) UnPublishProduct(ctx context.Context, req productpara
 		return productparam.UnPublishProductResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	return productparam.UnPublishProductResponse{}, nil
+}
+
+func appendUnique(list []string, v string) []string {
+	for _, s := range list {
+		if s == v {
+			return list
+		}
+	}
+	return append(list, v)
 }
