@@ -9,6 +9,10 @@ import (
 func (h Handler) SetRoutes(e *echo.Echo) {
 	g := e.Group("/product")
 	g.POST("/create", h.Create, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.CreateProduct))
+	// Competitor-price agent. Registered before "/:id" for readability; Echo
+	// matches static segments first either way.
+	g.GET("/competitor-links", h.GetCompetitorLinks, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ManageCompetitorPrice))
+	g.PATCH("/:id/competitor-price", h.UpdateCompetitorPrice, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ManageCompetitorPrice))
 	g.GET("/:id", h.Get, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ViewProduct))
 	g.GET("", h.All, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ListProducts))
 	g.GET("/export-excel", h.ExportExcel, backofficemiddleware.BackofficeAuth(h.authSvc, h.authCfg), backofficemiddleware.ACL(h.aclSvc, key.ExportProducts))

@@ -1,6 +1,10 @@
 package productparam
 
-import "github.com/abolfazlnorzad/steve/entity"
+import (
+	"time"
+
+	"github.com/abolfazlnorzad/steve/entity"
+)
 
 type CreateProductRequest struct {
 	Name         string `json:"name"`
@@ -30,6 +34,9 @@ type CreateProductRequest struct {
 	SeoDescription string              `json:"seo_description"`
 	FocusKeyword   string              `json:"focus_keyword"`
 	FAQ            []entity.ProductFAQ `json:"faq"`
+
+	// TorobURL is the product's Torob page, https://torob.com/p/<uuid>.
+	TorobURL string `json:"torob_url"`
 }
 type CreateProductResponse struct {
 	Product ProductCreated `json:"product"`
@@ -64,6 +71,28 @@ type ProductCreated struct {
 	SeoDescription string              `json:"seo_description,omitempty"`
 	FocusKeyword   string              `json:"focus_keyword,omitempty"`
 	FAQ            []entity.ProductFAQ `json:"faq,omitempty"`
+
+	CompetitorInfo
+}
+
+// CompetitorInfo is the backoffice-only competitor pricing of a product.
+// Embedded in admin DTOs; never in storefront ones.
+type CompetitorInfo struct {
+	TorobURL              string     `json:"torob_url,omitempty"`
+	CompetitorMinPrice    uint64     `json:"competitor_min_price,omitempty"`
+	CompetitorMaxPrice    uint64     `json:"competitor_max_price,omitempty"`
+	CompetitorOffersCount uint       `json:"competitor_offers_count,omitempty"`
+	CompetitorCheckedAt   *time.Time `json:"competitor_checked_at,omitempty"`
+}
+
+func NewCompetitorInfo(p entity.Product) CompetitorInfo {
+	return CompetitorInfo{
+		TorobURL:              p.TorobURL,
+		CompetitorMinPrice:    p.CompetitorMinPrice,
+		CompetitorMaxPrice:    p.CompetitorMaxPrice,
+		CompetitorOffersCount: p.CompetitorOffersCount,
+		CompetitorCheckedAt:   p.CompetitorCheckedAt,
+	}
 }
 
 // NewProductCreated normalises the entity's defaulted fields (kind and sales
@@ -86,6 +115,7 @@ func NewProductCreated(p entity.Product) ProductCreated {
 		SeoDescription:          p.SeoDescription,
 		FocusKeyword:            p.FocusKeyword,
 		FAQ:                     p.FAQ,
+		CompetitorInfo:          NewCompetitorInfo(p),
 	}
 	if v, ok := p.ServiceVariant(); ok {
 		created.Price = v.Price

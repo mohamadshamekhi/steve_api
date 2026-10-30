@@ -60,6 +60,9 @@ const (
 	UpdateProduct  = "product:update"
 	DeleteProduct  = "product:delete"
 	ExportProducts = "product:export"
+	// ManageCompetitorPrice gates the Torob competitor-price agent endpoints:
+	// listing products with a Torob link and writing back the prices it found.
+	ManageCompetitorPrice = "competitor_price:manage"
 
 	// --- مدیریت موجودیت‌های وابسته به محصول ---
 	ListBrands  = "brand:list"

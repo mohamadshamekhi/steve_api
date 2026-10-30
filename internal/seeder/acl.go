@@ -35,6 +35,7 @@ var predefinedPermissions = []entity.Permission{
 	{Name: key.UpdateProduct, Description: "ویرایش محصول"},
 	{Name: key.DeleteProduct, Description: "حذف محصول"},
 	{Name: key.ExportProducts, Description: "خروجی اکسل از لیست محصولات"},
+	{Name: key.ManageCompetitorPrice, Description: "خواندن لینک ترب محصولات و ثبت قیمت رقبا (ایجنت قیمت)"},
 	{Name: key.ListBrands, Description: "مشاهده لیست برندها"},
 	{Name: key.CreateBrand, Description: "ایجاد برند جدید"},
 	{Name: key.UpdateBrand, Description: "ویرایش برند"},
@@ -284,6 +285,7 @@ func seedRoles(ctx context.Context, repo *mongodbrole.DB) error {
 			key.ListArticles, key.ViewArticle, key.CreateArticle, key.UpdateArticle,
 			key.ListProducts, key.ViewProduct, key.UpdateProduct,
 			key.AIAgentReport,
+			key.ManageCompetitorPrice,
 		},
 	}
 

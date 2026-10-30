@@ -37,6 +37,8 @@ func (v Validator) ValidateCreateProductRequest(req productparam.CreateProductRe
 				validation.Min(uint64(1)).Error("validation.required"))),
 		validation.Field(&req.Kind, validation.By(validateKind)),
 		validation.Field(&req.SalesChannels, validation.By(validateSalesChannels)),
+		validation.Field(&req.TorobURL,
+			validation.Match(TorobURLRegex).Error("validation.invalid_format")),
 	); err != nil {
 
 		var vErrs validation.Errors
