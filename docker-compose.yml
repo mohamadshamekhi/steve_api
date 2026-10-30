@@ -27,6 +27,8 @@ services:
       - ST_MELLIPAYAMAK__PASSWORD=${ST_MELLIPAYAMAK__PASSWORD}
       # MelliPayamak bodyId of the birthday_discount pattern ({0}=name {1}=code {2}=discount {3}=valid days)
       - ST_MELLIPAYAMAK__PATTERNS__BIRTHDAY_DISCOUNT=568773
+      # MelliPayamak bodyId of the order_shipped pattern ({0}=name {1}=order id {2}=tracking code)
+      - ST_MELLIPAYAMAK__PATTERNS__ORDER_SHIPPED=572257
       - ST_REDIS__PORT=6379
       - ST_REDIS__HOST=steve_cache
       - ST_ZARINPAL__MERCHANT_ID=${ST_ZARINPAL__MERCHANT_ID}
