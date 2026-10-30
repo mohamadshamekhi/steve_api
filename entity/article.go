@@ -7,9 +7,12 @@ import (
 )
 
 type Article struct {
-	ID              string    `bson:"_id"`
-	Title           string    `bson:"title"`
-	Slug            string    `bson:"slug"`
+	ID    string `bson:"_id"`
+	Title string `bson:"title"`
+	Slug  string `bson:"slug"`
+	// PreviousSlugs keeps every slug the article had before a rename, so the
+	// storefront can 301-redirect old links.
+	PreviousSlugs   []string  `bson:"previous_slugs,omitempty"`
 	Body            string    `bson:"body"`
 	IsPublished     bool      `bson:"is_published"`
 	Tags            []string  `bson:"tags"`

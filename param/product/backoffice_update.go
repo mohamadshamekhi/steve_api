@@ -22,6 +22,9 @@ type UpdateProductRequest struct {
 	SeoDescription *string             `json:"seo_description"`
 	FocusKeyword   *string             `json:"focus_keyword"`
 	FAQ            []entity.ProductFAQ `json:"faq"`
+
+	// TorobURL sets the product's Torob page; "" clears it.
+	TorobURL *string `json:"torob_url"`
 }
 
 type UpdateProductResponse struct {

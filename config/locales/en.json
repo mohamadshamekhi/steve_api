@@ -358,5 +358,13 @@
   {
     "id": "validation.invalid_format",
     "translation": "{{.Attribute}} format is invalid."
+  },
+  {
+    "id": "attr.tracking_code",
+    "translation": "Tracking code"
+  },
+  {
+    "id": "article.invalid_inline_image",
+    "translation": "An image embedded in the article body is corrupt and could not be uploaded."
   }
 ]

@@ -18,6 +18,8 @@ type ArticleReader interface {
 	FindBySlug(ctx context.Context, slug string) (entity.Article, error)
 	All(ctx context.Context, filter commonparam.FilterRequest, page commonparam.PaginationRequest) (ListResult, error)
 	GetSearchArticles(ctx context.Context, search commonparam.SearchRequest) (ListResult, error)
+	FindByPreviousSlug(ctx context.Context, slug string) (entity.Article, error)
+	FindWithInlineImages(ctx context.Context) ([]entity.Article, error)
 }
 
 type ArticleWriter interface {
@@ -51,4 +53,5 @@ type MediaService interface {
 	GetURLsByMediaIDs(ctx context.Context, req mediaparam.GetUrlsByIDsRequest) (mediaparam.GetUrlsByIDsResponse, error)
 	DeleteMedia(ctx context.Context, req mediaparam.DeleteMediaRequest) (mediaparam.DeleteMediaResponse, error)
 	FindMediaByID(ctx context.Context, req mediaparam.GetMediaByIDRequest) (mediaparam.GetMediaByIDResponse, error)
+	UploadFile(ctx context.Context, req mediaparam.UploadMediaRequest) (mediaparam.UploadMediaResponse, error)
 }

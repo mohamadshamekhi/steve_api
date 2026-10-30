@@ -77,6 +77,9 @@ func (s Service) StatusChanged(order entity.Order, to entity.OrderStatus) {
 		if placed && !order.IsPartnerOrder && s.sendThankYou(ctx, order, user) {
 			return
 		}
+		if to == entity.OrderStatusShipped && order.TrackingCode != "" && s.sendShipped(ctx, order, user) {
+			return
+		}
 		s.sendStatus(ctx, order, user, to)
 	}()
 }
@@ -112,6 +115,20 @@ func (s Service) sendThankYou(ctx context.Context, order entity.Order, user enti
 	if sErr := s.sms.SendPatternSMS(ctx, user.PhoneNumber,
 		[]string{displayName(user), order.ID, d.Code}, mellipayamak.OrderThanksKey); sErr != nil {
 		logger.L().Error(op, "order_id", order.ID, "err", sErr)
+	}
+	return true
+}
+
+// sendShipped sends the tracking code of a shipped order. It returns false
+// when the SMS could not be sent (e.g. the order_shipped pattern is not
+// configured), so the caller falls back to the plain status message.
+func (s Service) sendShipped(ctx context.Context, order entity.Order, user entity.User) bool {
+	const op = "ordernotifyservice.sendShipped"
+
+	if err := s.sms.SendPatternSMS(ctx, user.PhoneNumber,
+		[]string{displayName(user), order.ID, order.TrackingCode}, mellipayamak.OrderShippedKey); err != nil {
+		logger.L().Error(op, "order_id", order.ID, "err", err)
+		return false
 	}
 	return true
 }

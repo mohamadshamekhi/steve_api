@@ -106,11 +106,17 @@ func (s StorefrontService) GetSingleStorefrontArticle(ctx context.Context, req a
 func (s StorefrontService) GetSingleBySlugStorefrontArticle(ctx context.Context, req articleparam.GetBySlugStorefrontArticleRequest) (articleparam.GetBySlugStorefrontArticleResponse, error) {
 	const op = "ArticleService.GetSingleBySlugStorefrontArticle"
 	article, err := s.aRepo.FindBySlug(ctx, req.Slug)
-	if err != nil {
-		return articleparam.GetBySlugStorefrontArticleResponse{}, richerror.New(op).WithWarpError(err)
-	}
-	if !article.DeletedAt.IsZero() || !article.IsPublished {
-		return articleparam.GetBySlugStorefrontArticleResponse{}, richerror.New(op).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
+	if err != nil || !article.DeletedAt.IsZero() || !article.IsPublished {
+		// A renamed article is still served from its old slug; the response
+		// carries the current slug, which the storefront 301-redirects to.
+		prev, pErr := s.aRepo.FindByPreviousSlug(ctx, req.Slug)
+		if pErr != nil {
+			if err != nil {
+				return articleparam.GetBySlugStorefrontArticleResponse{}, richerror.New(op).WithWarpError(err)
+			}
+			return articleparam.GetBySlugStorefrontArticleResponse{}, richerror.New(op).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
+		}
+		article = prev
 	}
 
 	backOfficeInfo, bErr := s.bRepo.GetBackOfficeUserByID(ctx, article.BackOfficeID)

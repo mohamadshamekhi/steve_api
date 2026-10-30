@@ -56,6 +56,8 @@ type BackofficeOrderList struct {
 	IsPostPayShipping bool               `json:"is_post_pay_shipping,omitempty"`
 	Payments          []entity.Payment   `json:"payments,omitempty"`
 	Status            entity.OrderStatus `json:"status"`
+	TrackingCode      string             `json:"tracking_code,omitempty"`
+	ShippedAt         *time.Time         `json:"shipped_at,omitempty"`
 	CreatedAt         time.Time          `json:"created_at"`
 	UpdatedAt         time.Time          `json:"updated_at"`
 	// IsEdited / Edits: super-admin corrections of this order, oldest first.

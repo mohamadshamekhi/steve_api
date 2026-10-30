@@ -28,10 +28,15 @@ func (s BackofficeService) Create(ctx context.Context, req articleparam.AddArtic
 	val := ctx.Value("backoffice_id")
 	backOfficeID := val.(string)
 
+	body, _, iErr := s.externalizeInlineImages(ctx, req.Body, backOfficeID)
+	if iErr != nil {
+		return articleparam.AddArticleResponse{}, richerror.New(op).WithWarpError(iErr)
+	}
+
 	a := entity.Article{
 		Title:           req.Title,
 		Slug:            req.Slug,
-		Body:            req.Body,
+		Body:            body,
 		IsPublished:     req.IsPublished,
 		Tags:            req.Tags,
 		BackOfficeID:    backOfficeID,
@@ -89,11 +94,18 @@ func (s BackofficeService) Update(ctx context.Context, req articleparam.UpdateAr
 	}
 
 	if req.Slug != nil && *req.Slug != article.Slug {
+		// Keep the old slug so the storefront can 301 its links here.
+		article.PreviousSlugs = appendUnique(article.PreviousSlugs, article.Slug)
 		article.Slug = *req.Slug
 	}
 
 	if req.Body != nil {
-		article.Body = *req.Body
+		uploaderID, _ := ctx.Value("backoffice_id").(string)
+		body, _, iErr := s.externalizeInlineImages(ctx, *req.Body, uploaderID)
+		if iErr != nil {
+			return articleparam.UpdateArticleResponse{}, richerror.New(op).WithWarpError(iErr)
+		}
+		article.Body = body
 	}
 
 	if req.IsPublished != nil {
@@ -296,4 +308,45 @@ func (s BackofficeService) GetAll(ctx context.Context, req articleparam.AllArtic
 		}{PageSize: req.Pagination.GetPageSize(), PageNumber: req.Pagination.GetPageNumber(), Total: uint(resp.TotalCount)},
 		Articles: articlesInfo,
 	}, nil
+}
+
+// ExternalizeInlineImages fixes articles saved before inline images were
+// uploaded on save: every base64 image in their bodies is uploaded and
+// replaced with its URL. Safe to run repeatedly.
+func (s BackofficeService) ExternalizeInlineImages(ctx context.Context, _ articleparam.ExternalizeInlineImagesRequest) (articleparam.ExternalizeInlineImagesResponse, error) {
+	const op = "articleservice.ExternalizeInlineImages"
+
+	articles, err := s.aRepo.FindWithInlineImages(ctx)
+	if err != nil {
+		return articleparam.ExternalizeInlineImagesResponse{}, richerror.New(op).WithWarpError(err)
+	}
+
+	uploaderID, _ := ctx.Value("backoffice_id").(string)
+	resp := articleparam.ExternalizeInlineImagesResponse{Fixed: []articleparam.ExternalizedArticle{}, Failed: []articleparam.ExternalizedArticle{}}
+	for _, a := range articles {
+		before := len(a.Body)
+		body, n, iErr := s.externalizeInlineImages(ctx, a.Body, uploaderID)
+		if iErr == nil && n > 0 {
+			a.Body = body
+			iErr = s.aRepo.Update(ctx, a)
+		}
+		row := articleparam.ExternalizedArticle{ID: a.ID, Slug: a.Slug, Images: n, BodyBytesBefore: before, BodyBytesAfter: len(a.Body)}
+		if iErr != nil {
+			logger.L().Error("failed to externalize article images", "article_id", a.ID, "err", iErr)
+			row.BodyBytesAfter = before
+			resp.Failed = append(resp.Failed, row)
+			continue
+		}
+		resp.Fixed = append(resp.Fixed, row)
+	}
+	return resp, nil
+}
+
+func appendUnique(list []string, v string) []string {
+	for _, s := range list {
+		if s == v {
+			return list
+		}
+	}
+	return append(list, v)
 }

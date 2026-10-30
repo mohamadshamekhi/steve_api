@@ -56,6 +56,27 @@ func (d DB) FindBySlug(ctx context.Context, slug string) (entity.Product, error)
 	return p, nil
 }
 
+// FindByPreviousSlug finds the product that used to live at slug before a
+// rename. Used by the storefront to redirect old links.
+func (d DB) FindByPreviousSlug(ctx context.Context, slug string) (entity.Product, error) {
+	const op = "mongodbproduct.FindByPreviousSlug"
+	filter := bson.M{
+		"previous_slugs": slug,
+		"deleted_at":     bson.M{"$exists": false},
+	}
+	var p entity.Product
+
+	if err := d.collection.FindOne(ctx, filter).Decode(&p); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return p, richerror.New(op).WithWarpError(err).WithKind(richerror.KindNotFound).WithMessageKey("global.not-found")
+		}
+		return p, richerror.New(op).WithMessageKey(errmsg.ErrorMsgSomethingWentWrong).WithKind(richerror.KindUnexpected).
+			WithMeta(map[string]any{"slug": slug})
+	}
+
+	return p, nil
+}
+
 func (d DB) FindManyByIDs(ctx context.Context, ids []string) ([]entity.Product, error) {
 	const op = "mongodbproduct.FindManyByIDs"
 	if len(ids) == 0 {

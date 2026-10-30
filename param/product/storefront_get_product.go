@@ -41,6 +41,7 @@ type StorefrontProductInfo struct {
 	Price                   uint64                     `json:"price,omitempty"`
 	Description             string                     `json:"description"`
 	Rating                  float64                    `json:"rating"`
+	RatingCount             uint                       `json:"rating_count"`
 	Discount                []ProductDiscount          `json:"discount"`
 
 	Variants       []StorefrontVariant `json:"variants"`

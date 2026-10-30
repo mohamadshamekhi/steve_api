@@ -2,6 +2,7 @@ package productservice
 
 import (
 	"context"
+	"errors"
 
 	brandparam "github.com/abolfazlnorzad/steve/param/brand"
 	categoryparam "github.com/abolfazlnorzad/steve/param/category"
@@ -83,6 +84,8 @@ func (s StorefrontService) GetProduct(ctx context.Context, req productparam.Stor
 		IsPublished:    p.IsPublished,
 		IsSecondHand:   p.IsSecondHand,
 		Description:    p.Description,
+		Rating:         p.Rating,
+		RatingCount:    p.RatingCount,
 		Variants:       productparam.ToStorefrontVariants(p.Variants),
 		CreatedAt:      p.CreatedAt,
 		UpdatedAt:      p.UpdatedAt,
@@ -120,7 +123,17 @@ func (s StorefrontService) GetProductBySlug(ctx context.Context, req productpara
 
 	p, err := s.repo.FindBySlug(ctx, req.Slug)
 	if err != nil {
-		return productparam.StorefrontGetProductBySlugResponse{}, richerror.New(op).WithWarpError(err)
+		// A renamed product is still served from its old slug; the response
+		// carries the current slug, which the storefront 301-redirects to.
+		var rErr *richerror.RichError
+		if !errors.As(err, &rErr) || rErr.Kind() != richerror.KindNotFound {
+			return productparam.StorefrontGetProductBySlugResponse{}, richerror.New(op).WithWarpError(err)
+		}
+		prev, pErr := s.repo.FindByPreviousSlug(ctx, req.Slug)
+		if pErr != nil {
+			return productparam.StorefrontGetProductBySlugResponse{}, richerror.New(op).WithWarpError(err)
+		}
+		p = prev
 	}
 
 	g, gCtx := errgroup.WithContext(ctx)
@@ -186,6 +199,8 @@ func (s StorefrontService) GetProductBySlug(ctx context.Context, req productpara
 		IsPublished:    p.IsPublished,
 		IsSecondHand:   p.IsSecondHand,
 		Description:    p.Description,
+		Rating:         p.Rating,
+		RatingCount:    p.RatingCount,
 		Variants:       productparam.ToStorefrontVariants(p.Variants),
 		Discount:       disRes.DiscountMap[p.ID],
 		CreatedAt:      p.CreatedAt,

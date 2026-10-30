@@ -3,6 +3,7 @@ package orderservice
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/abolfazlnorzad/steve/entity"
@@ -189,6 +190,8 @@ func (s BackofficeService) GetAll(ctx context.Context, req orderparam.GetAllOrde
 			ManualDiscount:      order.ManualDiscountAmount,
 			Payments:            payments.Payments,
 			Status:              order.Status,
+			TrackingCode:        order.TrackingCode,
+			ShippedAt:           order.ShippedAt,
 			CreatedAt:           order.CreatedAt,
 			UpdatedAt:           order.UpdatedAt,
 			Shipping:            order.Shipping,
@@ -213,8 +216,7 @@ func (s BackofficeService) UpdateStatus(ctx context.Context, req orderparam.Upda
 
 	order, err := s.repo.GetOrderByID(ctx, req.OrderID)
 	if err != nil {
-		return orderparam.UpdateStatusOrderResponse{}, nil
-
+		return orderparam.UpdateStatusOrderResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	if !entity.CanTransitionOrderStatus(order.Status, req.Status) {
 		return orderparam.UpdateStatusOrderResponse{}, richerror.New(op).
@@ -226,6 +228,13 @@ func (s BackofficeService) UpdateStatus(ctx context.Context, req orderparam.Upda
 			})
 	}
 
+	// The tracking code lands before the status so the shipped SMS, fired
+	// from the status change, can read it off the order.
+	if req.Status == entity.OrderStatusShipped {
+		if err := s.repo.SetTrackingCode(ctx, req.OrderID, strings.TrimSpace(req.TrackingCode)); err != nil {
+			return orderparam.UpdateStatusOrderResponse{}, richerror.New(op).WithWarpError(err)
+		}
+	}
 	if err := s.repo.UpdateOrderStatus(ctx, req.OrderID, req.Status); err != nil {
 		return orderparam.UpdateStatusOrderResponse{}, richerror.New(op).WithWarpError(err)
 	}

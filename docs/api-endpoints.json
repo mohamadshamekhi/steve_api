@@ -191,8 +191,8 @@
       "method": "POST",
       "path": "/product/create",
       "auth": "backoffice+ACL:CreateProduct",
-      "in": "{name, category_id, brand_id, ..., kind?('physical'|'service'), sales_channels?(['website','in_person']), price?(اجباری برای kind=service)}",
-      "out": "{product: {id, name, en_title, slug, brand_id, category_id, kind, sales_channels, is_published, is_second_hand, description, price?, variant_id?}}",
+      "in": "{name, category_id, brand_id, ..., kind?('physical'|'service'), sales_channels?(['website','in_person']), price?(اجباری برای kind=service), seo_title?, seo_description?, focus_keyword?, faq?[{question, answer}], torob_url?(فقط https://torob.com/p/<uuid>)}",
+      "out": "{product: {id, name, en_title, slug, brand_id, category_id, kind, sales_channels, is_published, is_second_hand, description, price?, variant_id?, seo_title?, seo_description?, focus_keyword?, faq?, torob_url?, competitor_min_price?, competitor_max_price?, competitor_offers_count?, competitor_checked_at?}}",
       "desc": "ثبت محصول یا خدمت. برای kind=service فیلد price اجباری است و واریانت قیمت خودکار ساخته می‌شود؛ brand_id/category_id اختیاری‌اند"
     },
     {
@@ -200,7 +200,7 @@
       "path": "/product/:id",
       "auth": "backoffice+ACL:ViewProduct",
       "in": "-",
-      "out": "{product}",
+      "out": "{product: {..., gallery[{media_id, url, is_primary, alt}], seo_title?, seo_description?, focus_keyword?, faq?[{question, answer}], torob_url?, competitor_min_price?, competitor_max_price?, competitor_offers_count?, competitor_checked_at?}}",
       "desc": "جزئیات محصول (ادمین)"
     },
     {
@@ -223,9 +223,25 @@
       "method": "PATCH",
       "path": "/product/:id",
       "auth": "backoffice+ACL:UpdateProduct",
-      "in": "{name?, price?, ..., kind?, sales_channels?, price?(فقط برای خدمات)}",
+      "in": "{name?, price?, ..., kind?, sales_channels?, price?(فقط برای خدمات), seo_title?, seo_description?, focus_keyword?, faq?, torob_url?(\"\" = حذف لینک)}",
       "out": "{product: {id, ..., kind, sales_channels, price?, variant_id?}}",
-      "desc": "ویرایش محصول"
+      "desc": "ویرایش محصول — تغییر en_title اسلاگ را عوض می‌کند و اسلاگ قبلی در previous_slugs می‌ماند تا فروشگاه ریدایرکت ۳۰۱ بدهد"
+    },
+    {
+      "method": "GET",
+      "path": "/product/competitor-links",
+      "auth": "backoffice+ACL:competitor_price:manage",
+      "in": "-",
+      "out": "{products[{id, slug, name, torob_url, our_min_price, in_stock}]}",
+      "desc": "محصولات دارای لینک ترب برای ایجنت قیمت — our_min_price کمترین قیمت واریانت (بدون تخفیف)، in_stock یعنی در سایت قابل خرید است. فقط نقش ai_agent و ادمین"
+    },
+    {
+      "method": "PATCH",
+      "path": "/product/:id/competitor-price",
+      "auth": "backoffice+ACL:competitor_price:manage",
+      "in": "{min_price, max_price(>= min_price), offers_count, checked_at(RFC3339، آینده نباشد)}",
+      "out": "{message}",
+      "desc": "ثبت قیمت رقبا از ترب — فقط همین ۴ فیلد نوشته می‌شود. این فیلدها و torob_url هیچ‌وقت در پاسخ‌های storefront نمی‌آیند"
     },
     {
       "method": "PATCH",
@@ -344,8 +360,8 @@
       "path": "/product/storefront",
       "auth": "public",
       "in": "?filters&page",
-      "out": "{products[], filters, pagination}",
-      "desc": "لیست فیلترپذیر محصولات فروشگاه"
+      "out": "{products[{..., variant: [{id, price, variant_attribute, warranty, in_stock, stock_left?(فقط وقتی ۱۰ عدد یا کمتر مانده)}]}], filters, pagination}",
+      "desc": "لیست فیلترپذیر محصولات فروشگاه — quantity/stock_mode/allow_backorder دیگر برنمی‌گردد"
     },
     {
       "method": "GET",
@@ -376,8 +392,8 @@
       "path": "/product/storefront/get-by-slug/:slug",
       "auth": "public",
       "in": "-",
-      "out": "{product}",
-      "desc": "جزئیات محصول فروشگاه با slug"
+      "out": "{product: {..., slug, gallery[{media_id, url, is_primary, alt}], rating, rating_count, variants[{id, price, variant_attribute, warranty, in_stock, stock_left?(فقط وقتی ۱۰ عدد یا کمتر مانده)}], seo_title?, seo_description?, focus_keyword?, faq?[{question, answer}]}}",
+      "desc": "جزئیات محصول فروشگاه با slug — اسلاگ قدیمی (بعد از تغییر نام) هم جواب می‌دهد؛ اگر product.slug با slug درخواست فرق داشت، ریدایرکت ۳۰۱ بدهید"
     },
     {
       "method": "GET",
@@ -716,7 +732,7 @@
       "path": "/order/all",
       "auth": "backoffice+ACL:ListOrders",
       "in": "?page_number&page_size&status(یک مقدار یا چندتا با کاما: processing,shipped)&order_id&user_id&phone(بخشی از شماره هم کافی است)&purchase_type(online|in_person)&is_partner_order(true|false)&from&to(YYYY-MM-DD به وقت تهران، هر دو شامل)&min_amount&max_amount(روی final_amount، تومان)؛ تاریخ نامعتبر → 400 validation.invalid_input",
-      "out": "{orders[{..., items[{ProductID, VariantID, ProductName, Quantity, PriceAtTime, ..., ProductThumbnailURL}], applied_discounts[{discount_id, discount_code?, amount}], total_discount_amount, manual_discount, is_edited, edits[]?}], pagination} — ProductThumbnailURL = تصویر اصلی فعلی محصول (سطر دستی: خالی)",
+      "out": "{orders[{..., items[{ProductID, VariantID, ProductName, Quantity, PriceAtTime, ..., ProductThumbnailURL}], applied_discounts[{discount_id, discount_code?, amount}], total_discount_amount, manual_discount, tracking_code?, shipped_at?, is_edited, edits[]?}], pagination} — ProductThumbnailURL = تصویر اصلی فعلی محصول (سطر دستی: خالی)",
       "desc": "لیست همه‌ی سفارش‌ها (ادمین)"
     },
     {
@@ -724,7 +740,7 @@
       "path": "/order/storefront/all",
       "auth": "user",
       "in": "?page",
-      "out": "{orders[], pagination}",
+      "out": "{orders[{..., status, tracking_code?, shipped_at?}], pagination}",
       "desc": "سفارش‌های کاربر جاری"
     },
     {
@@ -739,9 +755,9 @@
       "method": "PATCH",
       "path": "/order/update-status/:id",
       "auth": "backoffice+ACL:UpdateOrderStatus",
-      "in": "{status}",
+      "in": "{status, tracking_code?}",
       "out": "{message}",
-      "desc": "تغییر وضعیت سفارش"
+      "desc": "تغییر وضعیت سفارش — برای status=shipped فیلد tracking_code (کد رهگیری مرسوله، ۴ تا ۶۴ کاراکتر، عدد/حرف لاتین/خط تیره) الزامی است؛ روی سفارش ذخیره می‌شود و با پیامک order_shipped برای خریدار ارسال می‌شود"
     },
     {
       "method": "POST",
@@ -938,6 +954,14 @@
       "desc": "لیست مقالات (ادمین)"
     },
     {
+      "method": "POST",
+      "path": "/article/externalize-inline-images",
+      "auth": "backoffice+ACL:UpdateArticle",
+      "in": "-",
+      "out": "{fixed[{id, slug, images, body_bytes_before, body_bytes_after}], failed[]}",
+      "desc": "یک‌بار اجرا: عکس‌های base64 داخل متن همه‌ی مقاله‌ها را آپلود و با URL جایگزین می‌کند. از این به بعد create/update مقاله این کار را خودکار انجام می‌دهد"
+    },
+    {
       "method": "PATCH",
       "path": "/article/:id",
       "auth": "backoffice+ACL:UpdateArticle",
@@ -958,7 +982,7 @@
       "path": "/article/storefront",
       "auth": "public",
       "in": "?page_number&page_size&title&sort|order=desc|asc (پیش‌فرض desc بر اساس created_at)",
-      "out": "{articles[], pagination}",
+      "out": "{articles[{id, title, slug, tags, meta_description, media_url, alt, back_office_name, view_count, created_at, updated_at}], pagination} — body فقط در get-by-slug",
       "desc": "لیست مقالات فروشگاه"
     },
     {
@@ -967,7 +991,7 @@
       "auth": "public",
       "in": "-",
       "out": "{article}",
-      "desc": "مقاله با slug"
+      "desc": "مقاله با slug — اسلاگ قدیمی (بعد از تغییر slug) هم جواب می‌دهد؛ اگر article.slug با slug درخواست فرق داشت، ریدایرکت ۳۰۱ بدهید"
     },
     {
       "method": "GET",

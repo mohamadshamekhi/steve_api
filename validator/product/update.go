@@ -32,6 +32,10 @@ func (v Validator) ValidateUpdateProductRequest(req productparam.UpdateProductRe
 		validation.Field(&req.Kind,
 			validation.When(req.Kind != nil, validation.By(validateKindPtr))),
 		validation.Field(&req.SalesChannels, validation.By(validateSalesChannels)),
+		// "" clears the link, so only a non-empty value has to match.
+		validation.Field(&req.TorobURL,
+			validation.When(req.TorobURL != nil && *req.TorobURL != "",
+				validation.Match(TorobURLRegex).Error("validation.invalid_format"))),
 	); err != nil {
 
 		var vErrs validation.Errors

@@ -3,6 +3,8 @@ package ordervalidator
 import (
 	"context"
 	"errors"
+	"regexp"
+	"strings"
 
 	"github.com/abolfazlnorzad/steve/entity"
 	orderparam "github.com/abolfazlnorzad/steve/param/order"
@@ -24,6 +26,13 @@ func (v Validator) UpdateStatusOrderValidator(ctx context.Context, req orderpara
 				entity.OrderStatusRefunded,
 			).Error("validation.invalid_status"),
 		),
+		validation.Field(&req.TrackingCode,
+			validation.When(req.Status == entity.OrderStatusShipped,
+				validation.By(requiredTrimmed),
+				validation.Length(4, 64).Error("validation.invalid_format"),
+				validation.Match(trackingCodeRegex).Error("validation.invalid_format"),
+			),
+		),
 	); err != nil {
 		var vErrs validation.Errors
 		if errors.As(err, &vErrs) {
@@ -36,6 +45,18 @@ func (v Validator) UpdateStatusOrderValidator(ctx context.Context, req orderpara
 		return richerror.New(op).WithKind(richerror.KindUnexpected).
 			WithMessageKey("global.something_wrong").WithWarpError(err)
 
+	}
+	return nil
+}
+
+// trackingCodeRegex accepts courier tracking numbers: Post's all-digit codes
+// as well as alphanumeric ones with dashes (Tipax, Chapar, …).
+var trackingCodeRegex = regexp.MustCompile(`^\s*[A-Za-z0-9-]+\s*$`)
+
+func requiredTrimmed(value interface{}) error {
+	s, _ := value.(string)
+	if strings.TrimSpace(s) == "" {
+		return errors.New("validation.required")
 	}
 	return nil
 }
