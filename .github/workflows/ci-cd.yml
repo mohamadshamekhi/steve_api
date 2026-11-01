@@ -31,10 +31,28 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
     steps:
+      # the runner's route to the server is flaky: wait for the port here rather
+      # than retry the deploy script, which isn't safe to run twice after a partial failure
+      - name: Wait for SSH port
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+        run: |
+          for i in $(seq 1 20); do
+            if timeout 10 bash -c 'exec 3<>"/dev/tcp/$DEPLOY_HOST/22"'; then
+              echo "port 22 reachable on attempt $i"
+              exit 0
+            fi
+            echo "attempt $i/20: port 22 unreachable, retrying in 15s"
+            sleep 15
+          done
+          echo "::error::port 22 stayed unreachable from this runner"
+          exit 1
+
       - name: SSH deploy
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.DEPLOY_SSH_HOST }}
           username: ${{ secrets.DEPLOY_SSH_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          timeout: 60s
           script: bash "${{ secrets.DEPLOY_PATH }}/deploy/server-deploy.sh" "${{ secrets.DEPLOY_PATH }}"
