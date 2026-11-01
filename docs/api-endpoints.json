@@ -360,7 +360,7 @@
       "path": "/product/storefront",
       "auth": "public",
       "in": "?filters&page",
-      "out": "{products[{..., variant: [{id, price, variant_attribute, warranty, in_stock, stock_left?(فقط وقتی ۱۰ عدد یا کمتر مانده)}]}], filters, pagination}",
+      "out": "{products[{..., updated_at?, variant: [{id, price, variant_attribute, warranty, in_stock, stock_left?(فقط وقتی ۱۰ عدد یا کمتر مانده)}]}], filters, pagination}",
       "desc": "لیست فیلترپذیر محصولات فروشگاه — quantity/stock_mode/allow_backorder دیگر برنمی‌گردد"
     },
     {

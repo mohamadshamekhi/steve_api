@@ -26,6 +26,8 @@ type StorefrontProductList struct {
 	Discount       []ProductDiscount       `json:"discount"`
 	Variant        []StorefrontVariant     `json:"variant" bson:"variant"`
 	Specifications []Specification         `json:"specifications,omitempty"`
+	// pointer so the other lists sharing this struct don't emit a zero date
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 }
 
 type GetProductWithSpecialCategoryRequest struct {

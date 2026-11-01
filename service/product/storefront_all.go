@@ -2,6 +2,7 @@ package productservice
 
 import (
 	"context"
+	"time"
 
 	categoryparam "github.com/abolfazlnorzad/steve/param/category"
 	commonparam "github.com/abolfazlnorzad/steve/param/common"
@@ -67,6 +68,10 @@ func (s StorefrontService) GetFilteredProduct(ctx context.Context, req productpa
 					}
 				}
 			}
+			var updatedAt *time.Time
+			if !product.UpdatedAt.IsZero() {
+				updatedAt = &product.UpdatedAt
+			}
 			// we don't need mutex because every goroutine write on spsefic index
 			list[index] = productparam.StorefrontProductList{
 				ID:             product.ID,
@@ -80,6 +85,7 @@ func (s StorefrontService) GetFilteredProduct(ctx context.Context, req productpa
 				Variant:        productparam.ToStorefrontVariants(product.Variants),
 				Rating:         product.Rating,
 				Specifications: specs,
+				UpdatedAt:      updatedAt,
 			}
 			return nil
 		})
