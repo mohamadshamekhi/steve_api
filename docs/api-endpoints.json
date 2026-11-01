@@ -223,7 +223,7 @@
       "method": "PATCH",
       "path": "/product/:id",
       "auth": "backoffice+ACL:UpdateProduct",
-      "in": "{name?, price?, ..., kind?, sales_channels?, price?(فقط برای خدمات), seo_title?, seo_description?, focus_keyword?, faq?, torob_url?(\"\" = حذف لینک)}",
+      "in": "{name?, price?, is_second_hand?, ..., kind?, sales_channels?, price?(فقط برای خدمات), seo_title?, seo_description?, focus_keyword?, faq?, torob_url?(\"\" = حذف لینک)}",
       "out": "{product: {id, ..., kind, sales_channels, price?, variant_id?}}",
       "desc": "ویرایش محصول — تغییر en_title اسلاگ را عوض می‌کند و اسلاگ قبلی در previous_slugs می‌ماند تا فروشگاه ریدایرکت ۳۰۱ بدهد"
     },

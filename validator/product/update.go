@@ -17,7 +17,6 @@ func (v Validator) ValidateUpdateProductRequest(req productparam.UpdateProductRe
 			validation.When(req.Name != nil, validation.Required.Error("validation.required"))),
 		validation.Field(&req.Description,
 			validation.When(req.Description != nil, validation.Required.Error("validation.required"))),
-		validation.Field(&req.IsSecondHand, validation.NotNil.Error("validation.required")),
 		validation.Field(&req.ENTitle, validation.When(req.ENTitle != nil,
 			validation.Required.Error("validation.required"))),
 		validation.Field(&req.BrandID,

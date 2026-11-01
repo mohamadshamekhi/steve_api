@@ -43,6 +43,7 @@ type ProductReader interface {
 type ProductWriter interface {
 	Create(ctx context.Context, product entity.Product) error
 	Update(ctx context.Context, product entity.Product) error
+	UpdateFields(ctx context.Context, product entity.Product, fields ...string) error
 	Delete(ctx context.Context, product entity.Product) error
 	AddProductGallery(ctx context.Context, productID string, g entity.ProductGallery) error
 	DeleteProductGallery(ctx context.Context, productID string, mediaID string) error

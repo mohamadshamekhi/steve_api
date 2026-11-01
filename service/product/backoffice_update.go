@@ -20,7 +20,9 @@ func (s BackofficeService) UpdateProduct(ctx context.Context, req productparam.U
 	if gErr != nil {
 		return productparam.UpdateProductResponse{}, richerror.New(op).WithWarpError(gErr)
 	}
+	var fields []string
 	if req.ENTitle != nil && *req.ENTitle != p.ENTitle {
+		fields = append(fields, "en_title", "slug", "previous_slugs")
 		p.ENTitle = *req.ENTitle
 
 		slug := slug.GenerateSlug(p.ENTitle)
@@ -51,50 +53,64 @@ func (s BackofficeService) UpdateProduct(ctx context.Context, req productparam.U
 
 	if req.Name != nil {
 		p.Name = *req.Name
+		fields = append(fields, "name")
 	}
 	if req.Description != nil {
 		p.Description = *req.Description
+		fields = append(fields, "description")
 	}
 	if req.BrandID != nil {
 		p.BrandID = *req.BrandID
+		fields = append(fields, "brand_id")
 	}
 
 	if req.CategoryID != nil {
 		p.CategoryID = *req.CategoryID
+		fields = append(fields, "category_id")
 	}
 	if req.IsSecondHand != nil {
 		p.IsSecondHand = *req.IsSecondHand
+		fields = append(fields, "is_second_hand")
 	}
 	if req.RequiresFreightShipping != nil {
 		p.RequiresFreightShipping = *req.RequiresFreightShipping
+		fields = append(fields, "requires_freight_shipping")
 	}
 	if req.Kind != nil {
 		p.Kind = *req.Kind
+		fields = append(fields, "kind")
 	}
 	if req.SalesChannels != nil {
 		p.SalesChannels = req.SalesChannels
+		fields = append(fields, "sales_channels")
 	}
 	if req.SeoTitle != nil {
 		p.SeoTitle = *req.SeoTitle
+		fields = append(fields, "seo_title")
 	}
 	if req.SeoDescription != nil {
 		p.SeoDescription = *req.SeoDescription
+		fields = append(fields, "seo_description")
 	}
 	if req.FocusKeyword != nil {
 		p.FocusKeyword = *req.FocusKeyword
+		fields = append(fields, "focus_keyword")
 	}
 	if req.FAQ != nil {
 		p.FAQ = req.FAQ
+		fields = append(fields, "faq")
 	}
 	if req.TorobURL != nil {
 		p.TorobURL = *req.TorobURL
+		fields = append(fields, "torob_url")
 	}
 
 	// Editing a service's fee goes through the product, not the variant: the
 	// pricing row is an implementation detail the caller should not have to
-	// address. The whole document is replaced below, so mutating it in place
-	// keeps the price change atomic with the rest of the update.
+	// address. A service has no stock, so writing its variants can't lose a
+	// concurrent quantity change, and one update keeps the price atomic with the rest.
 	if req.Price != nil && p.IsService() {
+		fields = append(fields, "variants", "price_reviewed_at")
 		if len(p.Variants) == 0 {
 			p.Variants = []entity.Variant{entity.NewServiceVariant(*req.Price)}
 			p.Variants[0].BeforeCreate()
@@ -108,7 +124,7 @@ func (s BackofficeService) UpdateProduct(ctx context.Context, req productparam.U
 		p.PriceReviewedAt = time.Now()
 	}
 
-	if err := s.repo.Update(ctx, p); err != nil {
+	if err := s.repo.UpdateFields(ctx, p, fields...); err != nil {
 		return productparam.UpdateProductResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	return productparam.UpdateProductResponse{Product: productparam.NewProductCreated(p)}, nil
@@ -209,7 +225,7 @@ func (s BackofficeService) PublishProduct(ctx context.Context, req productparam.
 		return productparam.PublishProductResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	product.IsPublished = true
-	if err := s.repo.Update(ctx, product); err != nil {
+	if err := s.repo.UpdateFields(ctx, product, "is_published"); err != nil {
 		return productparam.PublishProductResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	return productparam.PublishProductResponse{}, nil
@@ -292,7 +308,7 @@ func (s BackofficeService) UnPublishProduct(ctx context.Context, req productpara
 	}
 
 	product.IsPublished = false
-	if err := s.repo.Update(ctx, product); err != nil {
+	if err := s.repo.UpdateFields(ctx, product, "is_published"); err != nil {
 		return productparam.UnPublishProductResponse{}, richerror.New(op).WithWarpError(err)
 	}
 	return productparam.UnPublishProductResponse{}, nil
