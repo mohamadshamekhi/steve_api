@@ -433,7 +433,7 @@
       "method": "PATCH",
       "path": "/category/:id",
       "auth": "backoffice+ACL:UpdateCategory",
-      "in": "{name?, media_id?, description?, parent_id?, attribute_set_id?}",
+      "in": "{name?, media_id?, description?, seo_title?, seo_description?, parent_id?, attribute_set_id?}",
       "out": "{message}",
       "desc": "ویرایش دسته‌بندی"
     },
@@ -450,7 +450,7 @@
       "path": "/category/storefront",
       "auth": "public",
       "in": "?page_number&page_size&name",
-      "out": "{categories[], pagination}",
+      "out": "{categories[{..., description, seo_title?, seo_description?}], pagination}",
       "desc": "لیست دسته‌بندی‌های فروشگاه"
     },
     {

@@ -58,14 +58,16 @@ func (s StorefrontService) GetAllCategories(ctx context.Context, req categorypar
 	}
 	for _, c := range resp.Categories {
 		categoriesInfo = append(categoriesInfo, categoryparam.CategoryInfo{
-			ID:          c.ID,
-			Name:        c.Name,
-			Description: c.Description,
-			URL:         urlMap.URLs[c.MediaID],
-			Level:       c.Level,
-			Ancestors:   c.Ancestors,
-			Slug:        c.Slug,
-			ParentID:    strPtrOrNil(c.ParentID),
+			ID:             c.ID,
+			Name:           c.Name,
+			Description:    c.Description,
+			SeoTitle:       c.SeoTitle,
+			SeoDescription: c.SeoDescription,
+			URL:            urlMap.URLs[c.MediaID],
+			Level:          c.Level,
+			Ancestors:      c.Ancestors,
+			Slug:           c.Slug,
+			ParentID:       strPtrOrNil(c.ParentID),
 		})
 	}
 

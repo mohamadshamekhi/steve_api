@@ -18,6 +18,8 @@ type CategoryInfo struct {
 	ID             string                       `json:"id"`
 	Name           string                       `json:"name"`
 	Description    string                       `json:"description"`
+	SeoTitle       string                       `json:"seo_title,omitempty"`
+	SeoDescription string                       `json:"seo_description,omitempty"`
 	URL            string                       `json:"url"`
 	Level          int                          `json:"level"`
 	Slug           string                       `json:"slug"`

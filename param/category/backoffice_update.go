@@ -5,6 +5,8 @@ type UpdateCategoryRequest struct {
 	Name           *string `json:"name"`
 	MediaID        *string `json:"media_id"`
 	Description    *string `json:"description"`
+	SeoTitle       *string `json:"seo_title"`
+	SeoDescription *string `json:"seo_description"`
 	ParentID       *string `json:"parent_id"`
 	AttributeSetID *string `json:"attribute_set_id"`
 }

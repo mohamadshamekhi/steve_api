@@ -11,6 +11,8 @@ type Category struct {
 	Name           string     `bson:"name"`
 	Slug           string     `bson:"slug"`
 	Description    string     `bson:"description,omitempty"`
+	SeoTitle       string     `bson:"seo_title,omitempty"`
+	SeoDescription string     `bson:"seo_description,omitempty"`
 	MediaID        string     `bson:"media_id"`
 	ParentID       string     `bson:"parent_id,omitempty"`
 	Ancestors      []Ancestor `bson:"ancestors,omitempty"`

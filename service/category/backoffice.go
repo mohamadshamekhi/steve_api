@@ -155,6 +155,8 @@ func (s BackofficeService) GetCategory(ctx context.Context, req categoryparam.Ge
 			ID:             category.ID,
 			Name:           category.Name,
 			Description:    category.Description,
+			SeoTitle:       category.SeoTitle,
+			SeoDescription: category.SeoDescription,
 			URL:            m.URL,
 			ParentID:       strPtrOrNil(category.ParentID),
 			Ancestors:      category.Ancestors,
@@ -197,6 +199,8 @@ func (s BackofficeService) GetAll(ctx context.Context, req categoryparam.GetAllC
 			ID:             c.ID,
 			Name:           c.Name,
 			Description:    c.Description,
+			SeoTitle:       c.SeoTitle,
+			SeoDescription: c.SeoDescription,
 			URL:            urlMap.URLs[c.MediaID],
 			Level:          c.Level,
 			ParentID:       strPtrOrNil(c.ParentID),
@@ -259,6 +263,12 @@ func (s BackofficeService) Update(ctx context.Context, req categoryparam.UpdateC
 
 	if req.Description != nil {
 		category.Description = *req.Description
+	}
+	if req.SeoTitle != nil {
+		category.SeoTitle = *req.SeoTitle
+	}
+	if req.SeoDescription != nil {
+		category.SeoDescription = *req.SeoDescription
 	}
 
 	if req.MediaID != nil && *req.MediaID != category.MediaID {
@@ -397,6 +407,8 @@ func (s BackofficeService) GetCategoryBySlug(ctx context.Context, req categorypa
 		Name:           resp.Name,
 		Slug:           resp.Slug,
 		Description:    resp.Description,
+		SeoTitle:       resp.SeoTitle,
+		SeoDescription: resp.SeoDescription,
 		MediaID:        resp.MediaID,
 		ParentID:       resp.ParentID,
 		Ancestors:      resp.Ancestors,
